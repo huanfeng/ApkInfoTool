@@ -1,7 +1,111 @@
+import 'package:apk_info_tool/apk_info.dart';
 import 'package:flutter/material.dart';
+import "package:file_picker/file_picker.dart";
+import 'package:chinese_font_library/chinese_font_library.dart';
+import 'package:window_manager/window_manager.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await windowManager.ensureInitialized();
+
+  // WindowOptions windowOptions = WindowOptions(
+  //   size: Size(800, 600),
+  //   center: true,
+  //   backgroundColor: Colors.transparent,
+  //   skipTaskbar: false,
+  //   titleBarStyle: TitleBarStyle.hidden,
+  // );
+  // windowManager.waitUntilReadyToShow(windowOptions, () async {
+  //   await windowManager.show();
+  //   await windowManager.focus();
+  // });
+
   runApp(const MyApp());
+}
+
+class APKInfoPage extends StatefulWidget {
+  const APKInfoPage({super.key});
+
+  @override
+  _APKInfoPageState createState() => _APKInfoPageState();
+}
+
+class _APKInfoPageState extends State<APKInfoPage> {
+  FilePickerResult? filePickerResult;
+  String? selectedFilePath;
+  int? fileSize;
+
+  void openFilePicker() async {
+    var result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['apk'],
+    );
+    print('result=${result}');
+    var file = result?.files.single;
+    // 打开文件选择
+    if (file != null) {
+      print('filePaths=$file');
+      setState(() {
+        fileSize = file.size;
+        selectedFilePath = file.path;
+        WindowManager.instance.setTitle(file.name);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("APK Info"),
+        actions: [
+          IconButton(
+              icon: const Icon(Icons.folder),
+              onPressed: () async {
+                openFilePicker();
+              }),
+          IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                getApkInfo();
+              }),
+          SizedBox(width: 50),
+        ],
+      ),
+      body: Column(
+        children: [
+          // 信息显示区
+          Expanded(
+            child: ListView(
+              children: [
+                Card(
+                    child: ListTile(
+                  title: const Text("文件"),
+                  subtitle: SelectableText(
+                    selectedFilePath ?? "No file selected",
+                  ), //显示复制按钮
+                )),
+                Card(
+                  child: ListTile(
+                    title: const Text("文件大小"),
+                    subtitle: Text("${fileSize ?? 0} bytes"),
+                  ),
+                ),
+                Card(
+                    child: Row(children: [
+                  Expanded(flex: 1, child: ListTile(title: Text("名称"))),
+                  Expanded(flex: 2, child: Text("名称")),
+                ])),
+                Card(child: ListTile(title: Text("版本"))),
+                Card(child: ListTile(title: Text("Permissions"))),
+                Card(child: ListTile(title: Text("Permissions"))),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -30,8 +134,8 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      ).useSystemChineseFont(),
+      home: const APKInfoPage(),
     );
   }
 }

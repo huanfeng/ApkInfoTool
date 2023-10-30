@@ -40,7 +40,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
       type: FileType.custom,
       allowedExtensions: ['apk'],
     );
-    print('result=${result}');
+    print('result=$result');
     var file = result?.files.single;
     // 打开文件选择
     if (file != null) {
@@ -69,7 +69,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
               onPressed: () {
                 getApkInfo();
               }),
-          SizedBox(width: 50),
+          const SizedBox(width: 50),
         ],
       ),
       body: Column(
@@ -91,14 +91,14 @@ class _APKInfoPageState extends State<APKInfoPage> {
                     subtitle: Text("${fileSize ?? 0} bytes"),
                   ),
                 ),
-                Card(
+                const Card(
                     child: Row(children: [
                   Expanded(flex: 1, child: ListTile(title: Text("名称"))),
                   Expanded(flex: 2, child: Text("名称")),
                 ])),
-                Card(child: ListTile(title: Text("版本"))),
-                Card(child: ListTile(title: Text("Permissions"))),
-                Card(child: ListTile(title: Text("Permissions"))),
+                const Card(child: ListTile(title: Text("版本"))),
+                const Card(child: ListTile(title: Text("Permissions"))),
+                const Card(child: ListTile(title: Text("Permissions"))),
               ],
             ),
           )

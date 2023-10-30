@@ -21,5 +21,5 @@ Future<void> getApkInfo() async {
 
 // 等待子进程退出
   var exitCode = await process.exitCode;
-  print("getApkInfo: end exitCode=${exitCode}");
+  print("getApkInfo: end exitCode=$exitCode");
 }

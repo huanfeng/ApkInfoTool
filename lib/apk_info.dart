@@ -1,25 +1,26 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:developer';
 
 Future<void> getApkInfo() async {
-  print("getApkInfo: start");
+  log("getApkInfo: start");
   // 启动子进程
   Process process = await Process.start('python', ['--version']);
 
 // 监听stdout
   process.stdout.listen((List<int> data) {
     String output = utf8.decode(data);
-    print(output);
+    log(output);
     // 从output提取信息
   });
 
 // 监听stderr
   process.stderr.listen((List<int> data) {
     String output = utf8.decode(data);
-    print(output);
+    log(output);
   });
 
 // 等待子进程退出
   var exitCode = await process.exitCode;
-  print("getApkInfo: end exitCode=$exitCode");
+  log("getApkInfo: end exitCode=$exitCode");
 }

@@ -2,8 +2,8 @@ import 'dart:developer';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:window_manager/window_manager.dart';
 
+import 'config.dart';
 import 'main.dart';
 
 class SettingPage extends StatefulWidget {
@@ -14,27 +14,19 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
-  FilePickerResult? filePickerResult;
-  String? selectedFilePath;
-  int? fileSize;
-
-  TextEditingController packageNameController = TextEditingController(text: '');
-
-  void openFilePicker() async {
+  void openFilePicker(ValueChanged<String> cb) async {
     var result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['apk'],
+      allowedExtensions: ['exe'],
     );
     log('result=$result');
     var file = result?.files.single;
     // 打开文件选择
     if (file != null) {
       log('filePaths=$file');
-      setState(() {
-        fileSize = file.size;
-        selectedFilePath = file.path;
-        WindowManager.instance.setTitle(file.name);
-      });
+      if (file.path != null) {
+        cb(file.path!);
+      }
     }
   }
 
@@ -42,7 +34,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Setting"),
+        title: const Text("设置"),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Column(
@@ -55,11 +47,32 @@ class _SettingPageState extends State<SettingPage> {
             child: ListView(
               children: [
                 Card(
-                    child: TitleValueRow(
-                        title: "文件", value: selectedFilePath ?? "")),
+                  child: TitleValueRow(
+                      title: "AAPT路径:",
+                      value: Config.aapt2Path,
+                      end: TextButton(
+                          onPressed: () {
+                            openFilePicker((path) {
+                              setState(() {
+                                Config.aapt2Path = path;
+                              });
+                            });
+                          },
+                          child: const Text("选择"))),
+                ),
                 Card(
                     child: TitleValueRow(
-                        title: "大小", value: "${fileSize ?? 0} bytes")),
+                        title: "ADB路径:",
+                        value: Config.adbPath,
+                        end: TextButton(
+                            onPressed: () {
+                              openFilePicker((path) {
+                                setState(() {
+                                  Config.adbPath = path;
+                                });
+                              });
+                            },
+                            child: const Text("选择")))),
               ],
             ),
           ))

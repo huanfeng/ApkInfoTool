@@ -1,34 +1,41 @@
 import 'package:apk_info_tool/apk_info.dart';
 import 'package:apk_info_tool/setting.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import "package:file_picker/file_picker.dart";
 import 'package:chinese_font_library/chinese_font_library.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer';
 
 import 'config.dart';
 
+const appTitle = "APK Info Tool";
+
+bool get isDesktop {
+  if (kIsWeb) return false;
+  return [
+    TargetPlatform.windows,
+    TargetPlatform.linux,
+    TargetPlatform.macOS,
+  ].contains(defaultTargetPlatform);
+}
+
 void main() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  Config.loadConfig(prefs);
+  await Config.init();
+  Config.loadConfig();
 
   WidgetsFlutterBinding.ensureInitialized();
-  await windowManager.ensureInitialized();
 
-  // WindowOptions windowOptions = WindowOptions(
-  //   size: Size(800, 600),
-  //   center: true,
-  //   backgroundColor: Colors.transparent,
-  //   skipTaskbar: false,
-  //   titleBarStyle: TitleBarStyle.hidden,
-  // );
-  // windowManager.waitUntilReadyToShow(windowOptions, () async {
-  //   await windowManager.show();
-  //   await windowManager.focus();
-  // });
-
+  if (isDesktop) {
+    await windowManager.ensureInitialized();
+    windowManager.waitUntilReadyToShow().then((_) async {
+      await windowManager.setMinimumSize(const Size(500, 600));
+      await windowManager.setTitle(appTitle);
+      await windowManager.show();
+      // await windowManager.setPreventClose(true);
+    });
+  }
   runApp(const MyApp());
 }
 
@@ -68,7 +75,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("APK Info"),
+        title: const Text(appTitle),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
@@ -139,10 +146,12 @@ class _APKInfoPageState extends State<APKInfoPage> {
 class TitleValueRow extends StatefulWidget {
   final String title;
   final String value;
+  final Widget? end;
 
   TitleValueRow({
     required this.title,
     required this.value,
+    this.end,
   });
 
   @override
@@ -164,6 +173,7 @@ class _TitleValueRowState extends State<TitleValueRow> {
           flex: 4,
           child: SelectableText(widget.value),
         ),
+        if (widget.end != null) widget.end!,
       ],
     );
   }

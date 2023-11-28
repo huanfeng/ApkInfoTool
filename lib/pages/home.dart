@@ -13,7 +13,7 @@ class APKInfoPage extends StatefulWidget {
   const APKInfoPage({super.key});
 
   @override
-  _APKInfoPageState createState() => _APKInfoPageState();
+  State<APKInfoPage> createState() => _APKInfoPageState();
 }
 
 class _APKInfoPageState extends State<APKInfoPage> {

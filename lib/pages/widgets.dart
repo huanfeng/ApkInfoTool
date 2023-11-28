@@ -17,7 +17,7 @@ class TitleValueRow extends StatefulWidget {
   });
 
   @override
-  _TitleValueRowState createState() => _TitleValueRowState();
+  State<TitleValueRow> createState() => _TitleValueRowState();
 }
 
 class _TitleValueRowState extends State<TitleValueRow> {

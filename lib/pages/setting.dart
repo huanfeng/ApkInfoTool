@@ -3,8 +3,8 @@ import 'dart:developer';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
-import 'config.dart';
-import 'main.dart';
+import '../config.dart';
+import 'widgets.dart';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});

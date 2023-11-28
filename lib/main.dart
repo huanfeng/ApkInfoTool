@@ -129,16 +129,19 @@ class _APKInfoPageState extends State<APKInfoPage> {
         actions: [
           IconButton(
               icon: const Icon(Icons.folder),
+              tooltip: "打开APK",
               onPressed: () async {
                 openFilePicker();
               }),
           IconButton(
               icon: const Icon(Icons.search),
+              tooltip: "解析APK信息",
               onPressed: () {
                 loadApkInfo();
               }),
           IconButton(
               icon: const Icon(Icons.settings),
+              tooltip: "设置",
               onPressed: () {
                 Navigator.pushNamed(context, 'setting');
               }),

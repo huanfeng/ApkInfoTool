@@ -17,7 +17,9 @@ class _SettingPageState extends State<SettingPage> {
   void openFilePicker(ValueChanged<String> cb) async {
     var result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
+      dialogTitle: "请选择可执行文件",
       allowedExtensions: ['exe'],
+      lockParentWindow: true,
     );
     log('result=$result');
     var file = result?.files.single;

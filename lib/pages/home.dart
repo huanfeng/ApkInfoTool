@@ -25,7 +25,9 @@ class _APKInfoPageState extends State<APKInfoPage> {
   void openFilePicker() async {
     var result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
+      dialogTitle: "请选择APK文件",
       allowedExtensions: ['apk'],
+      lockParentWindow: true,
     );
     log('result=$result');
     var file = result?.files.single;

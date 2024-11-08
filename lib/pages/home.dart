@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../apk_info.dart';
 import '../config.dart';
 import '../main.dart';
+import '../utils/local.dart';
 import 'widgets.dart';
 
 class APKInfoPage extends StatefulWidget {
@@ -25,7 +26,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
   void openFilePicker() async {
     var result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      dialogTitle: "请选择APK文件",
+      dialogTitle: context.loc.select_apk_file,
       allowedExtensions: ['apk'],
       lockParentWindow: true,
     );
@@ -53,14 +54,14 @@ class _APKInfoPageState extends State<APKInfoPage> {
   void loadApkInfo() {
     if (selectedFilePath != null) {
       if (Config.aapt2Path.isEmpty) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("请先设置 aapt2 路径")));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.loc.tint_set_aapt2_path)));
         return;
       }
       getApkInfo(selectedFilePath!).then((value) {
         if (value == null) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text("解析APK信息失败!")));
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(context.loc.warn_parse_apk_info_fail)));
         } else {
           setState(() {
             apkInfo = value;
@@ -91,19 +92,19 @@ class _APKInfoPageState extends State<APKInfoPage> {
         actions: [
           IconButton(
               icon: const Icon(Icons.folder),
-              tooltip: "打开APK",
+              tooltip: context.loc.open_apk,
               onPressed: () async {
                 openFilePicker();
               }),
           IconButton(
               icon: const Icon(Icons.search),
-              tooltip: "解析APK信息",
+              tooltip: context.loc.parse_apk,
               onPressed: () {
                 loadApkInfo();
               }),
           IconButton(
               icon: const Icon(Icons.settings),
-              tooltip: "设置",
+              tooltip: context.loc.setting,
               onPressed: () {
                 Navigator.pushNamed(context, 'setting');
               }),
@@ -142,29 +143,33 @@ class _APKInfoPageState extends State<APKInfoPage> {
               children: [
                 Card(
                     child: TitleValueRow(
-                        title: "文件", value: selectedFilePath ?? "")),
+                        title: context.loc.file,
+                        value: selectedFilePath ?? "")),
                 Card(
                     child: TitleValueRow(
-                        title: "大小", value: "${fileSize ?? 0} bytes")),
+                        title: context.loc.size,
+                        value: "${fileSize ?? 0} bytes")),
                 Card(
                     child: TitleValueRow(
-                        title: "包名", value: apkInfo?.packageName ?? "")),
+                        title: context.loc.package_name,
+                        value: apkInfo?.packageName ?? "")),
                 Card(
                     child: TitleValueRow(
-                        title: "应用名称", value: apkInfo?.label ?? "")),
+                        title: context.loc.app_name,
+                        value: apkInfo?.label ?? "")),
                 Row(
                   children: [
                     Expanded(
                         child: Card(
                       child: TitleValueRow(
-                          title: "最低SDK",
+                          title: context.loc.min_sdk,
                           value: "${apkInfo?.sdkVersion ?? ""}",
                           titleFlex: 6),
                     )),
                     Expanded(
                         child: Card(
                             child: TitleValueRow(
-                                title: "目标SDK",
+                                title: context.loc.target_sdk,
                                 value:
                                     apkInfo?.targetSdkVersion?.toString() ?? "",
                                 titleFlex: 6))),
@@ -175,36 +180,36 @@ class _APKInfoPageState extends State<APKInfoPage> {
                     Expanded(
                         child: Card(
                             child: TitleValueRow(
-                                title: "版本号",
+                                title: context.loc.version_code,
                                 value: "${apkInfo?.versionCode ?? ""}",
                                 titleFlex: 6))),
                     Expanded(
                         child: Card(
                             child: TitleValueRow(
-                                title: "版本名称",
+                                title: context.loc.version_name,
                                 value: apkInfo?.versionName ?? "",
                                 titleFlex: 6))),
                   ],
                 ),
                 Card(
                     child: TitleValueRow(
-                        title: "屏幕尺寸",
+                        title: context.loc.screen_size,
                         value: apkInfo?.supportsScreens.join(" ") ?? "")),
                 Card(
                     child: TitleValueRow(
-                        title: "屏幕密度",
+                        title: context.loc.screen_density,
                         value: apkInfo?.densities.join(" ") ?? "")),
                 Card(
                     child: TitleValueRow(
-                        title: "ABI",
+                        title: context.loc.abi,
                         value: apkInfo?.nativeCodes.join(" ") ?? "")),
                 Card(
                     child: TitleValueRow(
-                        title: "语言列表",
+                        title: context.loc.language_list,
                         value: apkInfo?.locales.join(" ") ?? "")),
                 Card(
                     child: TitleValueRow(
-                        title: "权限列表",
+                        title: context.loc.perm_list,
                         value: apkInfo?.usesPermissions.join("\n") ?? "")),
               ],
             ),

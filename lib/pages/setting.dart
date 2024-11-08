@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:apk_info_tool/utils/local.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -36,7 +37,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("设置"),
+        title: Text(context.loc.select),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Column(
@@ -50,7 +51,7 @@ class _SettingPageState extends State<SettingPage> {
               children: [
                 Card(
                   child: TitleValueRow(
-                      title: "AAPT路径:",
+                      title: context.loc.aapt_path,
                       value: Config.aapt2Path,
                       end: TextButton(
                           onPressed: () {
@@ -60,11 +61,11 @@ class _SettingPageState extends State<SettingPage> {
                               });
                             });
                           },
-                          child: const Text("选择"))),
+                          child: Text(context.loc.select))),
                 ),
                 Card(
                     child: TitleValueRow(
-                        title: "ADB路径:",
+                        title: context.loc.adb_path,
                         value: Config.adbPath,
                         end: TextButton(
                             onPressed: () {
@@ -74,7 +75,7 @@ class _SettingPageState extends State<SettingPage> {
                                 });
                               });
                             },
-                            child: const Text("选择")))),
+                            child: Text(context.loc.select)))),
               ],
             ),
           ))

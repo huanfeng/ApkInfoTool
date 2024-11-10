@@ -1,0 +1,12 @@
+# AppId 的值唯一标识此应用。
+# 不要在其他应用的安装程序中使用相同的 AppId 值。
+app_id: 8cdac933-dde4-5d06-985d-4c99f7247903
+publisher: FengSoft
+publisher_url: https://github.com/leanflutter/flutter_distributor
+display_name: ApkInfoTool
+create_desktop_icon: false
+# See: https://jrsoftware.org/ishelp/index.php?topic=setup_defaultdirname
+# install_dir_name: "D:\\HELLO-WORLD"
+locales:
+  - zh
+  - en

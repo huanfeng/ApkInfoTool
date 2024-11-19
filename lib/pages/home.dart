@@ -5,7 +5,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../apk_info.dart';
-import '../config.dart';
 import '../main.dart';
 import '../utils/local.dart';
 import 'widgets.dart';
@@ -53,9 +52,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
   }
 
   Future<void> loadApkInfo() async {
-    if (selectedFilePath == null) {
-      return;
-    }
+    if (selectedFilePath == null) return;
 
     setState(() {
       _isParsing = true;
@@ -63,6 +60,8 @@ class _APKInfoPageState extends State<APKInfoPage> {
 
     try {
       final apkInfo = await getApkInfo(selectedFilePath!);
+      if (!mounted) return;
+
       setState(() {
         this.apkInfo = apkInfo;
         _isParsing = false;
@@ -74,6 +73,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isParsing = false;
       });
@@ -122,48 +122,9 @@ class _APKInfoPageState extends State<APKInfoPage> {
               }),
           // 最右的空间
           const SizedBox(width: 50),
-          if (_isParsing)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(context.loc.parsing),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
-      // drawer: Drawer(
-      //     child: ListView(
-      //   children: [
-      //     ListTile(
-      //       title: Text('Home'),
-      //       onTap: () {
-      //         // 切换到首页
-      //         Navigator.pushNamed(context, '/');
-      //       },
-      //     ),
-      //     ListTile(
-      //       title: Text('About'),
-      //       onTap: () {
-      //         // 切换到关于页面
-      //         // Navigator.pop(context);
-      //         Navigator.pushNamed(context, 'setting');
-      //       },
-      //     ),
-      //   ],
-      // )),
-      body: Column(
+      body: Stack(
         children: [
           // 信息显示区
           Expanded(
@@ -244,7 +205,35 @@ class _APKInfoPageState extends State<APKInfoPage> {
                         value: apkInfo?.usesPermissions.join("\n") ?? "")),
               ],
             ),
-          ))
+          )),
+
+          // 解析状态指示器
+          if (_isParsing)
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(context.loc.parsing),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

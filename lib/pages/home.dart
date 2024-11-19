@@ -9,6 +9,7 @@ import '../config.dart';
 import '../main.dart';
 import '../utils/local.dart';
 import 'widgets.dart';
+import '../utils/android_version.dart';
 
 class APKInfoPage extends StatefulWidget {
   const APKInfoPage({super.key});
@@ -50,6 +51,11 @@ class _APKInfoPageState extends State<APKInfoPage> {
         loadApkInfo();
       }
     });
+  }
+
+  String getSdkVersionText(int? sdkVersion) {
+    if (sdkVersion == null) return "";
+    return "$sdkVersion (${AndroidVersion.getAndroidVersion(sdkVersion)})";
   }
 
   Future<void> loadApkInfo() async {
@@ -162,15 +168,15 @@ class _APKInfoPageState extends State<APKInfoPage> {
                         child: Card(
                       child: TitleValueRow(
                           title: context.loc.min_sdk,
-                          value: "${apkInfo?.sdkVersion ?? ""}",
+                          value: getSdkVersionText(apkInfo?.sdkVersion),
                           titleFlex: 6),
                     )),
                     Expanded(
                         child: Card(
                             child: TitleValueRow(
                                 title: context.loc.target_sdk,
-                                value:
-                                    apkInfo?.targetSdkVersion?.toString() ?? "",
+                                value: getSdkVersionText(
+                                    apkInfo?.targetSdkVersion),
                                 titleFlex: 6))),
                   ],
                 ),
@@ -220,7 +226,8 @@ class _APKInfoPageState extends State<APKInfoPage> {
               top: 10,
               right: 10,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(20),

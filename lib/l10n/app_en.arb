@@ -25,5 +25,6 @@
   "adb_path": "ADB Path:",
   "select": "Select",
   "parsing": "Parsing...",
-  "parse_timeout": "Parse timeout, file may be too large"
+  "parse_timeout": "Parse timeout, file may be too large",
+  "select_exe_file": "Please select executable file"
 }

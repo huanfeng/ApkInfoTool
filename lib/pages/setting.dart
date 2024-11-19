@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:apk_info_tool/utils/local.dart';
 import 'package:file_picker/file_picker.dart';
@@ -15,11 +16,20 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
+  String getExecutableExtension() {
+    if (Platform.isWindows) {
+      return 'exe';
+    } else if (Platform.isMacOS || Platform.isLinux) {
+      return '*';
+    }
+    return '';
+  }
+
   void openFilePicker(ValueChanged<String> cb) async {
     var result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      dialogTitle: "请选择可执行文件",
-      allowedExtensions: ['exe'],
+      dialogTitle: context.loc.select_exe_file,
+      allowedExtensions: [getExecutableExtension()],
       lockParentWindow: true,
     );
     log('result=$result');

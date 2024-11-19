@@ -32,6 +32,9 @@ flutter:
 
   generate: true
 
+  assets:
+    - assets/icon.png
+
 inno_bundle:
   id: 8cdac933-dde4-5d06-985d-4c99f7247903
   publisher: Fengware

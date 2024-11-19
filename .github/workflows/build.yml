@@ -1,0 +1,165 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(grep 'version:' pubspec.yaml | cut -d' ' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Install Dependencies
+        run: |
+          flutter pub get
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Create Installer
+        run: dart run inno_bundle:build --release
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: build/windows/x64/installer/Release/*.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep 'version:' pubspec.yaml | cut -d' ' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Build macOS
+        run: |
+          flutter pub get
+          flutter build macos --release
+
+      - name: Create DMG
+        run: |
+          create-dmg \
+            --volname "APK Info Tool ${{ steps.version.outputs.version }}" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "apk_info_tool.app" 200 190 \
+            --hide-extension "apk_info_tool.app" \
+            --app-drop-link 600 185 \
+            "build/macos/APKInfoTool-${{ steps.version.outputs.version }}.dmg" \
+            "build/macos/Build/Products/Release/apk_info_tool.app"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: build/macos/*.dmg
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep 'version:' pubspec.yaml | cut -d' ' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev
+          flutter pub get
+
+      - name: Build Linux
+        run: flutter build linux --release
+
+      - name: Create AppImage
+        run: |
+          # 下载必要的工具
+          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+
+          # 设置执行权限
+          chmod +x linuxdeploy*.AppImage
+
+          # 创建必要的目录和文件
+          mkdir -p AppDir/usr/share/applications
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+
+          # 创建 desktop 文件
+          cat > AppDir/usr/share/applications/apk-info-tool.desktop << EOF
+          [Desktop Entry]
+          Name=APK Info Tool
+          Exec=apk_info_tool
+          Icon=apk_info_tool
+          Type=Application
+          Categories=Development;
+          EOF
+
+          # 复制图标
+          cp assets/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/apk_info_tool.png
+
+          # 复制编译好的文件到 AppDir
+          cp -r build/linux/x64/release/bundle/* AppDir/
+
+          # 构建 AppImage
+          ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage
+
+          # 重命名 AppImage
+          mv *.AppImage APKInfoTool-${{ steps.version.outputs.version }}-x86_64.AppImage
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-appimage
+          path: '*.AppImage'
+
+  create-release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ github.ref_name }}
+          files: |
+            windows-installer/*.exe
+            macos-dmg/*.dmg
+            linux-appimage/*.AppImage

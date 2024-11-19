@@ -99,7 +99,9 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
+          # sudo apt-get install -y cmake clang
           sudo apt-get install -y ninja-build libgtk-3-dev
+
           flutter pub get
 
       - name: Build Linux
@@ -107,35 +109,64 @@ jobs:
 
       - name: Create AppImage
         run: |
-          # 下载必要的工具
-          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          # 下载 linuxdeploy
+          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -O linuxdeploy
+          chmod +x linuxdeploy
+          export APPIMAGE_EXTRACT_AND_RUN=1
 
-          # 设置执行权限
-          chmod +x linuxdeploy*.AppImage
+          # 创建基本 AppDir 结构
+          mkdir -p AppDir
 
-          # 创建必要的目录和文件
-          mkdir -p AppDir/usr/share/applications
-          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          echo "DUMP bundle:["
+          find build/linux/x64/release/bundle/
+          echo "]END"
+
+          # 首先复制主程序和库文件
+          cp -r build/linux/x64/release/bundle AppDir/app
+
+          # 设置正确的权限
+          chmod +x AppDir/app/apk_info_tool
+          chmod +x AppDir/app/lib/*.so*
+
+          # 创建必要的目录
+          mkdir -p AppDir/usr/share/{applications,icons/hicolor/256x256/apps}
 
           # 创建 desktop 文件
           cat > AppDir/usr/share/applications/apk-info-tool.desktop << EOF
           [Desktop Entry]
           Name=APK Info Tool
-          Exec=apk_info_tool
+          Exec=AppRun
           Icon=apk_info_tool
           Type=Application
           Categories=Development;
+          Terminal=false
+          Version=1.0
           EOF
 
           # 复制图标
           cp assets/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/apk_info_tool.png
 
-          # 复制编译好的文件到 AppDir
-          cp -r build/linux/x64/release/bundle/* AppDir/
+          # 创建 AppRun 文件
+          cat > AppDir/AppRun << EOF
+          #!/bin/bash
+          HERE=\$(dirname \$(readlink -f "\${0}"))
+          export LD_LIBRARY_PATH=\${HERE}/usr/lib:\$LD_LIBRARY_PATH
+          cd \${HERE}/app
+          exec ./apk_info_tool "\$@"
+          EOF
 
-          # 构建 AppImage
-          ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage
+          chmod +x AppDir/AppRun
+
+          echo "DUMP AppDir:["
+          find AppDir/
+          echo "]END"
+
+          # 运行 linuxdeploy 并启用调试输出
+          ARCH=x86_64 ./linuxdeploy \
+            --appdir AppDir \
+            --desktop-file=AppDir/usr/share/applications/apk-info-tool.desktop \
+            --output appimage \
+            -v0
 
           # 重命名 AppImage
           mv *.AppImage APKInfoTool-${{ steps.version.outputs.version }}-x86_64.AppImage

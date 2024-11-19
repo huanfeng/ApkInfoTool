@@ -23,5 +23,7 @@
   "tint_select_exe_path": "Please select the executable file",
   "aapt_path": "AAPT Path:",
   "adb_path": "ADB Path:",
-  "select": "Select"
+  "select": "Select",
+  "parsing": "Parsing...",
+  "parse_timeout": "Parse timeout, file may be too large"
 }

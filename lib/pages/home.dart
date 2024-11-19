@@ -22,6 +22,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
   String? selectedFilePath;
   int? fileSize;
   ApkInfo? apkInfo;
+  bool _isParsing = false;
 
   void openFilePicker() async {
     var result = await FilePicker.platform.pickFiles(
@@ -51,23 +52,34 @@ class _APKInfoPageState extends State<APKInfoPage> {
     });
   }
 
-  void loadApkInfo() {
-    if (selectedFilePath != null) {
-      if (Config.aapt2Path.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.loc.tint_set_aapt2_path)));
-        return;
-      }
-      getApkInfo(selectedFilePath!).then((value) {
-        if (value == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(context.loc.warn_parse_apk_info_fail)));
-        } else {
-          setState(() {
-            apkInfo = value;
-          });
-        }
+  Future<void> loadApkInfo() async {
+    if (selectedFilePath == null) {
+      return;
+    }
+
+    setState(() {
+      _isParsing = true;
+    });
+
+    try {
+      final apkInfo = await getApkInfo(selectedFilePath!);
+      setState(() {
+        this.apkInfo = apkInfo;
+        _isParsing = false;
       });
+
+      if (apkInfo == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.loc.warn_parse_apk_info_fail)),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isParsing = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.loc.warn_parse_apk_info_fail)),
+      );
     }
   }
 
@@ -110,6 +122,25 @@ class _APKInfoPageState extends State<APKInfoPage> {
               }),
           // 最右的空间
           const SizedBox(width: 50),
+          if (_isParsing)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  children: [
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(context.loc.parsing),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
       // drawer: Drawer(

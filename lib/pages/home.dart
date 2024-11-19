@@ -140,8 +140,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
       body: Stack(
         children: [
           // 信息显示区
-          Expanded(
-              child: Padding(
+          Padding(
             // 指定上下左右的内边距为 10 像素
             padding: const EdgeInsets.only(left: 10, right: 10),
             child: ListView(
@@ -218,7 +217,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
                         value: apkInfo?.usesPermissions.join("\n") ?? "")),
               ],
             ),
-          )),
+          ),
 
           // 解析状态指示器
           if (_isParsing)

@@ -1,4 +1,5 @@
 {
+  "@@locale": "en",
   "title": "APK Info Tool",
   "message": "This is a message",
   "select_apk_file": "Please select an APK file",

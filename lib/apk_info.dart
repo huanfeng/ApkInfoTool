@@ -138,6 +138,7 @@ class ApkInfo {
         parsePackage(value);
         break;
       case "sdkVersion":
+      case "minSdkVersion":
         sdkVersion = parseInt(value);
         break;
       case "targetSdkVersion":

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:developer';
+import 'dart:async';
 
 import 'config.dart';
 
@@ -9,16 +10,35 @@ Future<ApkInfo?> getApkInfo(String apk) async {
   final aapt = Config.aapt2Path;
 
   final start = DateTime.now();
-  var result = await Process.run(aapt, ['dump', 'badging', apk],
-      stdoutEncoding: utf8, stderrEncoding: utf8);
-  final end = DateTime.now();
-  var exitCode = result.exitCode;
-  final cost = end.difference(start).inMilliseconds;
-  log("getApkInfo: end exitCode=$exitCode, cost=${cost}ms");
-  if (exitCode == 0) {
-    final apkInfo = parseApkInfoFromOutput(result.stdout.toString());
-    return apkInfo;
+
+  try {
+    var result = await Process.run(
+      aapt,
+      ['dump', 'badging', apk],
+      stdoutEncoding: utf8,
+      stderrEncoding: utf8,
+    ).timeout(
+      const Duration(seconds: 120),  // 设置30秒超时
+      onTimeout: () {
+        throw TimeoutException('Parse timeout');
+      },
+    );
+
+    final end = DateTime.now();
+    var exitCode = result.exitCode;
+    final cost = end.difference(start).inMilliseconds;
+    log("getApkInfo: end exitCode=$exitCode, cost=${cost}ms");
+
+    if (exitCode == 0) {
+      final apkInfo = parseApkInfoFromOutput(result.stdout.toString());
+      return apkInfo;
+    }
+  } on TimeoutException {
+    log("getApkInfo: timeout");
+  } catch (e) {
+    log("getApkInfo: error=$e");
   }
+
   return null;
 }
 

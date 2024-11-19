@@ -23,5 +23,7 @@
   "tint_select_exe_path": "请选择可执行文件",
   "aapt_path": "AAPT路径:",
   "adb_path": "ADB路径:",
-  "select": "选择"
+  "select": "选择",
+  "parsing": "正在解析中...",
+  "parse_timeout": "解析超时,文件可能过大"
 }

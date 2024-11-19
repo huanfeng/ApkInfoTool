@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../apk_info.dart';
+import '../config.dart';
 import '../main.dart';
 import '../utils/local.dart';
 import 'widgets.dart';
@@ -53,6 +54,12 @@ class _APKInfoPageState extends State<APKInfoPage> {
 
   Future<void> loadApkInfo() async {
     if (selectedFilePath == null) return;
+
+    if (Config.aapt2Path.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.loc.tint_set_aapt2_path)));
+      return;
+    }
 
     setState(() {
       _isParsing = true;

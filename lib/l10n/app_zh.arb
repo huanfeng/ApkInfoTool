@@ -25,5 +25,6 @@
   "adb_path": "ADB路径:",
   "select": "选择",
   "parsing": "正在解析中...",
-  "parse_timeout": "解析超时,文件可能过大"
+  "parse_timeout": "解析超时,文件可能过大",
+  "select_exe_file": "请选择可执行文件"
 }

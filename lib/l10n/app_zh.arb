@@ -1,4 +1,5 @@
 {
+  "@@locale": "zh",
   "title": "APK Info Tool",
   "message": "这是一条消息",
   "select_apk_file": "请选择APK文件",

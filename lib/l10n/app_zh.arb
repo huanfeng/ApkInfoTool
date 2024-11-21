@@ -39,5 +39,9 @@
   "theme_color": "主题颜色",
   "max_lines": "列表最大行数",
   "ok": "确定",
-  "open_file_directory": "打开文件位置"
+  "open_file_directory": "打开文件位置",
+  "copy_file_path": "复制文件路径",
+  "copy_content": "复制内容",
+  "copy_content_disabled": "无内容可复制",
+  "copied_content": "已复制内容: {content}"
 }

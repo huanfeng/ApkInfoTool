@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:desktop_drop/desktop_drop.dart';
+import 'package:flutter/services.dart';
 
 import '../apk_info.dart';
 import '../config.dart';
@@ -137,27 +138,97 @@ class _APKInfoPageState extends State<APKInfoPage> {
       // 设置菜单项更紧凑
       itemBuilder: (context) => [
         PopupMenuItem(
-          height: 32, // 减小高度
-          padding: const EdgeInsets.symmetric(horizontal: 8), // 减小水平内边距
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           value: 'open_directory',
           child: Row(
-            mainAxisSize: MainAxisSize.min, // 使Row更紧凑
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.folder_open, size: 16), // 减小图标大小
+              const Icon(Icons.folder_open, size: 16),
               const SizedBox(width: 8),
               Text(
                 context.loc.open_file_directory,
-                style: const TextStyle(fontSize: 12), // 减小字体大小
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          value: 'copy_path',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.content_copy, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                context.loc.copy_file_path,
+                style: const TextStyle(fontSize: 12),
               ),
             ],
           ),
         ),
       ],
-      onSelected: (value) {
-        if (value == 'open_directory' && selectedFilePath != null) {
-          openFileInExplorer(selectedFilePath!);
+      onSelected: (value) async {
+        if (selectedFilePath == null) return;
+
+        switch (value) {
+          case 'open_directory':
+            openFileInExplorer(selectedFilePath!);
+            break;
+          case 'copy_path':
+            await Clipboard.setData(ClipboardData(text: selectedFilePath!));
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content:
+                      Text(context.loc.copied_content(selectedFilePath ?? '')),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+            break;
         }
       },
+    );
+  }
+
+  // 构建复制按钮
+  Widget _buildCopyButton(String? text, bool enable) {
+    return Tooltip(
+      message:
+          enable ? context.loc.copy_content : context.loc.copy_content_disabled,
+      waitDuration: const Duration(seconds: 1),
+      textStyle: TextStyle(
+        color: Colors.white,
+        fontSize: 14,
+      ),
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(
+          minWidth: 32,
+          minHeight: 32,
+        ),
+        icon: Icon(
+          Icons.content_copy,
+          size: 16,
+          color: enable ? null : Theme.of(context).disabledColor,
+        ),
+        onPressed: enable
+            ? () async {
+                await Clipboard.setData(ClipboardData(text: text ?? ''));
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(context.loc.copied_content(text ?? '')),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              }
+            : null,
+      ),
     );
   }
 
@@ -240,11 +311,15 @@ class _APKInfoPageState extends State<APKInfoPage> {
                             Card(
                                 child: TitleValueRow(
                                     title: context.loc.package_name,
-                                    value: apkInfo?.packageName ?? "")),
+                                    value: apkInfo?.packageName ?? "",
+                                    end: _buildCopyButton(apkInfo?.packageName,
+                                        apkInfo?.packageName != null))),
                             Card(
                                 child: TitleValueRow(
                                     title: context.loc.app_name,
-                                    value: apkInfo?.label ?? "")),
+                                    value: apkInfo?.label ?? "",
+                                    end: _buildCopyButton(apkInfo?.label,
+                                        apkInfo?.label != null))),
                             Row(
                               children: [
                                 Expanded(

@@ -39,5 +39,9 @@
   "theme_color": "Theme Color",
   "max_lines": "Max Lines in Lists",
   "ok": "OK",
-  "open_file_directory": "Open file location"
+  "open_file_directory": "Open file location",
+  "copy_file_path": "Copy file path",
+  "copy_content": "Copy content",
+  "copy_content_disabled": "No content to copy",
+  "copied_content": "Copied content: {content}"
 }

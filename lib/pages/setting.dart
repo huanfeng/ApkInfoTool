@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:apk_info_tool/utils/local.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config.dart';
 import 'widgets.dart';
@@ -17,30 +16,12 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
-  final _maxLinesController = TextEditingController(text: '6');
-  bool _enableSignatureCheck = true;
-  Color _themeColor = Colors.blue;
+  final _maxLinesController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _loadSettings();
-  }
-
-  void _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _maxLinesController.text = prefs.getInt('maxLines')?.toString() ?? '6';
-      _enableSignatureCheck = prefs.getBool('enableSignature') ?? true;
-      _themeColor = Color(prefs.getInt('themeColor') ?? Colors.blue.value);
-    });
-  }
-
-  void _saveSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('maxLines', int.tryParse(_maxLinesController.text) ?? 6);
-    await prefs.setBool('enableSignature', _enableSignatureCheck);
-    await prefs.setInt('themeColor', _themeColor.value);
+    _maxLinesController.text = Config.maxLines.toString();
   }
 
   void openFilePicker(ValueChanged<String> cb) async {
@@ -66,143 +47,166 @@ class _SettingPageState extends State<SettingPage> {
     return [''];
   }
 
-  Widget _buildEnvironmentSection() {
+  Widget _buildSettingCard({
+    required String title,
+    required List<Widget> children,
+    required IconData icon,
+    bool initiallyExpanded = false,
+  }) {
     return Card(
-      child: ExpansionTile(
-        leading: const Icon(Icons.computer),
-        title: Text(context.loc.environment),
-        initiallyExpanded: true,
-        children: [
-          TitleValueRow(
-            title: context.loc.aapt_path,
-            value: Config.aapt2Path,
-            end: TextButton(
-              onPressed: () {
-                openFilePicker((path) {
-                  setState(() {
-                    Config.aapt2Path = path;
-                  });
-                });
-              },
-              child: Text(context.loc.select),
-            ),
-          ),
-          TitleValueRow(
-            title: context.loc.adb_path,
-            value: Config.adbPath,
-            end: TextButton(
-              onPressed: () {
-                openFilePicker((path) {
-                  setState(() {
-                    Config.adbPath = path;
-                  });
-                });
-              },
-              child: Text(context.loc.select),
-            ),
-          ),
-          TitleValueRow(
-            title: context.loc.apksigner_path,
-            value: Config.apksignerPath,
-            end: TextButton(
-              onPressed: () {
-                openFilePicker((path) {
-                  setState(() {
-                    Config.apksignerPath = path;
-                  });
-                });
-              },
-              child: Text(context.loc.select),
-            ),
-          ),
-        ],
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: Theme.of(context).dividerColor.withOpacity(0.2),
+          width: 1,
+        ),
       ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          leading: Icon(icon),
+          title: Text(title),
+          initiallyExpanded: initiallyExpanded,
+          children: children,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnvironmentSection() {
+    return _buildSettingCard(
+      title: context.loc.environment,
+      icon: Icons.computer,
+      initiallyExpanded: true,
+      children: [
+        TitleValueRow(
+          title: context.loc.aapt_path,
+          value: Config.aapt2Path,
+          end: TextButton(
+            onPressed: () {
+              openFilePicker((path) {
+                setState(() {
+                  Config.aapt2Path = path;
+                });
+              });
+            },
+            child: Text(context.loc.select),
+          ),
+        ),
+        TitleValueRow(
+          title: context.loc.adb_path,
+          value: Config.adbPath,
+          end: TextButton(
+            onPressed: () {
+              openFilePicker((path) {
+                setState(() {
+                  Config.adbPath = path;
+                });
+              });
+            },
+            child: Text(context.loc.select),
+          ),
+        ),
+        TitleValueRow(
+          title: context.loc.apksigner_path,
+          value: Config.apksignerPath,
+          end: TextButton(
+            onPressed: () {
+              openFilePicker((path) {
+                setState(() {
+                  Config.apksignerPath = path;
+                });
+              });
+            },
+            child: Text(context.loc.select),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildFeaturesSection() {
-    return Card(
-      child: ExpansionTile(
-        leading: const Icon(Icons.featured_play_list),
-        title: Text(context.loc.features),
-        children: [
-          SwitchListTile(
-            title: Text(context.loc.enable_signature),
-            value: _enableSignatureCheck,
-            onChanged: (bool value) {
-              setState(() {
-                _enableSignatureCheck = value;
-                _saveSettings();
-              });
-            },
-          ),
-        ],
-      ),
+    return _buildSettingCard(
+      title: context.loc.features,
+      icon: Icons.featured_play_list,
+      children: [
+        SwitchListTile(
+          title: Text(context.loc.enable_signature),
+          value: Config.enableSignature,
+          onChanged: (bool value) {
+            setState(() {
+              Config.enableSignature = value;
+            });
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildAppearanceSection() {
-    return Card(
-      child: ExpansionTile(
-        leading: const Icon(Icons.palette),
-        title: Text(context.loc.appearance),
-        children: [
-          ListTile(
-            title: Text(context.loc.theme_color),
-            trailing: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: _themeColor,
-                shape: BoxShape.circle,
+    return _buildSettingCard(
+      title: context.loc.appearance,
+      icon: Icons.palette,
+      children: [
+        ListTile(
+          title: Text(context.loc.theme_color),
+          trailing: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Config.themeColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          onTap: () {
+            // TODO: Add color picker
+          },
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(context.loc.max_lines),
               ),
-            ),
-            onTap: () {
-              // TODO: Add color picker
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(context.loc.max_lines),
-                ),
-                SizedBox(
-                  width: 100,
-                  child: TextField(
-                    controller: _maxLinesController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (value) => _saveSettings(),
+              SizedBox(
+                width: 100,
+                child: TextField(
+                  controller: _maxLinesController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
                   ),
+                  onChanged: (value) {
+                    final lines = int.tryParse(value);
+                    if (lines != null) {
+                      Config.maxLines = lines;
+                    }
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildAboutSection() {
-    return Card(
-      child: ExpansionTile(
-        leading: const Icon(Icons.info),
-        title: Text(context.loc.about),
-        children: [
-          ListTile(
-            title: const Text('APK Info Tool'),
-            subtitle: const Text('Version 1.0.0'),
-          ),
-          const ListTile(
-            title: Text('Dependencies'),
-            subtitle: Text('Flutter SDK\nDart SDK\naapt2\napksigner'),
-          ),
-        ],
-      ),
+    return _buildSettingCard(
+      title: context.loc.about,
+      icon: Icons.info,
+      children: [
+        ListTile(
+          title: const Text('APK Info Tool'),
+          subtitle: const Text('Version 1.0.0'),
+        ),
+        const ListTile(
+          title: Text('Dependencies'),
+          subtitle: Text('Flutter SDK\nDart SDK\naapt2\napksigner'),
+        ),
+      ],
     );
   }
 

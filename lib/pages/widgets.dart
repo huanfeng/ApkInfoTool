@@ -6,7 +6,7 @@ class TitleValueRow extends StatefulWidget {
   final Widget? end;
   final int titleFlex;
   final int textFlex;
-
+  final int? maxLines;
   const TitleValueRow({
     super.key,
     required this.title,
@@ -14,6 +14,7 @@ class TitleValueRow extends StatefulWidget {
     this.end,
     this.titleFlex = 2,
     this.textFlex = 6,
+    this.maxLines,
   });
 
   @override
@@ -34,7 +35,7 @@ class _TitleValueRowState extends State<TitleValueRow> {
             flex: widget.titleFlex, child: ListTile(title: Text(widget.title))),
         Expanded(
           flex: widget.textFlex,
-          child: SelectableText(widget.value),
+          child: SelectableText(widget.value, maxLines: widget.maxLines),
         ),
         if (widget.end != null) widget.end!,
       ],

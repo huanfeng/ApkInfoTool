@@ -68,11 +68,25 @@ class _APKInfoPageState extends State<APKInfoPage> {
     }
 
     setState(() {
+      apkInfo?.reset();
       _isParsing = true;
     });
 
     try {
       final apkInfo = await getApkInfo(selectedFilePath!);
+      if (apkInfo != null) {
+        // 获取签名信息
+        try {
+          final signatureInfo = await getSignatureInfo(selectedFilePath!);
+          apkInfo.signatureInfo = signatureInfo;
+        } catch (e) {
+          // 显示签名验证失败提示
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(context.loc.signature_verify_failed)));
+          }
+        }
+      }
       if (!mounted) return;
 
       setState(() {
@@ -213,8 +227,16 @@ class _APKInfoPageState extends State<APKInfoPage> {
                         value: apkInfo?.locales.join(" ") ?? "")),
                 Card(
                     child: TitleValueRow(
-                        title: context.loc.perm_list,
-                        value: apkInfo?.usesPermissions.join("\n") ?? "")),
+                  title: context.loc.perm_list,
+                  value: apkInfo?.usesPermissions.join("\n") ?? "",
+                  maxLines: 6,
+                )),
+                Card(
+                    child: TitleValueRow(
+                  title: context.loc.signature_info,
+                  value: apkInfo?.signatureInfo ?? "",
+                  maxLines: 5,
+                )),
               ],
             ),
           ),

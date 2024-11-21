@@ -16,20 +16,20 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
-  String getExecutableExtension() {
+  List<String> getExecutableExtensions() {
     if (Platform.isWindows) {
-      return 'exe';
+      return ['exe', 'bat'];
     } else if (Platform.isMacOS || Platform.isLinux) {
-      return '*';
+      return ['*'];
     }
-    return '';
+    return [''];
   }
 
   void openFilePicker(ValueChanged<String> cb) async {
     var result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       dialogTitle: context.loc.select_exe_file,
-      allowedExtensions: [getExecutableExtension()],
+      allowedExtensions: getExecutableExtensions(),
       lockParentWindow: true,
     );
     log('result=$result');

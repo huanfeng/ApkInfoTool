@@ -67,7 +67,8 @@ class _SettingPageState extends State<SettingPage> {
               enableAlpha: false,
               displayThumbColor: true,
               paletteType: PaletteType.hsvWithHue,
-              pickerAreaBorderRadius: const BorderRadius.all(Radius.circular(10)),
+              pickerAreaBorderRadius:
+                  const BorderRadius.all(Radius.circular(10)),
             ),
           ),
           actions: <Widget>[
@@ -131,20 +132,6 @@ class _SettingPageState extends State<SettingPage> {
           ),
         ),
         TitleValueRow(
-          title: context.loc.adb_path,
-          value: Config.adbPath,
-          end: TextButton(
-            onPressed: () {
-              openFilePicker((path) {
-                setState(() {
-                  Config.adbPath = path;
-                });
-              });
-            },
-            child: Text(context.loc.select),
-          ),
-        ),
-        TitleValueRow(
           title: context.loc.apksigner_path,
           value: Config.apksignerPath,
           end: TextButton(
@@ -152,6 +139,20 @@ class _SettingPageState extends State<SettingPage> {
               openFilePicker((path) {
                 setState(() {
                   Config.apksignerPath = path;
+                });
+              });
+            },
+            child: Text(context.loc.select),
+          ),
+        ),
+        TitleValueRow(
+          title: context.loc.adb_path,
+          value: Config.adbPath,
+          end: TextButton(
+            onPressed: () {
+              openFilePicker((path) {
+                setState(() {
+                  Config.adbPath = path;
                 });
               });
             },

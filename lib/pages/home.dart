@@ -75,7 +75,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
 
     try {
       final apkInfo = await getApkInfo(selectedFilePath!);
-      if (apkInfo != null) {
+      if (apkInfo != null && Config.enableSignature) {
         // 获取签名信息
         try {
           final signatureInfo = await getSignatureInfo(selectedFilePath!);

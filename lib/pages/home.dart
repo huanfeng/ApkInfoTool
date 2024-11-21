@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -10,6 +9,7 @@ import '../apk_info.dart';
 import '../config.dart';
 import '../main.dart';
 import '../utils/local.dart';
+import '../utils/log.dart';
 import '../utils/platform.dart';
 import 'widgets.dart';
 import '../utils/android_version.dart';
@@ -117,7 +117,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
   @override
   void initState() {
     super.initState();
-    log("initState apkByArgs=$apkByArgs", level: 2);
+    log("initState apkByArgs=$apkByArgs");
     if (apkByArgs.isNotEmpty) {
       final file = File(apkByArgs);
       if (file.existsSync()) {

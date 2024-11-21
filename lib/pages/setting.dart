@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:apk_info_tool/utils/local.dart';
@@ -9,6 +8,9 @@ import 'package:provider/provider.dart';
 
 import '../config.dart';
 import '../theme/theme_manager.dart';
+import '../utils/log.dart';
+import '../utils/logger.dart';
+import '../utils/platform.dart';
 import 'widgets.dart';
 
 class SettingPage extends StatefulWidget {
@@ -232,6 +234,53 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
+  Widget _buildDebugSection() {
+    return _buildSettingCard(
+      title: context.loc.debug,
+      icon: Icons.bug_report,
+      children: [
+        SwitchListTile(
+          title: Text(context.loc.enable_debug),
+          value: Config.enableDebug,
+          onChanged: (bool value) async {
+            setState(() {
+              Config.enableDebug = value;
+            });
+            // 重新初始化日志系统
+            if (!value) {
+              await Logger.instance.dispose();
+            } else {
+              await Logger.instance.dispose();
+              await Logger.instance.init();
+            }
+          },
+        ),
+        ListTile(
+          enabled: Config.enableDebug,
+          title: Text(context.loc.open_debug_log),
+          leading: const Icon(Icons.description),
+          onTap: () {
+            final logPath = Logger.instance.logFilePath;
+            if (logPath != null) {
+              openFileInExplorer(logPath);
+            }
+          },
+        ),
+        ListTile(
+          enabled: Config.enableDebug,
+          title: Text(context.loc.open_debug_directory),
+          leading: const Icon(Icons.folder),
+          onTap: () {
+            final logPath = Logger.instance.logFilePath;
+            if (logPath != null) {
+              openFileInExplorer(logPath);
+            }
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildAboutSection() {
     return _buildSettingCard(
       title: context.loc.about,
@@ -262,6 +311,7 @@ class _SettingPageState extends State<SettingPage> {
           _buildEnvironmentSection(),
           _buildFeaturesSection(),
           _buildAppearanceSection(),
+          _buildDebugSection(),
           _buildAboutSection(),
         ],
       ),

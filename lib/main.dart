@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:apk_info_tool/pages/setting.dart';
 import 'package:chinese_font_library/chinese_font_library.dart';
 import 'package:flutter/foundation.dart';
@@ -11,6 +9,8 @@ import 'package:window_manager/window_manager.dart';
 import 'config.dart';
 import 'pages/home.dart';
 import 'theme/theme_manager.dart';
+import 'utils/log.dart';
+import 'utils/logger.dart';
 
 const appTitle = "APK Info Tool";
 
@@ -28,6 +28,8 @@ bool get isDesktop {
 void main(List<String> arguments) async {
   await Config.init();
   Config.loadConfig();
+
+  await Logger.instance.init();
 
   log("args=$arguments");
   if (arguments.isNotEmpty) {

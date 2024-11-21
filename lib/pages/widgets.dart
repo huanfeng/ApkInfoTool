@@ -8,6 +8,7 @@ class TitleValueRow extends StatefulWidget {
   final int textFlex;
   final int? maxLines;
   final int? minLines;
+  final Widget? prefix;
 
   const TitleValueRow({
     super.key,
@@ -18,6 +19,7 @@ class TitleValueRow extends StatefulWidget {
     this.textFlex = 6,
     this.maxLines,
     this.minLines,
+    this.prefix,
   });
 
   @override
@@ -34,6 +36,7 @@ class _TitleValueRowState extends State<TitleValueRow> {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        if (widget.prefix != null) widget.prefix!,
         Expanded(
             flex: widget.titleFlex, child: ListTile(title: Text(widget.title))),
         Expanded(

@@ -38,5 +38,6 @@
   "enable_signature": "启用签名检查",
   "theme_color": "主题颜色",
   "max_lines": "列表最大行数",
-  "ok": "确定"
+  "ok": "确定",
+  "open_file_directory": "打开文件位置"
 }

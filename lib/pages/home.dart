@@ -42,17 +42,20 @@ class _APKInfoPageState extends State<APKInfoPage> {
     if (file != null) {
       log('filePaths=$file');
       if (file.path != null) {
-        openApk(file.path!, file.size);
+        openApk(file.path!);
       }
     }
   }
 
-  void openApk(String path, int size) {
+  void openApk(String path) {
     setState(() {
-      fileSize = size;
+      final file = File(path);
       selectedFilePath = path;
-      if (selectedFilePath != null) {
-        loadApkInfo();
+      if (file.existsSync()) {
+        fileSize = file.lengthSync();
+        if (selectedFilePath != null && selectedFilePath!.isNotEmpty) {
+          loadApkInfo();
+        }
       }
     });
   }
@@ -119,10 +122,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
     super.initState();
     log("initState apkByArgs=$apkByArgs");
     if (apkByArgs.isNotEmpty) {
-      final file = File(apkByArgs);
-      if (file.existsSync()) {
-        openApk(file.path, file.lengthSync());
-      }
+      openApk(apkByArgs);
     }
   }
 
@@ -249,7 +249,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
               icon: const Icon(Icons.search),
               tooltip: context.loc.parse_apk,
               onPressed: () {
-                loadApkInfo();
+                openApk(selectedFilePath ?? '');
               }),
           IconButton(
               icon: const Icon(Icons.settings),
@@ -273,8 +273,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
                 final file = details.files.first;
                 if (file.path.toLowerCase().endsWith('.apk')) {
                   setState(() {
-                    selectedFilePath = file.path;
-                    loadApkInfo();
+                    openApk(file.path);
                   });
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(

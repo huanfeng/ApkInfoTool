@@ -5,9 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 class Config {
   static String _aapt2Path = "";
   static String _adbPath = "";
+  static String _apksignerPath = "";
 
   static const KEY_AAPT2_PATH = "aapt2_path";
   static const KEY_ADB_PATH = "adb_path";
+  static const KEY_APKSIGNER_PATH = "apksigner_path";
 
   static late SharedPreferences gPrefs;
 
@@ -29,10 +31,18 @@ class Config {
     gPrefs.setString(KEY_ADB_PATH, adbPath);
   }
 
+  static String get apksignerPath => _apksignerPath;
+
+  static set apksignerPath(String value) {
+    _apksignerPath = value.trim();
+    gPrefs.setString(KEY_APKSIGNER_PATH, apksignerPath);
+  }
+
   static void loadConfig() {
     final prefs = gPrefs;
     aapt2Path = prefs.getString(KEY_AAPT2_PATH) ?? aapt2Path;
     adbPath = prefs.getString(KEY_ADB_PATH) ?? adbPath;
-    log("aapt2Path=$aapt2Path, adbPath=$adbPath");
+    apksignerPath = prefs.getString(KEY_APKSIGNER_PATH) ?? apksignerPath;
+    log("aapt2Path=$aapt2Path, adbPath=$adbPath, apksignerPath=$apksignerPath");
   }
 }

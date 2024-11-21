@@ -18,7 +18,7 @@ Future<ApkInfo?> getApkInfo(String apk) async {
       stdoutEncoding: utf8,
       stderrEncoding: utf8,
     ).timeout(
-      const Duration(seconds: 120),  // 设置30秒超时
+      const Duration(seconds: 120), // 设置30秒超时
       onTimeout: () {
         throw TimeoutException('Parse timeout');
       },
@@ -40,6 +40,31 @@ Future<ApkInfo?> getApkInfo(String apk) async {
   }
 
   return null;
+}
+
+Future<String> getSignatureInfo(String apkPath) async {
+  final apksigner = Config.apksignerPath;
+  if (apksigner.isEmpty) {
+    throw Exception('请先设置 apksigner 路径');
+  }
+
+  try {
+    final result = await Process.run(
+      apksigner,
+      ['verify', '--print-certs', '--verbose', apkPath],
+      stdoutEncoding: utf8,
+      stderrEncoding: utf8,
+    );
+
+    if (result.exitCode == 0) {
+      return result.stdout.toString();
+    } else {
+      throw Exception('获取签名失败: ${result.stderr}');
+    }
+  } catch (e) {
+    log('获取签名信息失败: $e');
+    rethrow;
+  }
 }
 
 ApkInfo parseApkInfoFromOutput(String output) {
@@ -93,6 +118,7 @@ class ApkInfo {
   List<String> nativeCodes = [];
 
   List<String> others = [];
+  String signatureInfo = "";
 
   (String, String) parseToKeyValue(String line, String separator) {
     final pos = line.indexOf(separator);
@@ -246,7 +272,37 @@ class ApkInfo {
 
   @override
   String toString() {
-    return 'ApkInfo{apkPath: $apkPath, apkSize: $apkSize, packageName: $packageName, versionCode: $versionCode, versionName: $versionName, platformBuildVersionName: $platformBuildVersionName, platformBuildVersionCode: $platformBuildVersionCode, compileSdkVersion: $compileSdkVersion, compileSdkVersionCodename: $compileSdkVersionCodename, sdkVersion: $sdkVersion, targetSdkVersion: $targetSdkVersion, label: $label, labels: $labels, usesPermissions: $usesPermissions, icons: $icons, application: $application, launchableActivity: $launchableActivity, userFeatures: $userFeatures, userFeaturesNotRequired: $userFeaturesNotRequired, userImpliedFeatures: $userImpliedFeatures, supportsScreens: $supportsScreens, locales: $locales, densities: $densities, supportsAnyDensity: $supportsAnyDensity, nativeCodes: $nativeCodes, others: $others}';
+    return 'ApkInfo{apkPath: $apkPath, apkSize: $apkSize, packageName: $packageName, versionCode: $versionCode, versionName: $versionName, platformBuildVersionName: $platformBuildVersionName, platformBuildVersionCode: $platformBuildVersionCode, compileSdkVersion: $compileSdkVersion, compileSdkVersionCodename: $compileSdkVersionCodename, sdkVersion: $sdkVersion, targetSdkVersion: $targetSdkVersion, label: $label, labels: $labels, usesPermissions: $usesPermissions, icons: $icons, application: $application, launchableActivity: $launchableActivity, userFeatures: $userFeatures, userFeaturesNotRequired: $userFeaturesNotRequired, userImpliedFeatures: $userImpliedFeatures, supportsScreens: $supportsScreens, locales: $locales, densities: $densities, supportsAnyDensity: $supportsAnyDensity, nativeCodes: $nativeCodes, others: $others, signatureInfo: $signatureInfo}';
+  }
+
+  void reset() {
+    apkPath = "";
+    apkSize = 0;
+    packageName = null;
+    versionCode = null;
+    versionName = null;
+    platformBuildVersionName = null;
+    platformBuildVersionCode = null;
+    compileSdkVersion = null;
+    compileSdkVersionCodename = null;
+    sdkVersion = null;
+    targetSdkVersion = null;
+    label = null;
+    labels.clear();
+    usesPermissions.clear();
+    icons.clear();
+    application = Component();
+    launchableActivity.clear();
+    userFeatures.clear();
+    userFeaturesNotRequired.clear();
+    userImpliedFeatures.clear();
+    supportsScreens.clear();
+    locales.clear();
+    densities.clear();
+    supportsAnyDensity = null;
+    nativeCodes.clear();
+    others.clear();
+    signatureInfo = "";
   }
 }
 

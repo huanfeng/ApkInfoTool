@@ -27,5 +27,8 @@
   "select": "选择",
   "parsing": "正在解析中...",
   "parse_timeout": "解析超时,文件可能过大",
-  "select_exe_file": "请选择可执行文件"
+  "select_exe_file": "请选择可执行文件",
+  "signature_info": "签名信息",
+  "apksigner_path": "Apksigner路径:",
+  "signature_verify_failed": "签名验证失败"
 }

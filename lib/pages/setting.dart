@@ -86,6 +86,22 @@ class _SettingPageState extends State<SettingPage> {
                               });
                             },
                             child: Text(context.loc.select)))),
+                Card(
+                  child: TitleValueRow(
+                    title: context.loc.apksigner_path,
+                    value: Config.apksignerPath,
+                    end: TextButton(
+                      onPressed: () {
+                        openFilePicker((path) {
+                          setState(() {
+                            Config.apksignerPath = path;
+                          });
+                        });
+                      },
+                      child: Text(context.loc.select)
+                    )
+                  ),
+                ),
               ],
             ),
           ))

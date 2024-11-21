@@ -11,6 +11,7 @@ import '../main.dart';
 import '../utils/local.dart';
 import 'widgets.dart';
 import '../utils/android_version.dart';
+import '../utils/format.dart';
 
 class APKInfoPage extends StatefulWidget {
   const APKInfoPage({super.key});
@@ -195,7 +196,9 @@ class _APKInfoPageState extends State<APKInfoPage> {
                             Card(
                                 child: TitleValueRow(
                                     title: context.loc.size,
-                                    value: "${fileSize ?? 0} bytes")),
+                                    value: fileSize != null
+                                        ? "${formatFileSize(fileSize)} ($fileSize Bytes)"
+                                        : "")),
                             Card(
                                 child: TitleValueRow(
                                     title: context.loc.package_name,

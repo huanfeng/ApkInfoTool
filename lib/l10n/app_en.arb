@@ -30,6 +30,7 @@
   "select_exe_file": "Please select executable file",
   "signature_info": "Signature Info",
   "apksigner_path": "Apksigner Path:",
+  "apkanalyzer_path": "ApkAnalyzer Path:",
   "signature_verify_failed": "Signature verification failed",
   "environment": "Environment",
   "features": "Features",

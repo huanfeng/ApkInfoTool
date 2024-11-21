@@ -149,6 +149,20 @@ class _SettingPageState extends State<SettingPage> {
           ),
         ),
         TitleValueRow(
+          title: context.loc.apkanalyzer_path,
+          value: Config.apkanalyzerPath,
+          end: TextButton(
+            onPressed: () {
+              openFilePicker((path) {
+                setState(() {
+                  Config.apkanalyzerPath = path;
+                });
+              });
+            },
+            child: Text(context.loc.select),
+          ),
+        ),
+        TitleValueRow(
           title: context.loc.adb_path,
           value: Config.adbPath,
           end: TextButton(

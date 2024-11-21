@@ -11,12 +11,12 @@ class Config {
   static int _maxLines = 6;
   static int _themeColor = Colors.blue.value;
 
-  static const KEY_AAPT2_PATH = "aapt2_path";
-  static const KEY_APKSIGNER_PATH = "apksigner_path";
-  static const KEY_ADB_PATH = "adb_path";
-  static const KEY_ENABLE_SIGNATURE = "enable_signature";
-  static const KEY_MAX_LINES = "max_lines";
-  static const KEY_THEME_COLOR = "theme_color";
+  static const kKeyAapt2PathKey = "aapt2_path";
+  static const kKeyApksignerPathKey = "apksigner_path";
+  static const kKeyAdbPathKey = "adb_path";
+  static const kKeyEnableSignatureKey = "enable_signature";
+  static const kKeyMaxLinesKey = "max_lines";
+  static const kKeyThemeColorKey = "theme_color";
 
   static late SharedPreferences gPrefs;
 
@@ -28,52 +28,52 @@ class Config {
 
   static set aapt2Path(String value) {
     _aapt2Path = value.trim();
-    gPrefs.setString(KEY_AAPT2_PATH, aapt2Path);
+    gPrefs.setString(kKeyAapt2PathKey, aapt2Path);
   }
 
   static String get apksignerPath => _apksignerPath;
 
   static set apksignerPath(String value) {
     _apksignerPath = value.trim();
-    gPrefs.setString(KEY_APKSIGNER_PATH, apksignerPath);
+    gPrefs.setString(kKeyApksignerPathKey, apksignerPath);
   }
 
   static String get adbPath => _adbPath;
 
   static set adbPath(String value) {
     _adbPath = value.trim();
-    gPrefs.setString(KEY_ADB_PATH, adbPath);
+    gPrefs.setString(kKeyAdbPathKey, adbPath);
   }
 
   static bool get enableSignature => _enableSignature;
 
   static set enableSignature(bool value) {
     _enableSignature = value;
-    gPrefs.setBool(KEY_ENABLE_SIGNATURE, value);
+    gPrefs.setBool(kKeyEnableSignatureKey, value);
   }
 
   static int get maxLines => _maxLines;
 
   static set maxLines(int value) {
     _maxLines = value;
-    gPrefs.setInt(KEY_MAX_LINES, value);
+    gPrefs.setInt(kKeyMaxLinesKey, value);
   }
 
   static Color get themeColor => Color(_themeColor);
 
   static set themeColor(Color value) {
     _themeColor = value.value;
-    gPrefs.setInt(KEY_THEME_COLOR, value.value);
+    gPrefs.setInt(kKeyThemeColorKey, value.value);
   }
 
   static void loadConfig() {
     final prefs = gPrefs;
-    aapt2Path = prefs.getString(KEY_AAPT2_PATH) ?? aapt2Path;
-    apksignerPath = prefs.getString(KEY_APKSIGNER_PATH) ?? apksignerPath;
-    adbPath = prefs.getString(KEY_ADB_PATH) ?? adbPath;
-    _enableSignature = prefs.getBool(KEY_ENABLE_SIGNATURE) ?? _enableSignature;
-    _maxLines = prefs.getInt(KEY_MAX_LINES) ?? _maxLines;
-    _themeColor = prefs.getInt(KEY_THEME_COLOR) ?? _themeColor;
+    aapt2Path = prefs.getString(kKeyAapt2PathKey) ?? aapt2Path;
+    apksignerPath = prefs.getString(kKeyApksignerPathKey) ?? apksignerPath;
+    adbPath = prefs.getString(kKeyAdbPathKey) ?? adbPath;
+    _enableSignature = prefs.getBool(kKeyEnableSignatureKey) ?? _enableSignature;
+    _maxLines = prefs.getInt(kKeyMaxLinesKey) ?? _maxLines;
+    _themeColor = prefs.getInt(kKeyThemeColorKey) ?? _themeColor;
 
     log("aapt2Path=$aapt2Path, apksignerPath=$apksignerPath, adbPath=$adbPath");
     log("enableSignature=$_enableSignature, maxLines=$_maxLines, themeColor=$_themeColor");

@@ -9,6 +9,7 @@ import '../apk_info.dart';
 import '../config.dart';
 import '../main.dart';
 import '../utils/local.dart';
+import '../utils/platform.dart';
 import 'widgets.dart';
 import '../utils/android_version.dart';
 import '../utils/format.dart';
@@ -124,6 +125,35 @@ class _APKInfoPageState extends State<APKInfoPage> {
     }
   }
 
+  // 构建文件操作菜单
+  Widget _buildFileActionMenu() {
+    return PopupMenuButton<String>(
+      padding: EdgeInsets.zero,
+      icon: const Icon(Icons.more_vert, size: 18),
+      enabled: selectedFilePath != null,
+      // 设置菜单位置在按钮下方
+      offset: const Offset(0, 0),
+      position: PopupMenuPosition.under,
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'open_directory',
+          child: Row(
+            children: [
+              const Icon(Icons.folder_open, size: 18),
+              const SizedBox(width: 8),
+              Text(context.loc.open_file_directory),
+            ],
+          ),
+        ),
+      ],
+      onSelected: (value) {
+        if (value == 'open_directory' && selectedFilePath != null) {
+          openFileInExplorer(selectedFilePath!);
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -192,7 +222,8 @@ class _APKInfoPageState extends State<APKInfoPage> {
                             Card(
                                 child: TitleValueRow(
                                     title: context.loc.file,
-                                    value: selectedFilePath ?? "")),
+                                    value: selectedFilePath ?? "",
+                                    end: _buildFileActionMenu())),
                             Card(
                                 child: TitleValueRow(
                                     title: context.loc.size,

@@ -38,5 +38,6 @@
   "enable_signature": "Enable Signature Check",
   "theme_color": "Theme Color",
   "max_lines": "Max Lines in Lists",
-  "ok": "OK"
+  "ok": "OK",
+  "open_file_directory": "Open file location"
 }

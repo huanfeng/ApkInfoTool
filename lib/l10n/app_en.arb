@@ -30,5 +30,12 @@
   "select_exe_file": "Please select executable file",
   "signature_info": "Signature Info",
   "apksigner_path": "Apksigner Path:",
-  "signature_verify_failed": "Signature verification failed"
+  "signature_verify_failed": "Signature verification failed",
+  "environment": "Environment",
+  "features": "Features",
+  "appearance": "Appearance",
+  "about": "About",
+  "enable_signature": "Enable Signature Check",
+  "theme_color": "Theme Color",
+  "max_lines": "Max Lines in Lists"
 }

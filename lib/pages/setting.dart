@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../config.dart';
 import '../theme/theme_manager.dart';
+import '../utils/file_association.dart';
 import '../utils/log.dart';
 import '../utils/logger.dart';
 import '../utils/platform.dart';
@@ -179,6 +180,25 @@ class _SettingPageState extends State<SettingPage> {
             });
           },
         ),
+        if (FileAssociationManager.isSupported)
+          ListTile(
+            title: Text(context.loc.file_association),
+            trailing: TextButton(
+              onPressed: () async {
+                try {
+                  await FileAssociationManager.openDefaultAppsSettings();
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(context.loc.cannot_open_settings),
+                    ),
+                  );
+                }
+              },
+              child: Text(context.loc.open_settings),
+            ),
+          ),
       ],
     );
   }

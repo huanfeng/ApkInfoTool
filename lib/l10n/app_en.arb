@@ -47,5 +47,8 @@
   "enable_debug": "Enable Debug Log",
   "open_debug_log": "Open Debug Log",
   "open_debug_directory": "Open Debug Directory",
-  "debug": "Debug"
+  "debug": "Debug",
+  "file_association": "File Association",
+  "open_settings": "Open Settings",
+  "cannot_open_settings": "Unable to open system settings, possibly due to unsupported system version"
 }

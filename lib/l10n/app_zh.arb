@@ -47,5 +47,8 @@
   "enable_debug": "启用调试日志",
   "open_debug_log": "打开调试日志",
   "open_debug_directory": "打开调试目录",
-  "debug": "调试"
+  "debug": "调试",
+  "file_association": "文件关联",
+  "open_settings": "打开设置",
+  "cannot_open_settings": "无法打开系统设置, 可能是当前系统版本不支持"
 }

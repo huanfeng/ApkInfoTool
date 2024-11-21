@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
+import 'dart:ui';
+import 'package:archive/archive_io.dart';
+import 'package:flutter/foundation.dart';
 
 import 'config.dart';
 import 'utils/log.dart';
@@ -44,6 +47,13 @@ Future<ApkInfo?> getApkInfo(String apk) async {
           log("获取签名信息失败: $e");
           apkInfo.signatureInfo = "获取签名信息失败: $e";
         }
+      }
+
+      // 获取图标
+      try {
+        apkInfo.mainIconImage = await apkInfo.loadIcon();
+      } catch (e) {
+        log("获取图标失败: $e");
       }
 
       return apkInfo;
@@ -116,6 +126,8 @@ class ApkInfo {
   int? sdkVersion;
   int? targetSdkVersion;
   String? label;
+  String? mainIconPath; // 主图标路径
+  Image? mainIconImage;
   Map<String, String> labels = {};
   List<String> usesPermissions = [];
   Map<String, String> icons = {};
@@ -191,11 +203,19 @@ class ApkInfo {
         break;
       case "application":
         parseComponent(value, application);
+        // 从application中获取主图标
+        if (mainIconPath == null && application.icon != null) {
+          mainIconPath = application.icon;
+        }
         break;
       case "launchable-activity":
         final component = Component();
         parseComponent(value, component);
         launchableActivity.add(component);
+        // 如果没有主图标且launchable-activity有图标，则使用它
+        if (mainIconPath == null && component.icon != null) {
+          mainIconPath = component.icon;
+        }
         break;
       case "supports-screens":
         parseStringList(value, supportsScreens);
@@ -283,9 +303,46 @@ class ApkInfo {
     }
   }
 
+  /// 加载APK图标
+  /// 返回图标的字节数据，如果加载失败返回null
+  Future<Image?> loadIcon() async {
+    if (mainIconPath == null || apkPath.isEmpty) {
+      return null;
+    }
+
+    final iconPath = mainIconPath!;
+
+    try {
+      if (iconPath.endsWith('.png') ||
+          iconPath.endsWith('.webp') ||
+          iconPath.endsWith('.jpg')) {
+        final inputStream = InputFileStream(apkPath);
+        final archive = ZipDecoder().decodeBuffer(inputStream);
+        final iconFile = archive.findFile(iconPath);
+
+        if (iconFile != null) {
+          // 只读取图标文件的内容
+          final codec =
+              await instantiateImageCodec(iconFile.content as Uint8List);
+          final frame = await codec.getNextFrame();
+          return frame.image;
+        } else {
+          log('找不到图标文件: $iconPath');
+        }
+      } else if (iconPath.endsWith('.xml')) {
+        // TODO: 处理XML格式的图标
+        log('暂不支持XML格式的图标: $iconPath');
+        return null;
+      }
+    } catch (e) {
+      log('加载图标失败: $e');
+    }
+    return null;
+  }
+
   @override
   String toString() {
-    return 'ApkInfo{apkPath: $apkPath, apkSize: $apkSize, packageName: $packageName, versionCode: $versionCode, versionName: $versionName, platformBuildVersionName: $platformBuildVersionName, platformBuildVersionCode: $platformBuildVersionCode, compileSdkVersion: $compileSdkVersion, compileSdkVersionCodename: $compileSdkVersionCodename, sdkVersion: $sdkVersion, targetSdkVersion: $targetSdkVersion, label: $label, labels: $labels, usesPermissions: $usesPermissions, icons: $icons, application: $application, launchableActivity: $launchableActivity, userFeatures: $userFeatures, userFeaturesNotRequired: $userFeaturesNotRequired, userImpliedFeatures: $userImpliedFeatures, supportsScreens: $supportsScreens, locales: $locales, densities: $densities, supportsAnyDensity: $supportsAnyDensity, nativeCodes: $nativeCodes, others: $others, signatureInfo: $signatureInfo}';
+    return 'ApkInfo{apkPath: $apkPath, apkSize: $apkSize, packageName: $packageName, versionCode: $versionCode, versionName: $versionName, platformBuildVersionName: $platformBuildVersionName, platformBuildVersionCode: $platformBuildVersionCode, compileSdkVersion: $compileSdkVersion, compileSdkVersionCodename: $compileSdkVersionCodename, sdkVersion: $sdkVersion, targetSdkVersion: $targetSdkVersion, label: $label, mainIcon: $mainIconPath, labels: $labels, usesPermissions: $usesPermissions, icons: $icons, application: $application, launchableActivity: $launchableActivity, userFeatures: $userFeatures, userFeaturesNotRequired: $userFeaturesNotRequired, userImpliedFeatures: $userImpliedFeatures, supportsScreens: $supportsScreens, locales: $locales, densities: $densities, supportsAnyDensity: $supportsAnyDensity, nativeCodes: $nativeCodes, others: $others, signatureInfo: $signatureInfo}';
   }
 
   void reset() {
@@ -301,6 +358,8 @@ class ApkInfo {
     sdkVersion = null;
     targetSdkVersion = null;
     label = null;
+    mainIconPath = null;
+    mainIconImage = null;
     labels.clear();
     usesPermissions.clear();
     icons.clear();

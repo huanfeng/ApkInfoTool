@@ -308,18 +308,36 @@ class _APKInfoPageState extends State<APKInfoPage> {
                                     value: fileSize != null
                                         ? "${formatFileSize(fileSize)} ($fileSize Bytes)"
                                         : "")),
-                            Card(
-                                child: TitleValueRow(
-                                    title: context.loc.package_name,
-                                    value: apkInfo?.packageName ?? "",
-                                    end: _buildCopyButton(apkInfo?.packageName,
-                                        apkInfo?.packageName != null))),
-                            Card(
-                                child: TitleValueRow(
-                                    title: context.loc.app_name,
-                                    value: apkInfo?.label ?? "",
-                                    end: _buildCopyButton(apkInfo?.label,
-                                        apkInfo?.label != null))),
+                            Row(children: [
+                              Expanded(
+                                  child: Column(
+                                children: [
+                                  Card(
+                                      child: TitleValueRow(
+                                          title: context.loc.app_name,
+                                          value: apkInfo?.label ?? "",
+                                          end: _buildCopyButton(apkInfo?.label,
+                                              apkInfo?.label != null))),
+                                  Card(
+                                      child: TitleValueRow(
+                                          title: context.loc.package_name,
+                                          value: apkInfo?.packageName ?? "",
+                                          end: _buildCopyButton(
+                                              apkInfo?.packageName,
+                                              apkInfo?.packageName != null))),
+                                ],
+                              )),
+                              Card(
+                                  child: Container(
+                                margin: const EdgeInsets.all(4),
+                                width: 96,
+                                height: 96,
+                                child: RawImage(
+                                  image: apkInfo?.mainIconImage,
+                                  fit: BoxFit.contain,
+                                ),
+                              )),
+                            ]),
                             Row(
                               children: [
                                 Expanded(

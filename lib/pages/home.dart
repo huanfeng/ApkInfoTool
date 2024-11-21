@@ -134,14 +134,21 @@ class _APKInfoPageState extends State<APKInfoPage> {
       // 设置菜单位置在按钮下方
       offset: const Offset(0, 0),
       position: PopupMenuPosition.under,
+      // 设置菜单项更紧凑
       itemBuilder: (context) => [
         PopupMenuItem(
+          height: 32, // 减小高度
+          padding: const EdgeInsets.symmetric(horizontal: 8), // 减小水平内边距
           value: 'open_directory',
           child: Row(
+            mainAxisSize: MainAxisSize.min, // 使Row更紧凑
             children: [
-              const Icon(Icons.folder_open, size: 18),
+              const Icon(Icons.folder_open, size: 16), // 减小图标大小
               const SizedBox(width: 8),
-              Text(context.loc.open_file_directory),
+              Text(
+                context.loc.open_file_directory,
+                style: const TextStyle(fontSize: 12), // 减小字体大小
+              ),
             ],
           ),
         ),

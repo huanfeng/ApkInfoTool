@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:developer';
 import 'dart:async';
 
 import 'config.dart';
+import 'utils/log.dart';
 
 Future<ApkInfo?> getApkInfo(String apk) async {
   log("getApkInfo: apk=$apk start");

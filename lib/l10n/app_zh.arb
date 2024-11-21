@@ -43,5 +43,9 @@
   "copy_file_path": "复制文件路径",
   "copy_content": "复制内容",
   "copy_content_disabled": "无内容可复制",
-  "copied_content": "已复制内容: {content}"
+  "copied_content": "已复制内容: {content}",
+  "enable_debug": "启用调试日志",
+  "open_debug_log": "打开调试日志",
+  "open_debug_directory": "打开调试目录",
+  "debug": "调试"
 }

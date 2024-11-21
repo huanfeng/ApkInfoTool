@@ -1,13 +1,13 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'utils/log.dart';
 
 class Config {
   static String _aapt2Path = "";
-  static String _adbPath = "";
   static String _apksignerPath = "";
+  static String _adbPath = "";
   static bool _enableSignature = true;
+  static bool _enableDebug = false;
   static int _maxLines = 6;
   static int _themeColor = Colors.blue.value;
 
@@ -15,6 +15,7 @@ class Config {
   static const kKeyApksignerPathKey = "apksigner_path";
   static const kKeyAdbPathKey = "adb_path";
   static const kKeyEnableSignatureKey = "enable_signature";
+  static const kKeyEnableDebugKey = "enable_debug";
   static const kKeyMaxLinesKey = "max_lines";
   static const kKeyThemeColorKey = "theme_color";
 
@@ -52,6 +53,13 @@ class Config {
     gPrefs.setBool(kKeyEnableSignatureKey, value);
   }
 
+  static bool get enableDebug => _enableDebug;
+
+  static set enableDebug(bool value) {
+    _enableDebug = value;
+    gPrefs.setBool(kKeyEnableDebugKey, value);
+  }
+
   static int get maxLines => _maxLines;
 
   static set maxLines(int value) {
@@ -72,10 +80,11 @@ class Config {
     apksignerPath = prefs.getString(kKeyApksignerPathKey) ?? apksignerPath;
     adbPath = prefs.getString(kKeyAdbPathKey) ?? adbPath;
     _enableSignature = prefs.getBool(kKeyEnableSignatureKey) ?? _enableSignature;
+    _enableDebug = prefs.getBool(kKeyEnableDebugKey) ?? _enableDebug;
     _maxLines = prefs.getInt(kKeyMaxLinesKey) ?? _maxLines;
     _themeColor = prefs.getInt(kKeyThemeColorKey) ?? _themeColor;
 
     log("aapt2Path=$aapt2Path, apksignerPath=$apksignerPath, adbPath=$adbPath");
-    log("enableSignature=$_enableSignature, maxLines=$_maxLines, themeColor=$_themeColor");
+    log("enableSignature=$_enableSignature, enableDebug=$_enableDebug, maxLines=$_maxLines, themeColor=$_themeColor");
   }
 }

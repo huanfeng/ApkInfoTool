@@ -43,5 +43,9 @@
   "copy_file_path": "Copy file path",
   "copy_content": "Copy content",
   "copy_content_disabled": "No content to copy",
-  "copied_content": "Copied content: {content}"
+  "copied_content": "Copied content: {content}",
+  "enable_debug": "Enable Debug Log",
+  "open_debug_log": "Open Debug Log",
+  "open_debug_directory": "Open Debug Directory",
+  "debug": "Debug"
 }

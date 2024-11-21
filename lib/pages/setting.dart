@@ -4,8 +4,11 @@ import 'dart:io';
 import 'package:apk_info_tool/utils/local.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:provider/provider.dart';
 
 import '../config.dart';
+import '../theme/theme_manager.dart';
 import 'widgets.dart';
 
 class SettingPage extends StatefulWidget {
@@ -45,6 +48,39 @@ class _SettingPageState extends State<SettingPage> {
       return ['*'];
     }
     return [''];
+  }
+
+  void _showColorPicker() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(context.loc.theme_color),
+          content: SingleChildScrollView(
+            child: ColorPicker(
+              pickerColor: Config.themeColor,
+              onColorChanged: (Color color) {
+                Provider.of<ThemeManager>(context, listen: false)
+                    .updateThemeColor(color);
+              },
+              pickerAreaHeightPercent: 0.8,
+              enableAlpha: false,
+              displayThumbColor: true,
+              paletteType: PaletteType.hsvWithHue,
+              pickerAreaBorderRadius: const BorderRadius.all(Radius.circular(10)),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(context.loc.ok),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildSettingCard({
@@ -157,11 +193,13 @@ class _SettingPageState extends State<SettingPage> {
             decoration: BoxDecoration(
               color: Config.themeColor,
               shape: BoxShape.circle,
+              border: Border.all(
+                color: Theme.of(context).dividerColor.withOpacity(0.2),
+                width: 1,
+              ),
             ),
           ),
-          onTap: () {
-            // TODO: Add color picker
-          },
+          onTap: _showColorPicker,
         ),
         Padding(
           padding: const EdgeInsets.all(16.0),

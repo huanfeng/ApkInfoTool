@@ -5,10 +5,12 @@ import 'package:chinese_font_library/chinese_font_library.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'config.dart';
 import 'pages/home.dart';
+import 'theme/theme_manager.dart';
 
 const appTitle = "APK Info Tool";
 
@@ -50,24 +52,23 @@ void main(List<String> arguments) async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      //locale: Locale('en'),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      title: appTitle,
-      initialRoute: "/",
-      theme: ThemeData(
-        // colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurpleAccent),
-        useMaterial3: true,
-      ).useSystemChineseFont(Brightness.light),
-      routes: {
-        "/": (context) => const APKInfoPage(), //注册首页路由
-        "setting": (context) => const SettingPage(),
-      },
-      // home: const APKInfoPage(),
+    return ChangeNotifierProvider(
+      create: (_) => ThemeManager(),
+      child: Consumer<ThemeManager>(
+        builder: (context, themeManager, _) => MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          title: appTitle,
+          initialRoute: "/",
+          theme: themeManager.themeData.useSystemChineseFont(Brightness.light),
+          routes: {
+            "/": (context) => const APKInfoPage(),
+            "setting": (context) => const SettingPage(),
+          },
+        ),
+      ),
     );
   }
 }

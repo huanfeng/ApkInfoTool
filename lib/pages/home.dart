@@ -229,13 +229,15 @@ class _APKInfoPageState extends State<APKInfoPage> {
                     child: TitleValueRow(
                   title: context.loc.perm_list,
                   value: apkInfo?.usesPermissions.join("\n") ?? "",
-                  maxLines: 6,
+                  minLines: 1,
+                  maxLines: Config.maxLines,
                 )),
                 Card(
                     child: TitleValueRow(
                   title: context.loc.signature_info,
                   value: apkInfo?.signatureInfo ?? "",
-                  maxLines: 5,
+                  minLines: 1,
+                  maxLines: Config.maxLines,
                 )),
               ],
             ),

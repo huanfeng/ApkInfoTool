@@ -10,6 +10,9 @@ Future<ApkInfo?> getApkInfo(String apk) async {
   final aapt = Config.aapt2Path;
 
   final start = DateTime.now();
+  final apkInfo = ApkInfo();
+  apkInfo.apkPath = apk;
+  apkInfo.apkSize = File(apk).lengthSync();
 
   try {
     var result = await Process.run(
@@ -18,7 +21,7 @@ Future<ApkInfo?> getApkInfo(String apk) async {
       stdoutEncoding: utf8,
       stderrEncoding: utf8,
     ).timeout(
-      const Duration(seconds: 120), // 设置30秒超时
+      const Duration(seconds: 120),
       onTimeout: () {
         throw TimeoutException('Parse timeout');
       },
@@ -30,7 +33,19 @@ Future<ApkInfo?> getApkInfo(String apk) async {
     log("getApkInfo: end exitCode=$exitCode, cost=${cost}ms");
 
     if (exitCode == 0) {
-      final apkInfo = parseApkInfoFromOutput(result.stdout.toString());
+      parseApkInfoFromOutput(result.stdout.toString(), apkInfo);
+
+      // 如果启用了签名检查，获取签名信息
+      if (Config.enableSignature) {
+        try {
+          final signInfo = await getSignatureInfo(apk);
+          apkInfo.signatureInfo = signInfo;
+        } catch (e) {
+          log("获取签名信息失败: $e");
+          apkInfo.signatureInfo = "获取签名信息失败: $e";
+        }
+      }
+
       return apkInfo;
     }
   } on TimeoutException {
@@ -67,15 +82,13 @@ Future<String> getSignatureInfo(String apkPath) async {
   }
 }
 
-ApkInfo parseApkInfoFromOutput(String output) {
+void parseApkInfoFromOutput(String output, ApkInfo apkInfo) {
   final lines = output.split("\n");
-  final apkInfo = ApkInfo();
   for (final (index, item) in lines.indexed) {
     log("[$index] $item");
     apkInfo.parseLine(item);
   }
   log("apkInfo=$apkInfo");
-  return apkInfo;
 }
 
 final _kNoneSingleQuotePattern = RegExp(r"[^']");

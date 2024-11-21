@@ -145,7 +145,10 @@ class _APKInfoPageState extends State<APKInfoPage> {
               icon: const Icon(Icons.settings),
               tooltip: context.loc.setting,
               onPressed: () {
-                Navigator.pushNamed(context, 'setting');
+                Navigator.pushNamed(context, 'setting').then((value) {
+                  // 返回时刷新
+                  setState(() {});
+                });
               }),
           // 最右的空间
           const SizedBox(width: 50),
@@ -232,13 +235,14 @@ class _APKInfoPageState extends State<APKInfoPage> {
                   minLines: 1,
                   maxLines: Config.maxLines,
                 )),
-                Card(
-                    child: TitleValueRow(
-                  title: context.loc.signature_info,
-                  value: apkInfo?.signatureInfo ?? "",
-                  minLines: 1,
-                  maxLines: Config.maxLines,
-                )),
+                if (Config.enableSignature)
+                  Card(
+                      child: TitleValueRow(
+                    title: context.loc.signature_info,
+                    value: apkInfo?.signatureInfo ?? "",
+                    minLines: 1,
+                    maxLines: Config.maxLines,
+                  )),
               ],
             ),
           ),

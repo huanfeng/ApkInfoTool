@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:async';
 import 'dart:ui';
+import 'dart:async';
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
+import 'package:anzip/anzip.dart' as az;
+import 'package:anio/anio.dart' as anio;
 
 import 'config.dart';
 import 'utils/log.dart';
@@ -303,25 +305,59 @@ class ApkInfo {
     }
   }
 
+  Future<Uint8List?> _readFileFromApk(String apkPath, String filePath) async {
+    final zip = await az.ZipFile.open(File(apkPath));
+    final entry = zip.getEntry(filePath);
+    if (entry == null) {
+      log('找不到文件: $filePath');
+      return null;
+    }
+    final source = await zip.getEntrySource(entry);
+    if (source == null) {
+      log('无法获取文件源: $filePath');
+      return null;
+    }
+    final buffer = anio.Buffer();
+    var read = 0;
+    do {
+      read = await source.read(buffer, entry.uncompressedSize);
+    } while (read != 0);
+    await source.close();
+    return buffer.asBytes();
+  }
+
+  Future<Uint8List?> _readFileFromZip(String apkPath, String filePath) async {
+    InputFileStream? inputStream;
+    try {
+      inputStream = InputFileStream(apkPath);
+      final archive = ZipDecoder().decodeBuffer(inputStream);
+      try {
+        final file = archive.findFile(filePath);
+        return file?.content as Uint8List?;
+      } catch (e) {
+        log('找不到文件: $filePath');
+      }
+    } catch (e) {
+      log('decodeBuffer fail: $e');
+    } finally {
+      inputStream?.close();
+    }
+    return null;
+  }
+
   /// 加载APK图标
   /// 返回图标的字节数据，如果加载失败返回null
   Future<Image?> loadIcon() async {
-    if (mainIconPath == null || apkPath.isEmpty) {
+    if (mainIconPath == null || mainIconPath!.isEmpty) {
       return null;
     }
 
-    final iconPath = mainIconPath!;
-    InputFileStream? inputStream;
-
     try {
-      if (iconPath.endsWith('.png') || iconPath.endsWith('.webp')) {
-        inputStream = InputFileStream(apkPath);
-        final archive = ZipDecoder().decodeBuffer(inputStream);
-        final iconFile = archive.findFile(iconPath);
-
-        if (iconFile != null) {
-          final codec =
-              await instantiateImageCodec(iconFile.content as Uint8List);
+      var iconPath = mainIconPath!;
+      if (iconPath.endsWith('.webp') || iconPath.endsWith('.png')) {
+        final data = await _readFileFromApk(apkPath, iconPath);
+        if (data != null) {
+          final codec = await instantiateImageCodec(data);
           final frame = await codec.getNextFrame();
           return frame.image;
         } else {
@@ -332,8 +368,6 @@ class ApkInfo {
       }
     } catch (e) {
       log('加载图标失败: $e');
-    } finally {
-      inputStream?.close();
     }
     return null;
   }

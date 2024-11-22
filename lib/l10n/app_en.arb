@@ -51,5 +51,7 @@
   "debug": "Debug",
   "file_association": "File Association",
   "open_settings": "Open Settings",
-  "cannot_open_settings": "Unable to open system settings, possibly due to unsupported system version"
+  "cannot_open_settings": "Unable to open system settings, possibly due to unsupported system version",
+  "title_width": "Title Width",
+  "title_width_preview": "Preview"
 }

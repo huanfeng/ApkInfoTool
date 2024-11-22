@@ -11,6 +11,7 @@ class Config {
   static bool _enableDebug = false;
   static int _maxLines = 6;
   static int _themeColor = Colors.blue.value;
+  static double _titleWidth = 100;
 
   static const kKeyAapt2PathKey = "aapt2_path";
   static const kKeyApksignerPathKey = "apksigner_path";
@@ -20,6 +21,7 @@ class Config {
   static const kKeyEnableDebugKey = "enable_debug";
   static const kKeyMaxLinesKey = "max_lines";
   static const kKeyThemeColorKey = "theme_color";
+  static const kKeyTitleWidthKey = "title_width";
 
   static late SharedPreferences gPrefs;
 
@@ -83,6 +85,13 @@ class Config {
     gPrefs.setInt(kKeyThemeColorKey, value.value);
   }
 
+  static double get titleWidth => _titleWidth;
+
+  static set titleWidth(double value) {
+    _titleWidth = value;
+    gPrefs.setDouble(kKeyTitleWidthKey, value);
+  }
+
   static void loadConfig() {
     final prefs = gPrefs;
     aapt2Path = prefs.getString(kKeyAapt2PathKey) ?? aapt2Path;
@@ -94,8 +103,9 @@ class Config {
     _enableDebug = prefs.getBool(kKeyEnableDebugKey) ?? _enableDebug;
     _maxLines = prefs.getInt(kKeyMaxLinesKey) ?? _maxLines;
     _themeColor = prefs.getInt(kKeyThemeColorKey) ?? _themeColor;
+    _titleWidth = prefs.getDouble(kKeyTitleWidthKey) ?? _titleWidth;
 
     log("aapt2Path=$aapt2Path, apksignerPath=$apksignerPath, apkanalyzerPath=$apkanalyzerPath, adbPath=$adbPath");
-    log("enableSignature=$_enableSignature, enableDebug=$_enableDebug, maxLines=$_maxLines, themeColor=$_themeColor");
+    log("enableSignature=$_enableSignature, enableDebug=$_enableDebug, maxLines=$_maxLines, themeColor=$_themeColor, titleWidth=$_titleWidth");
   }
 }

@@ -51,5 +51,7 @@
   "debug": "调试",
   "file_association": "文件关联",
   "open_settings": "打开设置",
-  "cannot_open_settings": "无法打开系统设置, 可能是当前系统版本不支持"
+  "cannot_open_settings": "无法打开系统设置, 可能是当前系统版本不支持",
+  "title_width": "标题宽度",
+  "title_width_preview": "预览"
 }

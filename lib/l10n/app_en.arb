@@ -52,5 +52,16 @@
   "open_settings": "Open Settings",
   "cannot_open_settings": "Unable to open system settings, possibly due to unsupported system version",
   "title_width": "Title Width",
-  "title_width_preview": "Preview"
+  "title_width_preview": "Preview",
+  "rename_file": "Rename File",
+  "new_file_name": "New File Name",
+  "file_name_cannot_be_empty": "File name cannot be empty",
+  "file_must_end_with_apk": "File name must end with .apk",
+  "default_name": "Default Name",
+  "app_name_only": "App Name Only",
+  "name_with_version": "Name + Version",
+  "rename_success": "Rename successful",
+  "rename_failed": "Rename failed",
+  "confirm": "Confirm",
+  "cancel": "Cancel"
 }

@@ -170,6 +170,22 @@ class _APKInfoPageState extends State<APKInfoPage> {
             ],
           ),
         ),
+        PopupMenuItem(
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          value: 'rename',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.drive_file_rename_outline, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                context.loc.rename_file,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+        ),
       ],
       onSelected: (value) async {
         if (selectedFilePath == null) return;
@@ -189,6 +205,9 @@ class _APKInfoPageState extends State<APKInfoPage> {
                 ),
               );
             }
+            break;
+          case 'rename':
+            _showRenameDialog();
             break;
         }
       },
@@ -445,6 +464,103 @@ class _APKInfoPageState extends State<APKInfoPage> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  // 显示重命名对话框
+  void _showRenameDialog() {
+    if (selectedFilePath == null || apkInfo == null) return;
+
+    final fileName = apkInfo!.label ?? '';
+    final versionName = apkInfo!.versionName ?? '';
+    final defaultName = '$fileName-$versionName.apk';
+
+    final controller = TextEditingController(text: defaultName);
+    final formKey = GlobalKey<FormFieldState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.loc.rename_file),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: controller,
+              decoration: InputDecoration(
+                labelText: context.loc.new_file_name,
+                suffixText: '',
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return context.loc.file_name_cannot_be_empty;
+                }
+                if (!value.toLowerCase().endsWith('.apk')) {
+                  return context.loc.file_must_end_with_apk;
+                }
+                return null;
+              },
+              key: formKey,
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              children: [
+                OutlinedButton(
+                  onPressed: () {
+                    controller.text = defaultName;
+                  },
+                  child: Text(context.loc.default_name),
+                ),
+                OutlinedButton(
+                  onPressed: () {
+                    controller.text = '${fileName}.apk';
+                  },
+                  child: Text(context.loc.app_name_only),
+                ),
+                OutlinedButton(
+                  onPressed: () {
+                    controller.text = '$fileName-v$versionName.apk';
+                  },
+                  child: Text(context.loc.name_with_version),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.loc.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                final newName = controller.text;
+                final oldFile = File(selectedFilePath!);
+                final directory = oldFile.parent;
+                final newPath =
+                    '${directory.path}${Platform.pathSeparator}$newName';
+
+                try {
+                  oldFile.renameSync(newPath);
+                  // 更新当前文件路径
+                  openApk(newPath);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(context.loc.rename_success)),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${context.loc.rename_failed}: $e')),
+                  );
+                }
+              }
+            },
+            child: Text(context.loc.confirm),
+          ),
         ],
       ),
     );

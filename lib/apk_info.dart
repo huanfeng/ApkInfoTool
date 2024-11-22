@@ -313,9 +313,7 @@ class ApkInfo {
     final iconPath = mainIconPath!;
 
     try {
-      if (iconPath.endsWith('.png') ||
-          iconPath.endsWith('.webp') ||
-          iconPath.endsWith('.jpg')) {
+      if (iconPath.endsWith('.png') || iconPath.endsWith('.webp')) {
         final inputStream = InputFileStream(apkPath);
         final archive = ZipDecoder().decodeBuffer(inputStream);
         final iconFile = archive.findFile(iconPath);

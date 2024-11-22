@@ -13,6 +13,7 @@ import '../utils/log.dart';
 import '../utils/logger.dart';
 import '../utils/platform.dart';
 import 'widgets.dart';
+import '../widgets/title_width_setting.dart';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});
@@ -263,6 +264,10 @@ class _SettingPageState extends State<SettingPage> {
               ),
             ],
           ),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          child: TitleWidthSetting(),
         ),
       ],
     );

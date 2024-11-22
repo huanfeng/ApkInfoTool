@@ -11,9 +11,9 @@ import '../main.dart';
 import '../utils/local.dart';
 import '../utils/log.dart';
 import '../utils/platform.dart';
-import 'widgets.dart';
 import '../utils/android_version.dart';
 import '../utils/format.dart';
+import '../widgets/title_value_layout.dart';
 
 class APKInfoPage extends StatefulWidget {
   const APKInfoPage({super.key});
@@ -28,6 +28,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
   int? fileSize;
   ApkInfo? apkInfo;
   bool _isParsing = false;
+  var titleWidth = Config.titleWidth;
 
   void openFilePicker() async {
     var result = await FilePicker.platform.pickFiles(
@@ -257,7 +258,9 @@ class _APKInfoPageState extends State<APKInfoPage> {
               onPressed: () {
                 Navigator.pushNamed(context, 'setting').then((value) {
                   // 返回时刷新
-                  setState(() {});
+                  setState(() {
+                    titleWidth = Config.titleWidth;
+                  });
                 });
               }),
           // 最右的空间
@@ -297,114 +300,112 @@ class _APKInfoPageState extends State<APKInfoPage> {
                           shrinkWrap: true,
                           children: [
                             Card(
-                                child: TitleValueRow(
+                                child: TitleValueLayout(
                                     title: context.loc.file,
                                     value: selectedFilePath ?? "",
-                                    end: _buildFileActionMenu())),
+                                    end: _buildFileActionMenu(),
+                                    titleWidth: titleWidth)),
                             Card(
-                                child: TitleValueRow(
+                                child: TitleValueLayout(
                                     title: context.loc.size,
                                     value: fileSize != null
                                         ? "${formatFileSize(fileSize)} ($fileSize Bytes)"
-                                        : "")),
+                                        : "",
+                                    titleWidth: titleWidth)),
+                            Card(
+                                child: TitleValueLayout(
+                                    title: context.loc.app_name,
+                                    value: apkInfo?.label ?? "",
+                                    end: _buildCopyButton(
+                                        apkInfo?.label, apkInfo?.label != null),
+                                    titleWidth: titleWidth)),
+                            Card(
+                                child: TitleValueLayout(
+                                    title: context.loc.package_name,
+                                    value: apkInfo?.packageName ?? "",
+                                    end: _buildCopyButton(apkInfo?.packageName,
+                                        apkInfo?.packageName != null),
+                                    titleWidth: titleWidth)),
                             Row(children: [
                               Expanded(
                                   child: Column(
                                 children: [
                                   Card(
-                                      child: TitleValueRow(
-                                          title: context.loc.app_name,
-                                          value: apkInfo?.label ?? "",
-                                          end: _buildCopyButton(apkInfo?.label,
-                                              apkInfo?.label != null))),
+                                      child: TitleValueLayout(
+                                    title: context.loc.version_code,
+                                    value: "${apkInfo?.versionCode ?? ""}",
+                                    titleWidth: titleWidth,
+                                  )),
                                   Card(
-                                      child: TitleValueRow(
-                                          title: context.loc.package_name,
-                                          value: apkInfo?.packageName ?? "",
-                                          end: _buildCopyButton(
-                                              apkInfo?.packageName,
-                                              apkInfo?.packageName != null))),
+                                      child: TitleValueLayout(
+                                    title: context.loc.version_name,
+                                    value: apkInfo?.versionName ?? "",
+                                    titleWidth: titleWidth,
+                                  )),
                                 ],
                               )),
                               Card(
                                   child: Container(
                                 margin: const EdgeInsets.all(4),
-                                width: 96,
-                                height: 96,
+                                width: 72,
+                                height: 72,
                                 child: RawImage(
                                   image: apkInfo?.mainIconImage,
                                   fit: BoxFit.contain,
                                 ),
                               )),
                             ]),
-                            Row(
-                              children: [
-                                Expanded(
-                                    child: Card(
-                                  child: TitleValueRow(
-                                      title: context.loc.min_sdk,
-                                      value: getSdkVersionText(
-                                          apkInfo?.sdkVersion),
-                                      titleFlex: 6),
-                                )),
-                                Expanded(
-                                    child: Card(
-                                        child: TitleValueRow(
-                                            title: context.loc.target_sdk,
-                                            value: getSdkVersionText(
-                                                apkInfo?.targetSdkVersion),
-                                            titleFlex: 6))),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                    child: Card(
-                                        child: TitleValueRow(
-                                            title: context.loc.version_code,
-                                            value:
-                                                "${apkInfo?.versionCode ?? ""}",
-                                            titleFlex: 6))),
-                                Expanded(
-                                    child: Card(
-                                        child: TitleValueRow(
-                                            title: context.loc.version_name,
-                                            value: apkInfo?.versionName ?? "",
-                                            titleFlex: 6))),
-                              ],
+                            Card(
+                              child: TitleValueLayout(
+                                  title: context.loc.min_sdk,
+                                  value: getSdkVersionText(apkInfo?.sdkVersion),
+                                  titleWidth: titleWidth),
                             ),
                             Card(
-                                child: TitleValueRow(
+                                child: TitleValueLayout(
+                                    title: context.loc.target_sdk,
+                                    value: getSdkVersionText(
+                                        apkInfo?.targetSdkVersion),
+                                    titleWidth: titleWidth)),
+                            Card(
+                                child: TitleValueLayout(
                                     title: context.loc.screen_size,
                                     value: apkInfo?.supportsScreens.join(" ") ??
-                                        "")),
+                                        "",
+                                    titleWidth: titleWidth)),
                             Card(
-                                child: TitleValueRow(
+                                child: TitleValueLayout(
                                     title: context.loc.screen_density,
-                                    value: apkInfo?.densities.join(" ") ?? "")),
+                                    value: apkInfo?.densities.join(" ") ?? "",
+                                    titleWidth: titleWidth)),
                             Card(
-                                child: TitleValueRow(
+                                child: TitleValueLayout(
                                     title: context.loc.abi,
-                                    value:
-                                        apkInfo?.nativeCodes.join(" ") ?? "")),
+                                    value: apkInfo?.nativeCodes.join(" ") ?? "",
+                                    titleWidth: titleWidth)),
                             Card(
-                                child: TitleValueRow(
+                                child: TitleValueLayout(
                                     title: context.loc.language_list,
-                                    value: apkInfo?.locales.join(" ") ?? "")),
+                                    value: apkInfo?.locales.join(" ") ?? "",
+                                    titleWidth: titleWidth)),
                             Card(
-                                child: TitleValueRow(
+                                child: TitleValueLayout(
                               title: context.loc.perm_list,
                               value: apkInfo?.usesPermissions.join("\n") ?? "",
                               minLines: 1,
                               maxLines: Config.maxLines,
+                              titleWidth: titleWidth,
+                              selectable: true,
                             )),
                             if (Config.enableSignature)
                               Card(
-                                  child: TitleValueRow(
+                                  child: TitleValueLayout(
                                 title: context.loc.signature_info,
                                 value: apkInfo?.signatureInfo ?? "",
                                 minLines: 1,
                                 maxLines: Config.maxLines,
+                                titleWidth: titleWidth,
+                                selectable: true,
                               )),
                           ],
                         ),

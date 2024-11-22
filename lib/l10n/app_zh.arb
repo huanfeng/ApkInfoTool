@@ -52,5 +52,16 @@
   "open_settings": "打开设置",
   "cannot_open_settings": "无法打开系统设置, 可能是当前系统版本不支持",
   "title_width": "标题宽度",
-  "title_width_preview": "预览"
+  "title_width_preview": "预览",
+  "rename_file": "重命名文件",
+  "new_file_name": "新文件名",
+  "file_name_cannot_be_empty": "文件名不能为空",
+  "file_must_end_with_apk": "文件名必须以.apk结尾",
+  "default_name": "默认名称",
+  "app_name_only": "仅应用名",
+  "name_with_version": "名称+版本号",
+  "rename_success": "重命名成功",
+  "rename_failed": "重命名失败",
+  "confirm": "确定",
+  "cancel": "取消"
 }

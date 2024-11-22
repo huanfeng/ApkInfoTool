@@ -311,15 +311,15 @@ class ApkInfo {
     }
 
     final iconPath = mainIconPath!;
+    InputFileStream? inputStream;
 
     try {
       if (iconPath.endsWith('.png') || iconPath.endsWith('.webp')) {
-        final inputStream = InputFileStream(apkPath);
+        inputStream = InputFileStream(apkPath);
         final archive = ZipDecoder().decodeBuffer(inputStream);
         final iconFile = archive.findFile(iconPath);
 
         if (iconFile != null) {
-          // 只读取图标文件的内容
           final codec =
               await instantiateImageCodec(iconFile.content as Uint8List);
           final frame = await codec.getNextFrame();
@@ -328,12 +328,12 @@ class ApkInfo {
           log('找不到图标文件: $iconPath');
         }
       } else if (iconPath.endsWith('.xml')) {
-        // TODO: 处理XML格式的图标
         log('暂不支持XML格式的图标: $iconPath');
-        return null;
       }
     } catch (e) {
       log('加载图标失败: $e');
+    } finally {
+      inputStream?.close();
     }
     return null;
   }

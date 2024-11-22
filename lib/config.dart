@@ -5,7 +5,6 @@ import 'utils/log.dart';
 class Config {
   static String _aapt2Path = "";
   static String _apksignerPath = "";
-  static String _apkanalyzerPath = "";
   static String _adbPath = "";
   static bool _enableSignature = true;
   static bool _enableDebug = false;
@@ -15,7 +14,6 @@ class Config {
 
   static const kKeyAapt2PathKey = "aapt2_path";
   static const kKeyApksignerPathKey = "apksigner_path";
-  static const kKeyApkanalyzerPath = "apkanalyzer_path";
   static const kKeyAdbPathKey = "adb_path";
   static const kKeyEnableSignatureKey = "enable_signature";
   static const kKeyEnableDebugKey = "enable_debug";
@@ -41,13 +39,6 @@ class Config {
   static set apksignerPath(String value) {
     _apksignerPath = value.trim();
     gPrefs.setString(kKeyApksignerPathKey, apksignerPath);
-  }
-
-  static String get apkanalyzerPath => _apkanalyzerPath;
-
-  static set apkanalyzerPath(String value) {
-    _apkanalyzerPath = value.trim();
-    gPrefs.setString(kKeyApkanalyzerPath, apkanalyzerPath);
   }
 
   static String get adbPath => _adbPath;
@@ -96,7 +87,6 @@ class Config {
     final prefs = gPrefs;
     aapt2Path = prefs.getString(kKeyAapt2PathKey) ?? aapt2Path;
     apksignerPath = prefs.getString(kKeyApksignerPathKey) ?? apksignerPath;
-    apkanalyzerPath = prefs.getString(kKeyApkanalyzerPath) ?? apkanalyzerPath;
     adbPath = prefs.getString(kKeyAdbPathKey) ?? adbPath;
     _enableSignature =
         prefs.getBool(kKeyEnableSignatureKey) ?? _enableSignature;
@@ -105,7 +95,7 @@ class Config {
     _themeColor = prefs.getInt(kKeyThemeColorKey) ?? _themeColor;
     _titleWidth = prefs.getDouble(kKeyTitleWidthKey) ?? _titleWidth;
 
-    log("aapt2Path=$aapt2Path, apksignerPath=$apksignerPath, apkanalyzerPath=$apkanalyzerPath, adbPath=$adbPath");
+    log("aapt2Path=$aapt2Path, apksignerPath=$apksignerPath, adbPath=$adbPath");
     log("enableSignature=$_enableSignature, enableDebug=$_enableDebug, maxLines=$_maxLines, themeColor=$_themeColor, titleWidth=$_titleWidth");
   }
 }

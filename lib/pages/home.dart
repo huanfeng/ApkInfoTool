@@ -516,7 +516,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
                 ),
                 OutlinedButton(
                   onPressed: () {
-                    controller.text = '${fileName}.apk';
+                    controller.text = '$fileName.apk';
                   },
                   child: Text(context.loc.app_name_only),
                 ),

@@ -4,8 +4,6 @@ import 'dart:ui';
 import 'dart:async';
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
-import 'package:anzip/anzip.dart' as az;
-import 'package:anio/anio.dart' as anio;
 
 import 'config.dart';
 import 'utils/log.dart';
@@ -305,40 +303,19 @@ class ApkInfo {
     }
   }
 
-  Future<Uint8List?> _readFileFromApk(String apkPath, String filePath) async {
-    final zip = await az.ZipFile.open(File(apkPath));
-    final entry = zip.getEntry(filePath);
-    if (entry == null) {
-      log('找不到文件: $filePath');
-      return null;
-    }
-    final source = await zip.getEntrySource(entry);
-    if (source == null) {
-      log('无法获取文件源: $filePath');
-      return null;
-    }
-    final buffer = anio.Buffer();
-    var read = 0;
-    do {
-      read = await source.read(buffer, entry.uncompressedSize);
-    } while (read != 0);
-    await source.close();
-    return buffer.asBytes();
-  }
-
   Future<Uint8List?> _readFileFromZip(String apkPath, String filePath) async {
     InputFileStream? inputStream;
     try {
       inputStream = InputFileStream(apkPath);
-      final archive = ZipDecoder().decodeBuffer(inputStream);
+      final archive = ZipDecoder().decodeStream(inputStream);
       try {
         final file = archive.findFile(filePath);
-        return file?.content as Uint8List?;
+        return file?.content;
       } catch (e) {
         log('找不到文件: $filePath');
       }
     } catch (e) {
-      log('decodeBuffer fail: $e');
+      log('decodeStream fail: $e');
     } finally {
       inputStream?.close();
     }
@@ -355,7 +332,7 @@ class ApkInfo {
     try {
       var iconPath = mainIconPath!;
       if (iconPath.endsWith('.webp') || iconPath.endsWith('.png')) {
-        final data = await _readFileFromApk(apkPath, iconPath);
+        final data = await _readFileFromZip(apkPath, iconPath);
         if (data != null) {
           final codec = await instantiateImageCodec(data);
           final frame = await codec.getNextFrame();

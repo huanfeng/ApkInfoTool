@@ -3,6 +3,7 @@ import 'package:chinese_font_library/chinese_font_library.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -12,6 +13,7 @@ import 'theme/theme_manager.dart';
 import 'utils/log.dart';
 import 'utils/logger.dart';
 
+late PackageInfo packageInfo;
 const appTitle = "APK Info Tool";
 
 String apkByArgs = "";
@@ -29,6 +31,8 @@ void main(List<String> arguments) async {
   await Config.init();
   Config.loadConfig();
 
+  packageInfo = await PackageInfo.fromPlatform();
+
   await Logger.instance.init();
 
   log("args=$arguments");
@@ -43,7 +47,7 @@ void main(List<String> arguments) async {
     windowManager.waitUntilReadyToShow().then((_) async {
       await windowManager.setMinimumSize(const Size(400, 400));
       await windowManager.setSize(const Size(500, 600));
-      await windowManager.setTitle(appTitle);
+      await windowManager.setTitle('$appTitle v${packageInfo.version}');
       await windowManager.show();
       // await windowManager.setPreventClose(true);
     });

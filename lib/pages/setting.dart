@@ -5,8 +5,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../config.dart';
+import '../main.dart';
 import '../theme/theme_manager.dart';
 import '../utils/file_association.dart';
 import '../utils/log.dart';
@@ -14,6 +16,8 @@ import '../utils/logger.dart';
 import '../utils/platform.dart';
 import 'widgets.dart';
 import '../widgets/title_width_setting.dart';
+
+const githubUrl = 'https://github.com/huanfeng/ApkInfoTool';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});
@@ -307,19 +311,57 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildAboutSection() {
-    return _buildSettingCard(
-      title: context.loc.about,
-      icon: Icons.info,
-      children: [
-        ListTile(
-          title: const Text('APK Info Tool'),
-          subtitle: const Text('Version 1.0.0'),
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: Theme.of(context).dividerColor.withOpacity(0.2),
+          width: 1,
         ),
-        const ListTile(
-          title: Text('Dependencies'),
-          subtitle: Text('Flutter SDK\nDart SDK\naapt2\napksigner'),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ListTile(
+          leading: const Icon(Icons.info),
+          title: Text(context.loc.about),
+          onTap: () {
+            showAboutDialog(
+              context: context,
+              applicationName: appTitle,
+              applicationVersion: packageInfo.version,
+              applicationIcon: Image.asset(
+                'assets/icon.png',
+                width: 64,
+                height: 64,
+              ),
+              applicationLegalese: '2024 Fengware',
+              children: [
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () {
+                    launchUrl(Uri.parse(githubUrl));
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.link, size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        githubUrl,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
-      ],
+      ),
     );
   }
 

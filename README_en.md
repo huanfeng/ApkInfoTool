@@ -6,11 +6,30 @@ A simple tool for viewing APK file information.
 
 ## Features
 
-- View basic APK information (package name, app name, version, etc.)
-- View supported screen sizes and densities
-- View supported CPU architectures
-- View list of supported languages
-- View list of requested permissions
+- View APK basic information
+- APK renaming
+- APK file installation
+
+## System Requirements
+
+### Android SDK Tools
+
+This tool depends on the following Android SDK components:
+
+- **Android Build Tools**: For parsing and analyzing APK files
+  - Requires `aapt2` (for parsing APK information)
+  - Requires `apksigner` (for verifying APK signatures)
+- **Android Debug Bridge (adb)**: For installing and uninstalling APKs
+
+You can obtain these tools by:
+
+1. Installing Android Studio and downloading through SDK Manager
+2. Or downloading [Android Command Line Tools](https://developer.android.com/studio#command-tools) directly, then installing using `sdkmanager`:
+   ```bash
+   sdkmanager "build-tools;35.0.0" "platform-tools"
+   ```
+
+Please ensure these tools are accessible in your system's environment variables and specify their paths in settings.
 
 ## Download & Installation
 
@@ -39,8 +58,8 @@ flutter build linux # Linux
 
 The application supports the following languages:
 
-- English
 - Simplified Chinese
+- English
 
 Language files are located in the `lib/l10n` directory.
 

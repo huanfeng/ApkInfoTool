@@ -6,7 +6,7 @@ class Config {
   static String _aapt2Path = "";
   static String _apksignerPath = "";
   static String _adbPath = "";
-  static bool _enableSignature = true;
+  static bool _enableSignature = false;
   static bool _enableDebug = false;
   static int _maxLines = 6;
   static int _themeColor = Colors.blue.value;

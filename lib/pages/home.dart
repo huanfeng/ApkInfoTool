@@ -14,6 +14,7 @@ import '../utils/platform.dart';
 import '../utils/android_version.dart';
 import '../utils/format.dart';
 import '../widgets/title_value_layout.dart';
+import './install_dialog.dart';
 
 class APKInfoPage extends StatefulWidget {
   const APKInfoPage({super.key});
@@ -271,6 +272,19 @@ class _APKInfoPageState extends State<APKInfoPage> {
               onPressed: () {
                 openApk(selectedFilePath ?? '');
               }),
+          IconButton(
+              icon: const Icon(Icons.android),
+              tooltip: context.loc.install_apk,
+              onPressed: selectedFilePath == null
+                  ? null
+                  : () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => InstallDialog(
+                          apkPath: selectedFilePath!,
+                        ),
+                      );
+                    }),
           IconButton(
               icon: const Icon(Icons.settings),
               tooltip: context.loc.setting,

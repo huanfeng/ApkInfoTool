@@ -63,5 +63,16 @@
   "rename_success": "重命名成功",
   "rename_failed": "重命名失败",
   "confirm": "确定",
-  "cancel": "取消"
+  "cancel": "取消",
+  "install_apk": "安装APK",
+  "no_devices": "未发现设备",
+  "please_select_device": "请至少选择一个设备",
+  "installing": "正在安装...",
+  "install_success": "安装成功",
+  "install_failed": "安装失败",
+  "install_error": "安装错误",
+  "allow_downgrade": "允许降级安装 (-d)",
+  "force_install": "强制安装 (-r)",
+  "allow_test": "允许测试版 (-t)",
+  "advanced_options": "高级选项"
 }

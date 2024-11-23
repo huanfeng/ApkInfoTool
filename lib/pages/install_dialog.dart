@@ -26,7 +26,9 @@ class AdbDevice {
     this.model,
     this.device,
     this.selected = false,
-  });
+  }) {
+    selected = !isOffline;
+  }
 
   bool get isOffline => status == 'offline';
   bool get isWireless => id.contains(':');

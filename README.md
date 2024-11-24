@@ -71,6 +71,9 @@ flutter build linux # Linux
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 提交 Pull Request
 
+## 致谢
+- 本应用 ICON 使用 [AppIcon Forge](https://github.com/zhangyu1818/appicon-forge) 工具制作
+
 ## 开源协议
 
 本项目采用 MIT 协议开源。

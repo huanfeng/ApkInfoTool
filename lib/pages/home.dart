@@ -1,18 +1,18 @@
 import 'dart:io';
 
+import 'package:apk_info_tool/gen/strings.g.dart';
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/services.dart';
 
 import '../apk_info.dart';
 import '../config.dart';
 import '../main.dart';
-import '../utils/local.dart';
-import '../utils/log.dart';
-import '../utils/platform.dart';
 import '../utils/android_version.dart';
 import '../utils/format.dart';
+import '../utils/log.dart';
+import '../utils/platform.dart';
 import '../widgets/title_value_layout.dart';
 import './install_dialog.dart';
 
@@ -34,7 +34,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
   void openFilePicker() async {
     var result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      dialogTitle: context.loc.select_apk_file,
+      dialogTitle: t.open.select_apk_file,
       allowedExtensions: ['apk'],
       lockParentWindow: true,
     );
@@ -71,8 +71,8 @@ class _APKInfoPageState extends State<APKInfoPage> {
     if (selectedFilePath == null) return;
 
     if (Config.aapt2Path.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.loc.tint_set_aapt2_path)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(t.parse.set_aapt2_path)));
       return;
     }
 
@@ -92,7 +92,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
           // 显示签名验证失败提示
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(context.loc.signature_verify_failed)));
+                SnackBar(content: Text(t.parse.signature_verify_failed)));
           }
         }
       }
@@ -105,7 +105,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
 
       if (apkInfo == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.loc.warn_parse_apk_info_fail)),
+          SnackBar(content: Text(t.parse.parse_apk_info_fail)),
         );
       }
     } catch (e) {
@@ -114,7 +114,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
         _isParsing = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.loc.warn_parse_apk_info_fail)),
+        SnackBar(content: Text(t.parse.parse_apk_info_fail)),
       );
     }
   }
@@ -149,7 +149,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
               const Icon(Icons.folder_open, size: 16),
               const SizedBox(width: 8),
               Text(
-                context.loc.open_file_directory,
+                t.open.open_file_directory,
                 style: const TextStyle(fontSize: 12),
               ),
             ],
@@ -165,7 +165,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
               const Icon(Icons.content_copy, size: 16),
               const SizedBox(width: 8),
               Text(
-                context.loc.copy_file_path,
+                t.home.copy_file_path,
                 style: const TextStyle(fontSize: 12),
               ),
             ],
@@ -181,7 +181,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
               const Icon(Icons.drive_file_rename_outline, size: 16),
               const SizedBox(width: 8),
               Text(
-                context.loc.rename_file,
+                t.rename.rename_file,
                 style: const TextStyle(fontSize: 12),
               ),
             ],
@@ -200,8 +200,8 @@ class _APKInfoPageState extends State<APKInfoPage> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content:
-                      Text(context.loc.copied_content(selectedFilePath ?? '')),
+                  content: Text(
+                      t.home.copied_content(content: selectedFilePath ?? '')),
                   duration: const Duration(seconds: 2),
                 ),
               );
@@ -218,8 +218,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
   // 构建复制按钮
   Widget _buildCopyButton(String? text, bool enable) {
     return Tooltip(
-      message:
-          enable ? context.loc.copy_content : context.loc.copy_content_disabled,
+      message: t.home.copy_content,
       waitDuration: const Duration(seconds: 1),
       textStyle: TextStyle(
         color: Colors.white,
@@ -242,7 +241,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(context.loc.copied_content(text ?? '')),
+                      content: Text(t.home.copied_content(content: text ?? '')),
                       duration: const Duration(seconds: 2),
                     ),
                   );
@@ -257,24 +256,24 @@ class _APKInfoPageState extends State<APKInfoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(appTitle),
+        title: Text(t.title),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
               icon: const Icon(Icons.folder),
-              tooltip: context.loc.open_apk,
+              tooltip: t.open.open_apk,
               onPressed: () async {
                 openFilePicker();
               }),
           IconButton(
               icon: const Icon(Icons.search),
-              tooltip: context.loc.parse_apk,
+              tooltip: t.parse.parse_apk,
               onPressed: () {
                 openApk(selectedFilePath ?? '');
               }),
           IconButton(
               icon: const Icon(Icons.android),
-              tooltip: context.loc.install_apk,
+              tooltip: t.install.apk,
               onPressed: selectedFilePath == null
                   ? null
                   : () {
@@ -287,7 +286,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
                     }),
           IconButton(
               icon: const Icon(Icons.settings),
-              tooltip: context.loc.setting,
+              tooltip: t.settings.open_settings,
               onPressed: () {
                 Navigator.pushNamed(context, 'setting').then((value) {
                   // 返回时刷新
@@ -314,7 +313,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(context.loc.select_apk_file),
+                      content: Text(t.open.select_apk_file),
                     ),
                   );
                 }
@@ -334,46 +333,43 @@ class _APKInfoPageState extends State<APKInfoPage> {
                           children: [
                             Card(
                                 child: TitleValueLayout(
-                                    title: context.loc.file,
+                                    title: t.file_info.file,
                                     value: selectedFilePath ?? "",
-                                    end: _buildFileActionMenu(),
-                                    titleWidth: titleWidth)),
+                                    end: _buildFileActionMenu())),
                             Card(
                                 child: TitleValueLayout(
-                                    title: context.loc.size,
-                                    value: fileSize != null
-                                        ? "${formatFileSize(fileSize)} ($fileSize Bytes)"
-                                        : "",
-                                    titleWidth: titleWidth)),
+                              title: t.file_info.size,
+                              value: fileSize != null
+                                  ? "${formatFileSize(fileSize)} ($fileSize Bytes)"
+                                  : "",
+                            )),
                             Card(
                                 child: TitleValueLayout(
-                                    title: context.loc.app_name,
-                                    value: apkInfo?.label ?? "",
-                                    end: _buildCopyButton(
-                                        apkInfo?.label, apkInfo?.label != null),
-                                    titleWidth: titleWidth)),
+                              title: t.apk_info.app_name,
+                              value: apkInfo?.label ?? "",
+                              end: _buildCopyButton(
+                                  apkInfo?.label, apkInfo?.label != null),
+                            )),
                             Card(
                                 child: TitleValueLayout(
-                                    title: context.loc.package_name,
-                                    value: apkInfo?.packageName ?? "",
-                                    end: _buildCopyButton(apkInfo?.packageName,
-                                        apkInfo?.packageName != null),
-                                    titleWidth: titleWidth)),
+                              title: t.apk_info.package_name,
+                              value: apkInfo?.packageName ?? "",
+                              end: _buildCopyButton(apkInfo?.packageName,
+                                  apkInfo?.packageName != null),
+                            )),
                             Row(children: [
                               Expanded(
                                   child: Column(
                                 children: [
                                   Card(
                                       child: TitleValueLayout(
-                                    title: context.loc.version_code,
+                                    title: t.apk_info.version_code,
                                     value: "${apkInfo?.versionCode ?? ""}",
-                                    titleWidth: titleWidth,
                                   )),
                                   Card(
                                       child: TitleValueLayout(
-                                    title: context.loc.version_name,
+                                    title: t.apk_info.version_name,
                                     value: apkInfo?.versionName ?? "",
-                                    titleWidth: titleWidth,
                                   )),
                                 ],
                               )),
@@ -390,54 +386,51 @@ class _APKInfoPageState extends State<APKInfoPage> {
                             ]),
                             Card(
                               child: TitleValueLayout(
-                                  title: context.loc.min_sdk,
-                                  value: getSdkVersionText(apkInfo?.sdkVersion),
-                                  titleWidth: titleWidth),
+                                title: t.apk_info.min_sdk,
+                                value: getSdkVersionText(apkInfo?.sdkVersion),
+                              ),
                             ),
                             Card(
                                 child: TitleValueLayout(
-                                    title: context.loc.target_sdk,
-                                    value: getSdkVersionText(
-                                        apkInfo?.targetSdkVersion),
-                                    titleWidth: titleWidth)),
+                              title: t.apk_info.target_sdk,
+                              value:
+                                  getSdkVersionText(apkInfo?.targetSdkVersion),
+                            )),
                             Card(
                                 child: TitleValueLayout(
-                                    title: context.loc.screen_size,
-                                    value: apkInfo?.supportsScreens.join(" ") ??
-                                        "",
-                                    titleWidth: titleWidth)),
+                              title: t.apk_info.screen_size,
+                              value: apkInfo?.supportsScreens.join(" ") ?? "",
+                            )),
                             Card(
                                 child: TitleValueLayout(
-                                    title: context.loc.screen_density,
-                                    value: apkInfo?.densities.join(" ") ?? "",
-                                    titleWidth: titleWidth)),
+                              title: t.apk_info.screen_density,
+                              value: apkInfo?.densities.join(" ") ?? "",
+                            )),
                             Card(
                                 child: TitleValueLayout(
-                                    title: context.loc.abi,
-                                    value: apkInfo?.nativeCodes.join(" ") ?? "",
-                                    titleWidth: titleWidth)),
+                              title: t.apk_info.abi,
+                              value: apkInfo?.nativeCodes.join(" ") ?? "",
+                            )),
                             Card(
                                 child: TitleValueLayout(
-                                    title: context.loc.language_list,
-                                    value: apkInfo?.locales.join(" ") ?? "",
-                                    titleWidth: titleWidth)),
+                              title: t.apk_info.languages,
+                              value: apkInfo?.locales.join(" ") ?? "",
+                            )),
                             Card(
                                 child: TitleValueLayout(
-                              title: context.loc.perm_list,
+                              title: t.apk_info.permissions,
                               value: apkInfo?.usesPermissions.join("\n") ?? "",
                               minLines: 1,
                               maxLines: Config.maxLines,
-                              titleWidth: titleWidth,
                               selectable: true,
                             )),
                             if (Config.enableSignature)
                               Card(
                                   child: TitleValueLayout(
-                                title: context.loc.signature_info,
+                                title: t.apk_info.signature_info,
                                 value: apkInfo?.signatureInfo ?? "",
                                 minLines: 1,
                                 maxLines: Config.maxLines,
-                                titleWidth: titleWidth,
                                 selectable: true,
                               )),
                           ],
@@ -473,7 +466,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(context.loc.parsing),
+                    Text(t.parse.parsing),
                   ],
                 ),
               ),
@@ -497,22 +490,22 @@ class _APKInfoPageState extends State<APKInfoPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.loc.rename_file),
+        title: Text(t.rename.rename_file),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextFormField(
               controller: controller,
               decoration: InputDecoration(
-                labelText: context.loc.new_file_name,
+                labelText: t.rename.new_file_name,
                 suffixText: '',
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return context.loc.file_name_cannot_be_empty;
+                  return t.rename.name_cannot_be_empty;
                 }
                 if (!value.toLowerCase().endsWith('.apk')) {
-                  return context.loc.file_must_end_with_apk;
+                  return t.rename.must_end_with_apk;
                 }
                 return null;
               },
@@ -526,19 +519,19 @@ class _APKInfoPageState extends State<APKInfoPage> {
                   onPressed: () {
                     controller.text = defaultName;
                   },
-                  child: Text(context.loc.default_name),
+                  child: Text(t.rename.default_name),
                 ),
                 OutlinedButton(
                   onPressed: () {
                     controller.text = '$fileName.apk';
                   },
-                  child: Text(context.loc.app_name_only),
+                  child: Text(t.rename.app_name_only),
                 ),
                 OutlinedButton(
                   onPressed: () {
                     controller.text = '$fileName-v$versionName.apk';
                   },
-                  child: Text(context.loc.name_with_version),
+                  child: Text(t.rename.name_with_version),
                 ),
               ],
             ),
@@ -547,7 +540,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(context.loc.cancel),
+            child: Text(t.base.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -564,16 +557,16 @@ class _APKInfoPageState extends State<APKInfoPage> {
                   openApk(newPath);
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(context.loc.rename_success)),
+                    SnackBar(content: Text(t.rename.success)),
                   );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${context.loc.rename_failed}: $e')),
+                    SnackBar(content: Text('${t.rename.failed}: $e')),
                   );
                 }
               }
             },
-            child: Text(context.loc.confirm),
+            child: Text(t.base.confirm),
           ),
         ],
       ),

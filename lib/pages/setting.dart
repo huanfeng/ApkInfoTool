@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:apk_info_tool/utils/local.dart';
+import 'package:apk_info_tool/gen/strings.g.dart';
+import 'package:apk_info_tool/widgets/title_value_layout.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -14,7 +15,6 @@ import '../utils/file_association.dart';
 import '../utils/log.dart';
 import '../utils/logger.dart';
 import '../utils/platform.dart';
-import 'widgets.dart';
 import '../widgets/title_width_setting.dart';
 
 const githubUrl = 'https://github.com/huanfeng/ApkInfoTool';
@@ -38,7 +38,7 @@ class _SettingPageState extends State<SettingPage> {
   void openFilePicker(ValueChanged<String> cb) async {
     var result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      dialogTitle: context.loc.select_exe_file,
+      dialogTitle: t.settings.select_exe_path,
       allowedExtensions: getExecutableExtensions(),
       lockParentWindow: true,
     );
@@ -63,7 +63,7 @@ class _SettingPageState extends State<SettingPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(context.loc.theme_color),
+          title: Text(t.settings.theme_color),
           content: SingleChildScrollView(
             child: ColorPicker(
               pickerColor: Config.themeColor,
@@ -81,7 +81,7 @@ class _SettingPageState extends State<SettingPage> {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text(context.loc.ok),
+              child: Text(t.base.ok),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -121,12 +121,12 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildEnvironmentSection() {
     return _buildSettingCard(
-      title: context.loc.environment,
+      title: t.settings.environment,
       icon: Icons.computer,
       initiallyExpanded: true,
       children: [
-        TitleValueRow(
-          title: context.loc.aapt_path,
+        TitleValueLayout(
+          title: t.settings.aapt_path,
           value: Config.aapt2Path,
           end: TextButton(
             onPressed: () {
@@ -136,11 +136,11 @@ class _SettingPageState extends State<SettingPage> {
                 });
               });
             },
-            child: Text(context.loc.select),
+            child: Text(t.base.select),
           ),
         ),
-        TitleValueRow(
-          title: context.loc.apksigner_path,
+        TitleValueLayout(
+          title: t.settings.apksigner_path,
           value: Config.apksignerPath,
           end: TextButton(
             onPressed: () {
@@ -150,11 +150,11 @@ class _SettingPageState extends State<SettingPage> {
                 });
               });
             },
-            child: Text(context.loc.select),
+            child: Text(t.base.select),
           ),
         ),
-        TitleValueRow(
-          title: context.loc.adb_path,
+        TitleValueLayout(
+          title: t.settings.adb_path,
           value: Config.adbPath,
           end: TextButton(
             onPressed: () {
@@ -164,7 +164,7 @@ class _SettingPageState extends State<SettingPage> {
                 });
               });
             },
-            child: Text(context.loc.select),
+            child: Text(t.base.select),
           ),
         ),
       ],
@@ -173,11 +173,11 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildFeaturesSection() {
     return _buildSettingCard(
-      title: context.loc.features,
+      title: t.settings.features,
       icon: Icons.featured_play_list,
       children: [
         SwitchListTile(
-          title: Text(context.loc.enable_signature),
+          title: Text(t.settings.enable_signature),
           value: Config.enableSignature,
           onChanged: (bool value) {
             setState(() {
@@ -187,7 +187,7 @@ class _SettingPageState extends State<SettingPage> {
         ),
         if (FileAssociationManager.isSupported)
           ListTile(
-            title: Text(context.loc.file_association),
+            title: Text(t.settings.file_association),
             trailing: TextButton(
               onPressed: () async {
                 try {
@@ -196,12 +196,12 @@ class _SettingPageState extends State<SettingPage> {
                   if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(context.loc.cannot_open_settings),
+                      content: Text(t.settings.cannot_open_settings),
                     ),
                   );
                 }
               },
-              child: Text(context.loc.open_settings),
+              child: Text(t.settings.open_settings),
             ),
           ),
       ],
@@ -210,11 +210,11 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildAppearanceSection() {
     return _buildSettingCard(
-      title: context.loc.appearance,
+      title: t.settings.appearance,
       icon: Icons.palette,
       children: [
         ListTile(
-          title: Text(context.loc.theme_color),
+          title: Text(t.settings.theme_color),
           trailing: Container(
             width: 24,
             height: 24,
@@ -234,7 +234,7 @@ class _SettingPageState extends State<SettingPage> {
           child: Row(
             children: [
               Expanded(
-                child: Text(context.loc.max_lines),
+                child: Text(t.settings.max_lines),
               ),
               SizedBox(
                 width: 100,
@@ -265,11 +265,11 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildDebugSection() {
     return _buildSettingCard(
-      title: context.loc.debug,
+      title: t.settings.debug,
       icon: Icons.bug_report,
       children: [
         SwitchListTile(
-          title: Text(context.loc.enable_debug),
+          title: Text(t.settings.enable_debug),
           value: Config.enableDebug,
           onChanged: (bool value) async {
             setState(() {
@@ -286,7 +286,7 @@ class _SettingPageState extends State<SettingPage> {
         ),
         ListTile(
           enabled: Config.enableDebug,
-          title: Text(context.loc.open_debug_log),
+          title: Text(t.settings.open_debug_log),
           leading: const Icon(Icons.description),
           onTap: () {
             final logPath = Logger.instance.logFilePath;
@@ -297,7 +297,7 @@ class _SettingPageState extends State<SettingPage> {
         ),
         ListTile(
           enabled: Config.enableDebug,
-          title: Text(context.loc.open_debug_directory),
+          title: Text(t.settings.open_debug_directory),
           leading: const Icon(Icons.folder),
           onTap: () {
             final logPath = Logger.instance.logFilePath;
@@ -324,14 +324,14 @@ class _SettingPageState extends State<SettingPage> {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ListTile(
           leading: const Icon(Icons.info),
-          title: Text(context.loc.about),
+          title: Text(t.settings.about),
           onTap: () {
             showAboutDialog(
               context: context,
-              applicationName: appTitle,
+              applicationName: t.title,
               applicationVersion: packageInfo.version,
               applicationIcon: Image.asset(
-                'assets/icon.png',
+                'assets/image/icon.png',
                 width: 64,
                 height: 64,
               ),
@@ -369,7 +369,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.loc.setting),
+        title: Text(t.settings.title),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: ListView(

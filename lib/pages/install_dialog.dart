@@ -1,7 +1,7 @@
 import 'dart:io';
 
+import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:flutter/material.dart';
-import '../utils/local.dart';
 
 class InstallOptions {
   bool allowDowngrade = false;
@@ -127,7 +127,7 @@ class _InstallDialogState extends State<InstallDialog> {
 
     for (var device in devices.where((d) => d.selected)) {
       setState(() {
-        device.installStatus = context.loc.installing;
+        device.installStatus = t.install.installing;
         device.errorMessage = null;
       });
 
@@ -153,15 +153,15 @@ class _InstallDialogState extends State<InstallDialog> {
 
         setState(() {
           if (result.exitCode == 0) {
-            device.installStatus = context.loc.install_success;
+            device.installStatus = t.install.success;
           } else {
-            device.installStatus = context.loc.install_failed;
+            device.installStatus = t.install.failed;
             device.errorMessage = result.stderr.toString();
           }
         });
       } catch (e) {
         setState(() {
-          device.installStatus = context.loc.install_error;
+          device.installStatus = t.install.error;
           device.errorMessage = e.toString();
         });
       }
@@ -181,7 +181,7 @@ class _InstallDialogState extends State<InstallDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(context.loc.install_apk),
+      title: Text(t.install.apk),
       content: SizedBox(
         width: 400,
         child: Column(
@@ -191,7 +191,7 @@ class _InstallDialogState extends State<InstallDialog> {
             if (isLoading)
               const Center(child: CircularProgressIndicator())
             else if (devices.isEmpty)
-              Text(context.loc.no_devices)
+              Text(t.install.no_devices)
             else
               SizedBox(
                 height: 200,
@@ -279,7 +279,7 @@ class _InstallDialogState extends State<InstallDialog> {
                     size: 20,
                   ),
                   Text(
-                    context.loc.advanced_options,
+                    t.install.advanced_options,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -308,7 +308,7 @@ class _InstallDialogState extends State<InstallDialog> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          context.loc.allow_test,
+                          t.install.allow_test,
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -331,7 +331,7 @@ class _InstallDialogState extends State<InstallDialog> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          context.loc.allow_downgrade,
+                          t.install.allow_downgrade,
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -354,7 +354,7 @@ class _InstallDialogState extends State<InstallDialog> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          context.loc.force_install,
+                          t.install.force_install,
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -369,7 +369,7 @@ class _InstallDialogState extends State<InstallDialog> {
       actions: [
         TextButton(
           onPressed: isInstalling ? null : () => Navigator.of(context).pop(),
-          child: Text(context.loc.cancel),
+          child: Text(t.base.cancel),
         ),
         ElevatedButton(
           onPressed: canInstall ? _installApk : null,
@@ -379,7 +379,7 @@ class _InstallDialogState extends State<InstallDialog> {
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(context.loc.confirm),
+              : Text(t.base.confirm),
         ),
       ],
     );

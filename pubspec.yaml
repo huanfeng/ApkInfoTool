@@ -17,9 +17,10 @@ dependencies:
   path_provider: ^2.1.2
   url_launcher: ^6.2.1
   package_info_plus: ^8.1.1
+  slang: ^3.29.0
+  slang_flutter: ^3.29.0
   intl: ^0.19.0
   file_picker: ^8.1.4
-  chinese_font_library: ^1.2.0
   window_manager: ^0.4.3
   shared_preferences: ^2.3.3
   provider: ^6.0.5
@@ -33,12 +34,12 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
   inno_bundle: ^0.7.4
+  slang_build_runner: ^3.29.0
 
 flutter:
   uses-material-design: true
-  generate: true
   assets:
-    - assets/icon.png
+    - assets/image/icon.png
 
 inno_bundle:
   id: 8cdac933-dde4-5d06-985d-4c99f7247903

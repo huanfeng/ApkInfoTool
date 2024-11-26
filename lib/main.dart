@@ -1,8 +1,8 @@
+import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:apk_info_tool/pages/setting.dart';
-import 'package:chinese_font_library/chinese_font_library.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -14,7 +14,6 @@ import 'utils/log.dart';
 import 'utils/logger.dart';
 
 late PackageInfo packageInfo;
-const appTitle = "APK Info Tool";
 
 String apkByArgs = "";
 
@@ -47,12 +46,13 @@ void main(List<String> arguments) async {
     windowManager.waitUntilReadyToShow().then((_) async {
       await windowManager.setMinimumSize(const Size(400, 400));
       await windowManager.setSize(const Size(500, 600));
-      await windowManager.setTitle('$appTitle v${packageInfo.version}');
+      await windowManager.setTitle('${t.title} v${packageInfo.version}');
       await windowManager.show();
       // await windowManager.setPreventClose(true);
     });
   }
-  runApp(const MyApp());
+  LocaleSettings.useDeviceLocale();
+  runApp(TranslationProvider(child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -64,11 +64,12 @@ class MyApp extends StatelessWidget {
       create: (_) => ThemeManager(),
       child: Consumer<ThemeManager>(
         builder: (context, themeManager, _) => MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          title: appTitle,
+          locale: TranslationProvider.of(context).flutterLocale,
+          supportedLocales: AppLocaleUtils.supportedLocales,
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          title: t.title,
           initialRoute: "/",
-          theme: themeManager.themeData.useSystemChineseFont(Brightness.light),
+          theme: themeManager.themeData,
           routes: {
             "/": (context) => const APKInfoPage(),
             "setting": (context) => const SettingPage(),

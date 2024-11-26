@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'package:apk_info_tool/config.dart';
+
 class TitleValueLayout extends StatelessWidget {
   final String title;
   final String value;
   final Widget? end;
   final int? minLines;
   final int? maxLines;
-  final double titleWidth;
+  final double? titleWidth;
   final bool selectable;
 
   const TitleValueLayout({
@@ -16,7 +18,7 @@ class TitleValueLayout extends StatelessWidget {
     this.end,
     this.minLines,
     this.maxLines,
-    required this.titleWidth,
+    this.titleWidth,
     this.selectable = false,
   });
 
@@ -29,7 +31,7 @@ class TitleValueLayout extends StatelessWidget {
         children: [
           // 标题部分
           SizedBox(
-            width: titleWidth,
+            width: titleWidth ?? Config.titleWidth,
             child: Text(
               title,
               style: TextStyle(

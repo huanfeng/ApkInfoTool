@@ -1,0 +1,16 @@
+targets:
+  $default:
+    builders:
+      slang_build_runner:
+        options:
+          base_locale: en
+          fallback_strategy: base_locale
+          input_directory: assets/i18n
+          input_file_pattern: .json
+          string_interpolation: braces
+          timestamp: false
+          flat_map: false
+          translation_overrides: false
+          format:
+            enabled: true
+            width: 150

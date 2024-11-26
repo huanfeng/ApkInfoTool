@@ -1,6 +1,6 @@
+import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:flutter/material.dart';
 import '../config.dart';
-import '../utils/local.dart';
 
 class TitleWidthSetting extends StatefulWidget {
   const TitleWidthSetting({super.key});
@@ -26,7 +26,7 @@ class _TitleWidthSettingState extends State<TitleWidthSetting> {
         // 滑块
         Row(
           children: [
-            Text(context.loc.title_width),
+            Text(t.settings.title_width),
             Expanded(
               child: Slider(
                 value: _currentWidth,
@@ -57,7 +57,7 @@ class _TitleWidthSettingState extends State<TitleWidthSetting> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  context.loc.title_width_preview,
+                  t.settings.title_width_preview,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 16),

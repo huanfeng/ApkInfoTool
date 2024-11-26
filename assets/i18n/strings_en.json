@@ -1,0 +1,92 @@
+{
+  "title": "APK Info Tool",
+  "base": {
+    "select": "Select",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "ok": "OK"
+  },
+  "home": {
+    "copy_file_path": "Copy file path",
+    "copy_content": "Copy content",
+    "copied_content": "Copied content: {content}"
+  },
+  "settings": {
+    "title": "Settings",
+    "open_settings": "Open Settings",
+    "aapt_path": "AAPT Path:",
+    "adb_path": "ADB Path:",
+    "apksigner_path": "Apksigner Path:",
+    "select_exe_path": "Please select the executable file",
+    "environment": "Environment",
+    "features": "Features",
+    "file_association": "File Association",
+    "appearance": "Appearance",
+    "about": "About",
+    "debug": "Debug",
+    "enable_signature": "Enable Signature Check",
+    "enable_debug": "Enable Debug Log",
+    "open_debug_log": "Open Debug Log",
+    "open_debug_directory": "Open Debug Directory",
+    "theme_color": "Theme Color",
+    "max_lines": "Max Lines in Lists",
+    "cannot_open_settings": "Unable to open system settings, possibly due to unsupported system version",
+    "title_width": "Title Width",
+    "title_width_preview": "Preview"
+  },
+  "parse": {
+    "signature_verify_failed": "Signature verification failed",
+    "set_aapt2_path": "Please set the aapt2 path first",
+    "parsing": "Parsing...",
+    "parse_apk": "Parse APK Info",
+    "parse_timeout": "Parse timeout, file may be too large",
+    "parse_apk_info_fail": "Failed to parse APK information!"
+  },
+  "open": {
+    "open_apk": "Open APK",
+    "open_file_directory": "Open file location",
+    "select_apk_file": "Please select APK file"
+  },
+  "file_info": {
+    "file": "File",
+    "size": "Size"
+  },
+  "apk_info": {
+    "package_name": "Package",
+    "app_name": "Name",
+    "min_sdk": "Min SDK",
+    "target_sdk": "Target SDK",
+    "version_code": "Version Code",
+    "version_name": "Version Name",
+    "screen_size": "Screen Size",
+    "screen_density": "Screen Density",
+    "abi": "ABI",
+    "languages": "Languages",
+    "permissions": "Permissions",
+    "signature_info": "Signature Info"
+  },
+  "rename": {
+    "rename_file": "Rename File",
+    "app_name_only": "App Name Only",
+    "name_with_version": "Name + Version",
+    "success": "Rename successful",
+    "failed": "Rename failed",
+    "new_file_name": "New File Name",
+    "name_cannot_be_empty": "File name cannot be empty",
+    "must_end_with_apk": "File name must end with .apk",
+    "default_name": "Default Name"
+  },
+  "install": {
+    "apk": "Install APK",
+    "installing": "Installing...",
+    "success": "Success",
+    "failed": "Failed",
+    "error": "Error",
+    "no_devices": "No devices found",
+    "please_select_device": "Please select at least one device",
+    "allow_downgrade": "Allow Downgrade (-d)",
+    "allow_test": "Allow Test (-t)",
+    "force_install": "Force Install (-r)",
+    "advanced_options": "Advanced Options"
+  }
+}

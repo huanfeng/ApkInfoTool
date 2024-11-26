@@ -144,7 +144,7 @@ jobs:
           EOF
 
           # 复制图标
-          cp assets/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/apk_info_tool.png
+          cp assets/image/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/apk_info_tool.png
 
           # 创建 AppRun 文件
           cat > AppDir/AppRun << EOF

@@ -1,0 +1,92 @@
+{
+  "title": "APK Info Tool",
+  "base": {
+    "select": "选择",
+    "confirm": "确定",
+    "cancel": "取消",
+    "ok": "确定"
+  },
+  "home": {
+    "copy_file_path": "复制文件路径",
+    "copy_content": "复制内容",
+    "copied_content": "已复制内容: {content}"
+  },
+  "settings": {
+    "title": "设置",
+    "open_settings": "打开设置",
+    "aapt_path": "AAPT路径:",
+    "adb_path": "ADB路径:",
+    "apksigner_path": "Apksigner路径:",
+    "select_exe_path": "请选择可执行文件",
+    "environment": "环境",
+    "features": "功能",
+    "file_association": "文件关联",
+    "appearance": "外观",
+    "about": "关于",
+    "debug": "调试",
+    "enable_signature": "启用签名检查",
+    "enable_debug": "启用调试日志",
+    "open_debug_log": "打开调试日志",
+    "open_debug_directory": "打开调试目录",
+    "theme_color": "主题颜色",
+    "max_lines": "列表最大行数",
+    "cannot_open_settings": "无法打开系统设置, 可能是当前系统版本不支持",
+    "title_width": "标题宽度",
+    "title_width_preview": "预览"
+  },
+  "parse": {
+    "signature_verify_failed": "签名验证失败",
+    "set_aapt2_path": "请先设置 aapt2 路径",
+    "parse_apk": "解析APK信息",
+    "parsing": "正在解析中...",
+    "parse_timeout": "解析超时,文件可能过大",
+    "parse_apk_info_fail": "解析APK信息失败!"
+  },
+  "open": {
+    "open_apk": "打开APK",
+    "open_file_directory": "打开文件位置",
+    "select_apk_file": "请选择 APK 文件"
+  },
+  "file_info": {
+    "file": "文件",
+    "size": "大小"
+  },
+  "apk_info": {
+    "package_name": "包名",
+    "app_name": "名称",
+    "min_sdk": "最低SDK",
+    "target_sdk": "目标SDK",
+    "version_code": "版本号",
+    "version_name": "版本名",
+    "screen_size": "屏幕尺寸",
+    "screen_density": "屏幕密度",
+    "abi": "ABI",
+    "languages": "语言列表",
+    "permissions": "权限列表",
+    "signature_info": "签名信息"
+  },
+  "rename": {
+    "rename_file": "重命名文件",
+    "app_name_only": "仅应用名",
+    "name_with_version": "名称+版本号",
+    "success": "重命名成功",
+    "failed": "重命名失败",
+    "new_file_name": "新文件名",
+    "name_cannot_be_empty": "文件名不能为空",
+    "must_end_with_apk": "文件名必须以.apk结尾",
+    "default_name": "默认名称"
+  },
+  "install": {
+    "apk": "安装APK",
+    "installing": "正在安装...",
+    "success": "安装成功",
+    "failed": "安装失败",
+    "error": "安装错误",
+    "no_devices": "未发现设备",
+    "please_select_device": "请至少选择一个设备",
+    "allow_downgrade": "允许降级安装 (-d)",
+    "allow_test": "允许测试版 (-t)",
+    "force_install": "强制安装 (-r)",
+    "advanced_options": "高级选项"
+  }
+}

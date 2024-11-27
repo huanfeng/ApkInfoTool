@@ -1,6 +1,6 @@
+import 'package:apk_info_tool/utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'utils/log.dart';
 
 class Config {
   static String _aapt2Path = "";
@@ -83,7 +83,7 @@ class Config {
     gPrefs.setDouble(kKeyTitleWidthKey, value);
   }
 
-  static void loadConfig() {
+  static Future<void> loadConfig() async {
     final prefs = gPrefs;
     aapt2Path = prefs.getString(kKeyAapt2PathKey) ?? aapt2Path;
     apksignerPath = prefs.getString(kKeyApksignerPathKey) ?? apksignerPath;
@@ -95,7 +95,11 @@ class Config {
     _themeColor = prefs.getInt(kKeyThemeColorKey) ?? _themeColor;
     _titleWidth = prefs.getDouble(kKeyTitleWidthKey) ?? _titleWidth;
 
-    log("aapt2Path=$aapt2Path, apksignerPath=$apksignerPath, adbPath=$adbPath");
-    log("enableSignature=$_enableSignature, enableDebug=$_enableDebug, maxLines=$_maxLines, themeColor=$_themeColor, titleWidth=$_titleWidth");
+    await LoggerInit.initLogger();
+
+    log.info(
+        "loadConfig: aapt2Path=$aapt2Path, apksignerPath=$apksignerPath, adbPath=$adbPath");
+    log.info(
+        "loadConfig: enableSignature=$_enableSignature, enableDebug=$_enableDebug, maxLines=$_maxLines, themeColor=$_themeColor, titleWidth=$_titleWidth");
   }
 }

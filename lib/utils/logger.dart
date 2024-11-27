@@ -1,18 +1,29 @@
-import 'dart:io';
 import 'dart:developer' as developer;
+import 'dart:io';
 
+import 'package:apk_info_tool/config.dart';
+import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import '../config.dart';
 
-class Logger {
-  static final Logger _instance = Logger._internal();
-  static Logger get instance => _instance;
+final log = Logger('ExampleLogger');
 
-  Logger._internal();
+class LoggerInit {
+  static final LoggerInit _instance = LoggerInit._internal();
+  static LoggerInit get instance => _instance;
+
+  LoggerInit._internal();
 
   File? _logFile;
   IOSink? _logSink;
+
+  static initLogger() async {
+    Logger.root.level = Level.ALL; // defaults to Level.INFO
+    Logger.root.onRecord.listen((record) {
+      developer.log('${record.level.name}: ${record.time}: ${record.message}');
+      LoggerInit.instance.log(record);
+    });
+  }
 
   Future<void> init() async {
     if (Config.enableDebug) {
@@ -23,17 +34,10 @@ class Logger {
     }
   }
 
-  void log(String message, {int level = 0}) {
-    final now = DateTime.now();
-
-    developer.log(message, time: now, level: level);
-
+  void log(LogRecord record) {
     if (Config.enableDebug && _logSink != null) {
-      final timeStr =
-          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} "
-          "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}";
-      final logMessage = "[$timeStr] $message";
-      _logSink?.writeln(logMessage);
+      _logSink
+          ?.writeln('${record.level.name}: ${record.time}: ${record.message}');
     }
   }
 

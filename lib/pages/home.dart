@@ -11,7 +11,7 @@ import '../config.dart';
 import '../main.dart';
 import '../utils/android_version.dart';
 import '../utils/format.dart';
-import '../utils/log.dart';
+import '../utils/logger.dart';
 import '../utils/platform.dart';
 import '../widgets/title_value_layout.dart';
 import './install_dialog.dart';
@@ -38,11 +38,11 @@ class _APKInfoPageState extends State<APKInfoPage> {
       allowedExtensions: ['apk'],
       lockParentWindow: true,
     );
-    log('result=$result');
+    log.fine('openFilePicker: result=$result');
     var file = result?.files.single;
     // 打开文件选择
     if (file != null) {
-      log('filePaths=$file');
+      log.fine('openFilePicker: filePaths=$file');
       if (file.path != null) {
         openApk(file.path!);
       }
@@ -122,7 +122,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
   @override
   void initState() {
     super.initState();
-    log("initState apkByArgs=$apkByArgs");
+    log.info("initState apkByArgs=$apkByArgs");
     if (apkByArgs.isNotEmpty) {
       openApk(apkByArgs);
     }

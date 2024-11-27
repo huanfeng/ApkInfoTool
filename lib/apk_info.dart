@@ -6,10 +6,10 @@ import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 
 import 'config.dart';
-import 'utils/log.dart';
+import 'utils/logger.dart';
 
 Future<ApkInfo?> getApkInfo(String apk) async {
-  log("getApkInfo: apk=$apk start");
+  log.info("getApkInfo: apk=$apk start");
   final aapt = Config.aapt2Path;
 
   final start = DateTime.now();
@@ -33,7 +33,7 @@ Future<ApkInfo?> getApkInfo(String apk) async {
     final end = DateTime.now();
     var exitCode = result.exitCode;
     final cost = end.difference(start).inMilliseconds;
-    log("getApkInfo: end exitCode=$exitCode, cost=${cost}ms");
+    log.info("getApkInfo: end exitCode=$exitCode, cost=${cost}ms");
 
     if (exitCode == 0) {
       parseApkInfoFromOutput(result.stdout.toString(), apkInfo);
@@ -44,7 +44,7 @@ Future<ApkInfo?> getApkInfo(String apk) async {
           final signInfo = await getSignatureInfo(apk);
           apkInfo.signatureInfo = signInfo;
         } catch (e) {
-          log("获取签名信息失败: $e");
+          log.info("getApkInfo: 获取签名信息失败: $e");
           apkInfo.signatureInfo = "获取签名信息失败: $e";
         }
       }
@@ -53,15 +53,15 @@ Future<ApkInfo?> getApkInfo(String apk) async {
       try {
         apkInfo.mainIconImage = await apkInfo.loadIcon();
       } catch (e) {
-        log("获取图标失败: $e");
+        log.warning("getApkInfo: getApkInfo: 获取图标失败: $e");
       }
 
       return apkInfo;
     }
   } on TimeoutException {
-    log("getApkInfo: timeout");
+    log.warning("getApkInfo: timeout");
   } catch (e) {
-    log("getApkInfo: error=$e");
+    log.severe("getApkInfo: error=$e");
   }
 
   return null;
@@ -87,7 +87,7 @@ Future<String> getSignatureInfo(String apkPath) async {
       throw Exception('获取签名失败: ${result.stderr}');
     }
   } catch (e) {
-    log('获取签名信息失败: $e');
+    log.warning('getSignatureInfo: 获取签名信息失败: $e');
     rethrow;
   }
 }
@@ -95,10 +95,10 @@ Future<String> getSignatureInfo(String apkPath) async {
 void parseApkInfoFromOutput(String output, ApkInfo apkInfo) {
   final lines = output.split("\n");
   for (final (index, item) in lines.indexed) {
-    log("[$index] $item");
+    log.fine("parseApkInfoFromOutput: [$index] $item");
     apkInfo.parseLine(item);
   }
-  log("apkInfo=$apkInfo");
+  log.fine("parseApkInfoFromOutput: apkInfo=$apkInfo");
 }
 
 final _kNoneSingleQuotePattern = RegExp(r"[^']");
@@ -312,10 +312,10 @@ class ApkInfo {
         final file = archive.findFile(filePath);
         return file?.content;
       } catch (e) {
-        log('找不到文件: $filePath');
+        log.info('_readFileFromZip: 找不到文件: $filePath');
       }
     } catch (e) {
-      log('decodeStream fail: $e');
+      log.warning('_readFileFromZip: decodeStream fail: $e');
     } finally {
       inputStream?.close();
     }
@@ -338,13 +338,13 @@ class ApkInfo {
           final frame = await codec.getNextFrame();
           return frame.image;
         } else {
-          log('找不到图标文件: $iconPath');
+          log.info('loadIcon: 找不到图标文件: $iconPath');
         }
       } else if (iconPath.endsWith('.xml')) {
-        log('暂不支持XML格式的图标: $iconPath');
+        log.info('loadIcon: 暂不支持XML格式的图标: $iconPath');
       }
     } catch (e) {
-      log('加载图标失败: $e');
+      log.warning('loadIcon: 加载图标失败: $e');
     }
     return null;
   }

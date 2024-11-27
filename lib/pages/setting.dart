@@ -12,7 +12,6 @@ import '../config.dart';
 import '../main.dart';
 import '../theme/theme_manager.dart';
 import '../utils/file_association.dart';
-import '../utils/log.dart';
 import '../utils/logger.dart';
 import '../utils/platform.dart';
 import '../widgets/title_width_setting.dart';
@@ -42,7 +41,7 @@ class _SettingPageState extends State<SettingPage> {
       allowedExtensions: getExecutableExtensions(),
       lockParentWindow: true,
     );
-    log('result=$result');
+    log.info('openFilePicker: result=$result');
     var file = result?.files.single;
     if (file != null && file.path != null) {
       cb(file.path!);
@@ -277,10 +276,10 @@ class _SettingPageState extends State<SettingPage> {
             });
             // 重新初始化日志系统
             if (!value) {
-              await Logger.instance.dispose();
+              await LoggerInit.instance.dispose();
             } else {
-              await Logger.instance.dispose();
-              await Logger.instance.init();
+              await LoggerInit.instance.dispose();
+              await LoggerInit.instance.init();
             }
           },
         ),
@@ -289,7 +288,7 @@ class _SettingPageState extends State<SettingPage> {
           title: Text(t.settings.open_debug_log),
           leading: const Icon(Icons.description),
           onTap: () {
-            final logPath = Logger.instance.logFilePath;
+            final logPath = LoggerInit.instance.logFilePath;
             if (logPath != null) {
               openFileInExplorer(logPath);
             }
@@ -300,7 +299,7 @@ class _SettingPageState extends State<SettingPage> {
           title: Text(t.settings.open_debug_directory),
           leading: const Icon(Icons.folder),
           onTap: () {
-            final logPath = Logger.instance.logFilePath;
+            final logPath = LoggerInit.instance.logFilePath;
             if (logPath != null) {
               openFileInExplorer(logPath);
             }

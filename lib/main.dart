@@ -10,7 +10,6 @@ import 'package:window_manager/window_manager.dart';
 import 'config.dart';
 import 'pages/home.dart';
 import 'theme/theme_manager.dart';
-import 'utils/log.dart';
 import 'utils/logger.dart';
 
 late PackageInfo packageInfo;
@@ -28,13 +27,13 @@ bool get isDesktop {
 
 void main(List<String> arguments) async {
   await Config.init();
-  Config.loadConfig();
+  await Config.loadConfig();
 
   packageInfo = await PackageInfo.fromPlatform();
 
-  await Logger.instance.init();
+  await LoggerInit.instance.init();
 
-  log("args=$arguments");
+  log.info("main: args=$arguments");
   if (arguments.isNotEmpty) {
     apkByArgs = arguments.first;
   }

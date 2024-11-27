@@ -34,11 +34,18 @@ jobs:
       - name: Create Installer
         run: dart run inno_bundle:build --release
 
+      - name: Create ZIP Package
+        run: |
+          cd build/windows/x64/runner/Release
+          7z a ../../installer/Release/ApkInfoTool-Windows-x86_64-${{ steps.version.outputs.version }}.zip *
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-installer
-          path: build/windows/x64/installer/Release/*.exe
+          name: windows-release
+          path: |
+            build/windows/x64/installer/Release/*.exe
+            build/windows/x64/installer/Release/*.zip
 
   build-macos:
     runs-on: macos-latest
@@ -194,6 +201,7 @@ jobs:
         with:
           name: Release ${{ github.ref_name }}
           files: |
-            windows-installer/*.exe
+            windows-release/*.exe
+            windows-release/*.zip
             macos-dmg/*.dmg
             linux-appimage/*.AppImage

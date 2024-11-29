@@ -93,6 +93,7 @@ Future<String> getSignatureInfo(String apkPath) async {
 }
 
 void parseApkInfoFromOutput(String output, ApkInfo apkInfo) {
+  apkInfo.originalText = output;
   final lines = output.split("\n");
   for (final (index, item) in lines.indexed) {
     log.fine("parseApkInfoFromOutput: [$index] $item");
@@ -144,6 +145,9 @@ class ApkInfo {
 
   List<String> others = [];
   String signatureInfo = "";
+
+  // 原始文本
+  String originalText = "";
 
   (String, String) parseToKeyValue(String line, String separator) {
     final pos = line.indexOf(separator);
@@ -384,6 +388,7 @@ class ApkInfo {
     nativeCodes.clear();
     others.clear();
     signatureInfo = "";
+    originalText = "";
   }
 }
 

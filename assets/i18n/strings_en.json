@@ -9,7 +9,8 @@
   "home": {
     "copy_file_path": "Copy file path",
     "copy_content": "Copy content",
-    "copied_content": "Copied content: {content}"
+    "copied_content": "Copied content: {content}",
+    "more_actions": "More Actions"
   },
   "settings": {
     "title": "Settings",
@@ -63,7 +64,8 @@
     "abi": "ABI",
     "languages": "Languages",
     "permissions": "Permissions",
-    "signature_info": "Signature Info"
+    "signature_info": "Signature Info",
+    "text_info": "Text Info"
   },
   "rename": {
     "rename_file": "Rename File",

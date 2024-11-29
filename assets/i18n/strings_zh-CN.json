@@ -1,5 +1,5 @@
 {
-  "title": "APK Info Tool",
+  "title": "APK 信息工具",
   "base": {
     "select": "选择",
     "confirm": "确定",
@@ -9,7 +9,8 @@
   "home": {
     "copy_file_path": "复制文件路径",
     "copy_content": "复制内容",
-    "copied_content": "已复制内容: {content}"
+    "copied_content": "已复制内容: {content}",
+    "more_actions": "更多操作"
   },
   "settings": {
     "title": "设置",
@@ -63,7 +64,8 @@
     "abi": "ABI",
     "languages": "语言列表",
     "permissions": "权限列表",
-    "signature_info": "签名信息"
+    "signature_info": "签名信息",
+    "text_info": "文本信息"
   },
   "rename": {
     "rename_file": "重命名文件",

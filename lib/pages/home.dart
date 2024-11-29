@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:apk_info_tool/gen/strings.g.dart';
+import 'package:apk_info_tool/pages/text_info.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -171,22 +172,6 @@ class _APKInfoPageState extends State<APKInfoPage> {
             ],
           ),
         ),
-        PopupMenuItem(
-          height: 32,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          value: 'rename',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.drive_file_rename_outline, size: 16),
-              const SizedBox(width: 8),
-              Text(
-                t.rename.rename_file,
-                style: const TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-        ),
       ],
       onSelected: (value) async {
         if (selectedFilePath == null) return;
@@ -207,9 +192,6 @@ class _APKInfoPageState extends State<APKInfoPage> {
               );
             }
             break;
-          case 'rename':
-            _showRenameDialog();
-            break;
         }
       },
     );
@@ -222,7 +204,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
       waitDuration: const Duration(seconds: 1),
       textStyle: TextStyle(
         color: Colors.white,
-        fontSize: 14,
+        fontSize: 12,
       ),
       child: IconButton(
         padding: EdgeInsets.zero,
@@ -284,6 +266,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
                         ),
                       );
                     }),
+          _buildMoreMenuButton(context),
           IconButton(
               icon: const Icon(Icons.settings),
               tooltip: t.settings.open_settings,
@@ -473,6 +456,71 @@ class _APKInfoPageState extends State<APKInfoPage> {
             ),
         ],
       ),
+    );
+  }
+
+  PopupMenuButton<String> _buildMoreMenuButton(BuildContext context) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_horiz),
+      tooltip: t.home.more_actions,
+      enabled: selectedFilePath != null,
+      offset: const Offset(0, 0),
+      position: PopupMenuPosition.under,
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          value: 'rename',
+          enabled: selectedFilePath != null,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.drive_file_rename_outline, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                t.rename.rename_file,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          value: 'text_info',
+          enabled: selectedFilePath != null && apkInfo != null,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.text_snippet, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                t.apk_info.text_info,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ],
+      onSelected: (value) {
+        switch (value) {
+          case 'rename':
+            _showRenameDialog();
+            break;
+          case 'text_info':
+            if (apkInfo != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TextInfoPage(
+                    text: apkInfo!.originalText,
+                  ),
+                ),
+              );
+            }
+            break;
+        }
+      },
     );
   }
 

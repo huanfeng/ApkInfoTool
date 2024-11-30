@@ -26,6 +26,8 @@ bool get isDesktop {
 }
 
 void main(List<String> arguments) async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   await Config.init();
   await Config.loadConfig();
 
@@ -37,8 +39,6 @@ void main(List<String> arguments) async {
   if (arguments.isNotEmpty) {
     apkByArgs = arguments.first;
   }
-
-  WidgetsFlutterBinding.ensureInitialized();
 
   if (isDesktop) {
     await windowManager.ensureInitialized();

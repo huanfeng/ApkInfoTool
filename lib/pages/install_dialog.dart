@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:apk_info_tool/config.dart';
 import 'package:apk_info_tool/gen/strings.g.dart';
+import 'package:apk_info_tool/utils/logger.dart';
 import 'package:flutter/material.dart';
 
 class InstallOptions {
@@ -72,7 +74,8 @@ class _InstallDialogState extends State<InstallDialog> {
     });
 
     try {
-      final result = await Process.run('adb', ['devices', '-l']);
+      final exePath = Config.adbPath.isNotEmpty ? Config.adbPath : 'adb';
+      final result = await Process.run(exePath, ['devices', '-l']);
       final lines = result.stdout.toString().split('\n');
 
       List<AdbDevice> newDevices = [];
@@ -114,6 +117,7 @@ class _InstallDialogState extends State<InstallDialog> {
         isLoading = false;
       });
     } catch (e) {
+      log.warning('_loadDevices: 获取设备列表失败: $e');
       setState(() {
         isLoading = false;
       });

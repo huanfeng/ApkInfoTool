@@ -28,5 +28,53 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+ 	<key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>apk</string>
+                <string>xapk</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>APK File</string>
+            <key>LSHandlerRank</key>
+            <string>Default</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.fengware.app.apkinfotool.apkInfoTool</string>
+            </array>
+
+            <!-- 新增以下两个键 -->
+            <key>NSDocumentClass</key>
+            <string>$(PRODUCT_MODULE_NAME).Document</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+        </dict>
+    </array>
+
+    <!-- UTI 定义 -->
+    <key>UTImportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.fengware.app.apkinfotool.apkInfoTool</string>
+            <key>UTTypeDescription</key>
+            <string>APK File</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+                <string>public.content</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>apk</string>
+                    <string>xapk</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
 </dict>
 </plist>

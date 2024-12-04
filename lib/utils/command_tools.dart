@@ -4,6 +4,10 @@ import '../config.dart';
 
 // 辅助获取命令行路径
 class CommandTools {
+  static const String adb = "adb";
+  static const String aapt2 = "aapt2";
+  static const String apksigner = "apksigner";
+
   static String _getMacOsCmdPath(String cmd) {
     final executable = Platform.resolvedExecutable;
     final parent = File(executable).parent.path;
@@ -12,16 +16,16 @@ class CommandTools {
 
   static String getAdbPath() {
     if (Platform.isMacOS) {
-      return _getMacOsCmdPath("adb");
+      return _getMacOsCmdPath(adb);
     }
-    return Config.adbPath.isEmpty ? "adb" : Config.adbPath;
+    return Config.adbPath.isEmpty ? adb : Config.adbPath;
   }
 
   static String getAapt2Path() {
     if (Platform.isMacOS) {
-      return _getMacOsCmdPath("aapt2");
+      return _getMacOsCmdPath(aapt2);
     }
-    return Config.adbPath.isEmpty ? "aapt2" : Config.adbPath;
+    return Config.aapt2Path.isEmpty ? aapt2 : Config.aapt2Path;
   }
 
   static String getApkSignerPath() {
@@ -29,6 +33,6 @@ class CommandTools {
       // macOS 暂不支持
       return "";
     }
-    return Config.adbPath.isEmpty ? "apksigner" : Config.adbPath;
+    return Config.apksignerPath.isEmpty ? apksigner : Config.apksignerPath;
   }
 }

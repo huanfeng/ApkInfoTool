@@ -151,8 +151,10 @@ class _APKInfoPageState extends State<APKInfoPage> {
     if (apkByArgs.isNotEmpty) {
       openApk(apkByArgs);
     }
-    _initPlatformState();
-    _setupFileAssociationHandler();
+    if (Platform.isMacOS) {
+      _initPlatformState();
+      _setupFileAssociationHandler();
+    }
   }
 
   // 构建文件操作菜单
@@ -276,9 +278,11 @@ class _APKInfoPageState extends State<APKInfoPage> {
           IconButton(
               icon: const Icon(Icons.search),
               tooltip: t.parse.parse_apk,
-              onPressed: () {
-                openApk(selectedFilePath ?? '');
-              }),
+              onPressed: selectedFilePath == null
+                  ? null
+                  : () {
+                      openApk(selectedFilePath ?? '');
+                    }),
           IconButton(
               icon: const Icon(Icons.android),
               tooltip: t.install.apk,

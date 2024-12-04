@@ -33,11 +33,12 @@
     "max_lines": "列表最大行数",
     "cannot_open_settings": "无法打开系统设置, 可能是当前系统版本不支持",
     "title_width": "标题宽度",
-    "title_width_preview": "预览"
+    "title_width_preview": "预览",
+    "reset": "重置"
   },
   "parse": {
     "signature_verify_failed": "签名验证失败",
-    "set_aapt2_path": "请先设置 aapt2 路径",
+    "please_set_path": "请先设置 {name} 路径",
     "parse_apk": "解析APK信息",
     "parsing": "正在解析中...",
     "parse_timeout": "解析超时,文件可能过大",

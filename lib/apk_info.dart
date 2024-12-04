@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'dart:async';
+import 'package:apk_info_tool/gen/strings.g.dart';
+import 'package:apk_info_tool/utils/command_tools.dart';
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 
@@ -10,7 +12,7 @@ import 'utils/logger.dart';
 
 Future<ApkInfo?> getApkInfo(String apk) async {
   log.info("getApkInfo: apk=$apk start");
-  final aapt = Config.aapt2Path;
+  final aaptPath = CommandTools.getAapt2Path();
 
   final start = DateTime.now();
   final apkInfo = ApkInfo();
@@ -19,7 +21,7 @@ Future<ApkInfo?> getApkInfo(String apk) async {
 
   try {
     var result = await Process.run(
-      aapt,
+      aaptPath,
       ['dump', 'badging', apk],
       stdoutEncoding: utf8,
       stderrEncoding: utf8,
@@ -70,7 +72,7 @@ Future<ApkInfo?> getApkInfo(String apk) async {
 Future<String> getSignatureInfo(String apkPath) async {
   final apksigner = Config.apksignerPath;
   if (apksigner.isEmpty) {
-    throw Exception('请先设置 apksigner 路径');
+    throw Exception(t.parse.please_set_path(name: "apksigner"));
   }
 
   try {

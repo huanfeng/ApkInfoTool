@@ -71,12 +71,6 @@ class _APKInfoPageState extends State<APKInfoPage> {
   Future<void> loadApkInfo() async {
     if (selectedFilePath == null) return;
 
-    if (Config.aapt2Path.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(t.parse.set_aapt2_path)));
-      return;
-    }
-
     setState(() {
       apkInfo?.reset();
       _isParsing = true;
@@ -120,6 +114,36 @@ class _APKInfoPageState extends State<APKInfoPage> {
     }
   }
 
+  Future<void> _initPlatformState() async {
+    log.info("_initPlatformState: start");
+    String? initialFilePath;
+    try {
+      // 使用方法通道获取文件路径
+      initialFilePath = await const MethodChannel('file_association')
+          .invokeMethod('getInitialFilePath');
+    } on PlatformException catch (e) {
+      log.info("PlatformException: $e");
+      initialFilePath = null;
+    }
+
+    log.info("_initPlatformState: initialFilePath=$initialFilePath");
+    if (!mounted) return;
+
+    if (initialFilePath != null && initialFilePath.isNotEmpty) {
+      openApk(initialFilePath);
+    }
+  }
+
+  void _setupFileAssociationHandler() {
+    const MethodChannel('file_association').setMethodCallHandler((call) async {
+      log.info("_setupFileAssociationHandler: call.method=${call.method}");
+      if (call.method == 'fileOpened') {
+        openApk(call.arguments);
+      }
+      return null;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -127,6 +151,8 @@ class _APKInfoPageState extends State<APKInfoPage> {
     if (apkByArgs.isNotEmpty) {
       openApk(apkByArgs);
     }
+    _initPlatformState();
+    _setupFileAssociationHandler();
   }
 
   // 构建文件操作菜单

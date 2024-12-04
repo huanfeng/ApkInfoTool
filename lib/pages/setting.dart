@@ -48,6 +48,21 @@ class _SettingPageState extends State<SettingPage> {
     }
   }
 
+  void resetToDefaultPath(String toolType) async {
+    switch (toolType) {
+      case 'aapt2':
+        Config.aapt2Path = '';
+        break;
+      case 'adb':
+        Config.adbPath = '';
+        break;
+      case 'apksigner':
+        Config.apksignerPath = '';
+        break;
+    }
+    setState(() {});
+  }
+
   List<String> getExecutableExtensions() {
     if (Platform.isWindows) {
       return ['exe', 'bat'];
@@ -125,46 +140,63 @@ class _SettingPageState extends State<SettingPage> {
       initiallyExpanded: true,
       children: [
         TitleValueLayout(
-          title: t.settings.aapt_path,
-          value: Config.aapt2Path,
-          end: TextButton(
-            onPressed: () {
-              openFilePicker((path) {
-                setState(() {
-                  Config.aapt2Path = path;
-                });
-              });
-            },
-            child: Text(t.base.select),
-          ),
-        ),
-        TitleValueLayout(
-          title: t.settings.apksigner_path,
-          value: Config.apksignerPath,
-          end: TextButton(
-            onPressed: () {
-              openFilePicker((path) {
-                setState(() {
-                  Config.apksignerPath = path;
-                });
-              });
-            },
-            child: Text(t.base.select),
-          ),
-        ),
+            title: t.settings.aapt_path,
+            value: Config.aapt2Path,
+            end: Row(children: [
+              TextButton(
+                onPressed: () {
+                  openFilePicker((path) {
+                    setState(() {
+                      Config.aapt2Path = path;
+                    });
+                  });
+                },
+                child: Text(t.base.select),
+              ),
+              TextButton(
+                onPressed: () => resetToDefaultPath('aapt2'),
+                child: Text(t.settings.reset),
+              )
+            ])),
+        if (!Platform.isMacOS)
+          TitleValueLayout(
+              title: t.settings.apksigner_path,
+              value: Config.apksignerPath,
+              end: Row(children: [
+                TextButton(
+                  onPressed: () {
+                    openFilePicker((path) {
+                      setState(() {
+                        Config.apksignerPath = path;
+                      });
+                    });
+                  },
+                  child: Text(t.base.select),
+                ),
+                TextButton(
+                  onPressed: () => resetToDefaultPath('apksigner'),
+                  child: Text(t.settings.reset),
+                )
+              ])),
         TitleValueLayout(
           title: t.settings.adb_path,
           value: Config.adbPath,
-          end: TextButton(
-            onPressed: () {
-              openFilePicker((path) {
-                setState(() {
-                  Config.adbPath = path;
+          end: Row(children: [
+            TextButton(
+              onPressed: () {
+                openFilePicker((path) {
+                  setState(() {
+                    Config.adbPath = path;
+                  });
                 });
-              });
-            },
-            child: Text(t.base.select),
-          ),
+              },
+              child: Text(t.base.select),
+            ),
+            TextButton(
+              onPressed: () => resetToDefaultPath('adb'),
+              child: Text(t.settings.reset),
+            )
+          ]),
         ),
       ],
     );
@@ -175,15 +207,16 @@ class _SettingPageState extends State<SettingPage> {
       title: t.settings.features,
       icon: Icons.featured_play_list,
       children: [
-        SwitchListTile(
-          title: Text(t.settings.enable_signature),
-          value: Config.enableSignature,
-          onChanged: (bool value) {
-            setState(() {
-              Config.enableSignature = value;
-            });
-          },
-        ),
+        if (!Platform.isMacOS)
+          SwitchListTile(
+            title: Text(t.settings.enable_signature),
+            value: Config.enableSignature,
+            onChanged: (bool value) {
+              setState(() {
+                Config.enableSignature = value;
+              });
+            },
+          ),
         if (FileAssociationManager.isSupported)
           ListTile(
             title: Text(t.settings.file_association),

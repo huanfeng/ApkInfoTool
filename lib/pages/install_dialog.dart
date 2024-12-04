@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:apk_info_tool/config.dart';
 import 'package:apk_info_tool/gen/strings.g.dart';
+import 'package:apk_info_tool/utils/command_tools.dart';
 import 'package:apk_info_tool/utils/logger.dart';
 import 'package:flutter/material.dart';
 
@@ -74,7 +75,7 @@ class _InstallDialogState extends State<InstallDialog> {
     });
 
     try {
-      final exePath = Config.adbPath.isNotEmpty ? Config.adbPath : 'adb';
+      final exePath = CommandTools.getAdbPath();
       final result = await Process.run(exePath, ['devices', '-l']);
       final lines = result.stdout.toString().split('\n');
 

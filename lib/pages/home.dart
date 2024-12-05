@@ -283,7 +283,7 @@ class _APKInfoPageState extends State<APKInfoPage> with WindowListener {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
-              icon: const Icon(Icons.folder),
+              icon: const Icon(Icons.file_open),
               tooltip: t.open.open_apk,
               onPressed: () async {
                 openFilePicker();
@@ -297,7 +297,7 @@ class _APKInfoPageState extends State<APKInfoPage> with WindowListener {
                       openApk(selectedFilePath ?? '');
                     }),
           IconButton(
-              icon: const Icon(Icons.android),
+              icon: const Icon(Icons.install_mobile),
               tooltip: t.install.apk,
               onPressed: selectedFilePath == null
                   ? null

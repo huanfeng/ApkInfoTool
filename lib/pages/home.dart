@@ -6,6 +6,7 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../apk_info.dart';
 import '../config.dart';
@@ -24,7 +25,7 @@ class APKInfoPage extends StatefulWidget {
   State<APKInfoPage> createState() => _APKInfoPageState();
 }
 
-class _APKInfoPageState extends State<APKInfoPage> {
+class _APKInfoPageState extends State<APKInfoPage> with WindowListener {
   FilePickerResult? filePickerResult;
   String? selectedFilePath;
   int? fileSize;
@@ -147,6 +148,8 @@ class _APKInfoPageState extends State<APKInfoPage> {
   @override
   void initState() {
     super.initState();
+    windowManager.addListener(this);
+
     log.info("initState apkByArgs=$apkByArgs");
     if (Platform.isMacOS) {
       _initPlatformState();
@@ -154,6 +157,17 @@ class _APKInfoPageState extends State<APKInfoPage> {
     } else if (apkByArgs.isNotEmpty) {
       openApk(apkByArgs);
     }
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  @override
+  void onWindowFocus() {
+    setState(() {});
   }
 
   // 构建文件操作菜单

@@ -148,12 +148,11 @@ class _APKInfoPageState extends State<APKInfoPage> {
   void initState() {
     super.initState();
     log.info("initState apkByArgs=$apkByArgs");
-    if (apkByArgs.isNotEmpty) {
-      openApk(apkByArgs);
-    }
     if (Platform.isMacOS) {
       _initPlatformState();
       _setupFileAssociationHandler();
+    } else if (apkByArgs.isNotEmpty) {
+      openApk(apkByArgs);
     }
   }
 

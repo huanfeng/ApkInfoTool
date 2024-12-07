@@ -4,14 +4,13 @@ import 'dart:ui';
 import 'dart:async';
 import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:apk_info_tool/utils/command_tools.dart';
-import 'package:archive/archive_io.dart';
-import 'package:flutter/foundation.dart';
+import 'package:apk_info_tool/utils/zip_helper.dart';
 
 import 'config.dart';
 import 'utils/logger.dart';
 
 Future<ApkInfo?> getApkInfo(String apk) async {
-  log.info("getApkInfo: apk=$apk start");
+  log.info("getApkInfo: apk=[$apk] start");
   final aaptPath = CommandTools.getAapt2Path();
 
   final start = DateTime.now();
@@ -98,7 +97,7 @@ void parseApkInfoFromOutput(String output, ApkInfo apkInfo) {
   apkInfo.originalText = output;
   final lines = output.split("\n");
   for (final (index, item) in lines.indexed) {
-    log.fine("parseApkInfoFromOutput: [$index] $item");
+    log.finer("parseApkInfoFromOutput: [$index] $item");
     apkInfo.parseLine(item);
   }
   log.fine("parseApkInfoFromOutput: apkInfo=$apkInfo");
@@ -309,23 +308,20 @@ class ApkInfo {
     }
   }
 
-  Future<Uint8List?> _readFileFromZip(String apkPath, String filePath) async {
-    InputFileStream? inputStream;
-    try {
-      inputStream = InputFileStream(apkPath);
-      final archive = ZipDecoder().decodeStream(inputStream);
-      try {
-        final file = archive.findFile(filePath);
-        return file?.content;
-      } catch (e) {
-        log.info('_readFileFromZip: 找不到文件: $filePath');
+// 找到最佳图标
+  String _findBestIconPath(ZipHelper zip, String path) {
+    String best = path;
+    var number = 0;
+    icons.forEach((key, value) {
+      final tmp = int.parse(key);
+      if (tmp > number) {
+        number = tmp;
+        best = value;
       }
-    } catch (e) {
-      log.warning('_readFileFromZip: decodeStream fail: $e');
-    } finally {
-      inputStream?.close();
-    }
-    return null;
+      log.finer("_findBestIconPath: key=$key, value=$value");
+    });
+    log.info("_findBestIconPath: orig=$path, best=$best");
+    return best;
   }
 
   /// 加载APK图标
@@ -337,8 +333,11 @@ class ApkInfo {
 
     try {
       var iconPath = mainIconPath!;
+      final zip = ZipHelper();
+      zip.open(apkPath);
+      iconPath = _findBestIconPath(zip, iconPath);
       if (iconPath.endsWith('.webp') || iconPath.endsWith('.png')) {
-        final data = await _readFileFromZip(apkPath, iconPath);
+        final data = await zip.readFileContent(iconPath);
         if (data != null) {
           final codec = await instantiateImageCodec(data);
           final frame = await codec.getNextFrame();

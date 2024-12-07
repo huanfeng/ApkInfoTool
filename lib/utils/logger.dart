@@ -18,7 +18,7 @@ class LoggerInit {
   IOSink? _logSink;
 
   static initLogger() async {
-    Logger.root.level = Level.ALL; // defaults to Level.INFO
+    Logger.root.level = Level.FINE;
     Logger.root.onRecord.listen((record) {
       developer.log('${record.level.name}: ${record.time}: ${record.message}');
       LoggerInit.instance.log(record);

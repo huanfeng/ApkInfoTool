@@ -17,7 +17,7 @@
 - macOS 因沙箱原因，有以下问题
   - 重命名功能无法工作
   - 无法指定外部的 adb 和 aapt2，只能使用内置的
-- macOS 平台 因 pksigner 依赖 Java Runtime, 所以没有做集成，暂时屏蔽了功能入口
+- macOS 平台 因 apksigner 依赖 Java Runtime, 所以没有做集成，暂时屏蔽了功能入口
 - macOS 平台因没有开发者账号, 签名为调试版本, 需要手动信任
 - Linux 环境未经过实测，欢迎反馈问题。
 

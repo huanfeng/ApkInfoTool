@@ -308,7 +308,7 @@ class ApkInfo {
     }
   }
 
-// 找到最佳图标
+  // 找到最佳图标
   String _findBestIconPath(ZipHelper zip, String path) {
     String best = path;
     var number = 0;

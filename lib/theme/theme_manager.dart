@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config.dart';
 
@@ -36,3 +37,5 @@ class ThemeManager extends ChangeNotifier {
     }
   }
 }
+
+final themeManagerProvider = ChangeNotifierProvider((ref) => ThemeManager());

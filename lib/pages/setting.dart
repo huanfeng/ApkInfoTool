@@ -5,7 +5,7 @@ import 'package:apk_info_tool/widgets/title_value_layout.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../config.dart';
@@ -76,32 +76,34 @@ class _SettingPageState extends State<SettingPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(t.settings.theme_color),
-          content: SingleChildScrollView(
-            child: ColorPicker(
-              pickerColor: Config.themeColor,
-              onColorChanged: (Color color) {
-                Provider.of<ThemeManager>(context, listen: false)
-                    .updateThemeColor(color);
-              },
-              pickerAreaHeightPercent: 0.8,
-              enableAlpha: false,
-              displayThumbColor: true,
-              paletteType: PaletteType.hsvWithHue,
-              pickerAreaBorderRadius:
-                  const BorderRadius.all(Radius.circular(10)),
+        return Consumer(builder: (context, ref, child) {
+          return AlertDialog(
+            title: Text(t.settings.theme_color),
+            content: SingleChildScrollView(
+              child: ColorPicker(
+                pickerColor: Config.themeColor,
+                onColorChanged: (Color color) {
+                  final themeManager = ref.read(themeManagerProvider);
+                  themeManager.updateThemeColor(color);
+                },
+                pickerAreaHeightPercent: 0.8,
+                enableAlpha: false,
+                displayThumbColor: true,
+                paletteType: PaletteType.hsvWithHue,
+                pickerAreaBorderRadius:
+                    const BorderRadius.all(Radius.circular(10)),
+              ),
             ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(t.base.ok),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
+            actions: <Widget>[
+              TextButton(
+                child: Text(t.base.ok),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        });
       },
     );
   }

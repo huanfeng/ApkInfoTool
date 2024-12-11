@@ -3,8 +3,8 @@ import 'package:apk_info_tool/pages/setting.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'config.dart';
@@ -51,30 +51,26 @@ void main(List<String> arguments) async {
     });
   }
   LocaleSettings.useDeviceLocale();
-  runApp(TranslationProvider(child: const MyApp()));
+  runApp(ProviderScope(child: TranslationProvider(child: const MyApp())));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ThemeManager(),
-      child: Consumer<ThemeManager>(
-        builder: (context, themeManager, _) => MaterialApp(
-          locale: TranslationProvider.of(context).flutterLocale,
-          supportedLocales: AppLocaleUtils.supportedLocales,
-          localizationsDelegates: GlobalMaterialLocalizations.delegates,
-          title: t.title,
-          initialRoute: "/",
-          theme: themeManager.themeData,
-          routes: {
-            "/": (context) => const APKInfoPage(),
-            "setting": (context) => const SettingPage(),
-          },
-        ),
-      ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeManager = ref.watch(themeManagerProvider);
+    return MaterialApp(
+      locale: TranslationProvider.of(context).flutterLocale,
+      supportedLocales: AppLocaleUtils.supportedLocales,
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      title: t.title,
+      initialRoute: "/",
+      theme: themeManager.themeData,
+      routes: {
+        "/": (context) => const HomePage(),
+        "setting": (context) => const SettingPage(),
+      },
     );
   }
 }

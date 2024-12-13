@@ -1,36 +1,35 @@
-import 'package:flutter/material.dart';
-import 'package:window_manager/window_manager.dart';
 import 'package:apk_info_tool/gen/strings.g.dart';
-import './info_page.dart';
-import './install_page.dart';
+import 'package:apk_info_tool/pages/info_page.dart';
+import 'package:apk_info_tool/pages/install_page.dart';
+import 'package:apk_info_tool/providers/home_page_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:window_manager/window_manager.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage>
+class _HomePageState extends ConsumerState<HomePage>
     with WindowListener, TickerProviderStateMixin {
-  late TabController _tabController;
-
   @override
   void initState() {
     super.initState();
     windowManager.addListener(this);
-    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   void dispose() {
     windowManager.removeListener(this);
-    _tabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final actions = ref.watch(pageActionsProvider);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -41,25 +40,26 @@ class _HomePageState extends State<HomePage>
           ),
           IconButton(
               icon: Icon(Icons.info_outline),
-              // text: '信息',
-              onPressed: () => {_tabController.animateTo(0)}),
+              tooltip: t.home.info_page,
+              onPressed: () => {
+                    ref.read(currentPageProvider.notifier).setIndex(0),
+                  }),
           IconButton(
               icon: Icon(Icons.android_outlined),
-              // text: '安装',
-              onPressed: () => {_tabController.animateTo(1)}),
+              tooltip: t.home.install_page,
+              onPressed: () => {
+                    ref.read(currentPageProvider.notifier).setIndex(1),
+                  }),
         ]),
-        actions: [],
+        actions: actions,
       ),
-      body: Row(children: [
-        Expanded(
-            child: TabBarView(
-          controller: _tabController,
-          children: const [
-            APKInfoPage(),
-            APKInstallPage(),
-          ],
-        ))
-      ]),
+      body: IndexedStack(
+        index: ref.watch(currentPageProvider),
+        children: const [
+          APKInfoPage(0),
+          APKInstallPage(1),
+        ],
+      ),
     );
   }
 

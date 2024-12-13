@@ -10,7 +10,10 @@
     "copy_file_path": "复制文件路径",
     "copy_content": "复制内容",
     "copied_content": "已复制内容: {content}",
-    "more_actions": "更多操作"
+    "more_actions": "更多操作",
+    "info_page": "信息页面",
+    "install_page": "安装页面",
+    "page_in_development": "页面开发中"
   },
   "settings": {
     "title": "设置",
@@ -47,7 +50,8 @@
   "open": {
     "open_apk": "打开APK",
     "open_file_directory": "打开文件位置",
-    "select_apk_file": "请选择 APK 文件"
+    "select_apk_file": "请选择 APK 文件",
+    "close_file": "关闭文件"
   },
   "file_info": {
     "file": "文件",

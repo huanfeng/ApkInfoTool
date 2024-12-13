@@ -8,18 +8,19 @@ class FileAssociationManager {
   static bool get isSupported => Platform.isWindows || Platform.isMacOS;
 
   /// 打开系统默认应用设置
-  /// 
+  ///
   /// 尝试打开默认应用设置页面
   /// 如果无法打开，会抛出 [UnsupportedError]
   static Future<void> openDefaultAppsSettings() async {
     if (!isSupported) {
-      throw UnsupportedError('This feature is only supported on Windows and macOS');
+      throw UnsupportedError(
+          'This feature is only supported on Windows and macOS');
     }
 
-    final uri = Uri.parse(Platform.isWindows 
-      ? 'ms-settings:defaultapps'
-      : 'x-apple.systempreferences:com.apple.preferences.extensions');
-      
+    final uri = Uri.parse(Platform.isWindows
+        ? 'ms-settings:defaultapps'
+        : 'x-apple.systempreferences:com.apple.preferences.extensions');
+
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {

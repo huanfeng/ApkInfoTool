@@ -1,37 +1,35 @@
 import 'dart:io';
 
+import 'package:apk_info_tool/apkparser/apk_info.dart';
 import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:apk_info_tool/main.dart';
+import 'package:apk_info_tool/pages/install_dialog.dart';
+import 'package:apk_info_tool/pages/text_info.dart';
+import 'package:apk_info_tool/providers/home_page_provider.dart';
+import 'package:apk_info_tool/providers/info_page_provider.dart';
+import 'package:apk_info_tool/providers/setting_provider.dart';
+import 'package:apk_info_tool/providers/ui_config_provider.dart';
+import 'package:apk_info_tool/utils/android_version.dart';
+import 'package:apk_info_tool/utils/format.dart';
+import 'package:apk_info_tool/utils/logger.dart';
 import 'package:apk_info_tool/utils/platform.dart';
+import 'package:apk_info_tool/utils/riverpod_utils.dart';
+import 'package:apk_info_tool/widgets/title_value_layout.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../apk_info.dart';
-import '../config.dart';
-import '../utils/android_version.dart';
-import '../utils/format.dart';
-import '../utils/logger.dart';
-import '../widgets/title_value_layout.dart';
-import '../pages/text_info.dart';
-import './install_dialog.dart';
-
-class APKInfoPage extends StatefulWidget {
-  const APKInfoPage({super.key});
+class APKInfoPage extends ConsumerStatefulWidget {
+  final int pageIndex;
+  const APKInfoPage(this.pageIndex, {super.key});
 
   @override
-  State<APKInfoPage> createState() => _APKInfoPageState();
+  ConsumerState<APKInfoPage> createState() => _APKInfoPageState();
 }
 
-class _APKInfoPageState extends State<APKInfoPage> {
-  FilePickerResult? filePickerResult;
-  String? selectedFilePath;
-  int? fileSize;
-  ApkInfo? apkInfo;
-  bool _isParsing = false;
-  var titleWidth = Config.titleWidth;
-
+class _APKInfoPageState extends ConsumerState<APKInfoPage> {
   void openFilePicker() async {
     var result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -51,16 +49,22 @@ class _APKInfoPageState extends State<APKInfoPage> {
   }
 
   void openApk(String path) {
-    setState(() {
-      final file = File(path);
-      selectedFilePath = path;
-      if (file.existsSync()) {
-        fileSize = file.lengthSync();
-        if (selectedFilePath != null && selectedFilePath!.isNotEmpty) {
-          loadApkInfo();
-        }
+    final file = File(path);
+    final state = ref.read(currentFileStateProvider.notifier);
+    if (file.existsSync()) {
+      final fileSize = file.lengthSync();
+      state.update(FileState(filePath: path, fileSize: fileSize));
+      if (path.isNotEmpty) {
+        loadApkInfo(path);
       }
-    });
+    } else {
+      state.update(FileState(filePath: path));
+    }
+  }
+
+  void closeApk() {
+    ref.read(currentFileStateProvider.notifier).update(FileState());
+    ref.read(currentApkInfoProvider.notifier).reset();
   }
 
   String getSdkVersionText(int? sdkVersion) {
@@ -68,20 +72,19 @@ class _APKInfoPageState extends State<APKInfoPage> {
     return "$sdkVersion (${AndroidVersion.getAndroidVersion(sdkVersion)})";
   }
 
-  Future<void> loadApkInfo() async {
-    if (selectedFilePath == null) return;
-
-    setState(() {
-      apkInfo?.reset();
-      _isParsing = true;
-    });
-
+  Future<void> loadApkInfo(String filePath) async {
+    final apkInfoState = ref.read(currentApkInfoProvider.notifier);
+    final isParsingState = ref.read(isParsingProvider.notifier);
+    final enableSignature =
+        ref.read(settingStateProvider.select((value) => value.enableSignature));
+    apkInfoState.reset();
+    isParsingState.update(true);
     try {
-      final apkInfo = await getApkInfo(selectedFilePath!);
-      if (apkInfo != null && Config.enableSignature) {
+      final apkInfo = await getApkInfo(filePath);
+      if (apkInfo != null && enableSignature) {
         // 获取签名信息
         try {
-          final signatureInfo = await getSignatureInfo(selectedFilePath!);
+          final signatureInfo = await getSignatureInfo(filePath);
           apkInfo.signatureInfo = signatureInfo;
         } catch (e) {
           // 显示签名验证失败提示
@@ -91,12 +94,9 @@ class _APKInfoPageState extends State<APKInfoPage> {
           }
         }
       }
+      apkInfoState.update(apkInfo);
+      isParsingState.update(false);
       if (!mounted) return;
-
-      setState(() {
-        this.apkInfo = apkInfo;
-        _isParsing = false;
-      });
 
       if (apkInfo == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -105,9 +105,8 @@ class _APKInfoPageState extends State<APKInfoPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _isParsing = false;
-      });
+      isParsingState.update(false);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(t.parse.parse_apk_info_fail)),
       );
@@ -147,7 +146,10 @@ class _APKInfoPageState extends State<APKInfoPage> {
   @override
   void initState() {
     super.initState();
-
+    // 延时以保证初始化一次
+    Future.delayed(Duration.zero).then((value) {
+      updateActions();
+    });
     log.info("initState apkByArgs=$apkByArgs");
     if (Platform.isMacOS) {
       _initPlatformState();
@@ -157,76 +159,83 @@ class _APKInfoPageState extends State<APKInfoPage> {
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
+  List<Widget> _buildActions(FileState fileState) {
+    return [
+      IconButton(
+          icon: const Icon(Icons.file_open),
+          tooltip: t.open.open_apk,
+          onPressed: () async {
+            openFilePicker();
+          }),
+      IconButton(
+          icon: const Icon(Icons.search),
+          tooltip: t.parse.parse_apk,
+          onPressed: fileState.filePath == null
+              ? null
+              : () {
+                  openApk(fileState.filePath ?? '');
+                }),
+      IconButton(
+          icon: const Icon(Icons.install_mobile),
+          tooltip: t.install.apk,
+          onPressed: fileState.filePath == null
+              ? null
+              : () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => InstallDialog(
+                      apkPath: fileState.filePath!,
+                    ),
+                  );
+                }),
+      _buildMoreMenuButton(context),
+      IconButton(
+          icon: const Icon(Icons.settings),
+          tooltip: t.settings.open_settings,
+          onPressed: () {
+            Navigator.pushNamed(context, 'setting');
+          }),
+    ];
+  }
+
+  PopupMenuItem<String> _buildMenuItem(
+      String value, IconData icon, String title,
+      {bool enabled = true}) {
+    return PopupMenuItem(
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        value: value,
+        enabled: enabled,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ));
   }
 
   // 构建文件操作菜单
   Widget _buildFileActionMenu() {
+    final fileState = ref.watch(currentFileStateProvider);
     return PopupMenuButton<String>(
       padding: EdgeInsets.zero,
       icon: const Icon(Icons.more_vert, size: 18),
-      enabled: selectedFilePath != null,
+      enabled: fileState.filePath != null,
       // 设置菜单位置在按钮下方
       offset: const Offset(0, 0),
       position: PopupMenuPosition.under,
       // 设置菜单项更紧凑
       itemBuilder: (context) => [
-        PopupMenuItem(
-          height: 32,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          value: 'open_directory',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.folder_open, size: 16),
-              const SizedBox(width: 8),
-              Text(
-                t.open.open_file_directory,
-                style: const TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          height: 32,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          value: 'copy_path',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.content_copy, size: 16),
-              const SizedBox(width: 8),
-              Text(
-                t.home.copy_file_path,
-                style: const TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-        ),
+        _buildMenuItem(
+            'open_directory', Icons.folder_open, t.open.open_file_directory),
+        _buildMenuItem('copy_path', Icons.content_copy, t.home.copy_file_path),
       ],
-      onSelected: (value) async {
-        if (selectedFilePath == null) return;
-
-        switch (value) {
-          case 'open_directory':
-            openFileInExplorer(selectedFilePath!);
-            break;
-          case 'copy_path':
-            await Clipboard.setData(ClipboardData(text: selectedFilePath!));
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                      t.home.copied_content(content: selectedFilePath ?? '')),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            }
-            break;
-        }
-      },
+      onSelected: onMenuActionSelected,
     );
   }
 
@@ -269,302 +278,221 @@ class _APKInfoPageState extends State<APKInfoPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        // title: Text(t.title),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          IconButton(
-              icon: const Icon(Icons.file_open),
-              tooltip: t.open.open_apk,
-              onPressed: () async {
-                openFilePicker();
-              }),
-          IconButton(
-              icon: const Icon(Icons.search),
-              tooltip: t.parse.parse_apk,
-              onPressed: selectedFilePath == null
-                  ? null
-                  : () {
-                      openApk(selectedFilePath ?? '');
-                    }),
-          IconButton(
-              icon: const Icon(Icons.install_mobile),
-              tooltip: t.install.apk,
-              onPressed: selectedFilePath == null
-                  ? null
-                  : () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => InstallDialog(
-                          apkPath: selectedFilePath!,
-                        ),
-                      );
-                    }),
-          _buildMoreMenuButton(context),
-          IconButton(
-              icon: const Icon(Icons.settings),
-              tooltip: t.settings.open_settings,
-              onPressed: () {
-                Navigator.pushNamed(context, 'setting').then((value) {
-                  // 返回时刷新
-                  setState(() {
-                    titleWidth = Config.titleWidth;
-                  });
-                });
-              }),
-          // 最右的空间
-          const SizedBox(width: 50),
-        ],
-      ),
-      body: Stack(
-        children: [
-          DropTarget(
-            onDragDone: (details) {
-              // 只处理第一个文件
-              if (details.files.isNotEmpty) {
-                final file = details.files.first;
-                if (file.path.toLowerCase().endsWith('.apk')) {
-                  setState(() {
-                    openApk(file.path);
-                  });
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(t.open.select_apk_file),
-                    ),
-                  );
-                }
+    // 在当前页/文件/APK信息变化时需要更新Actions, 因为Actions的变化会修改按钮的使能状态
+    ref.listenAll(
+        [currentPageProvider, currentFileStateProvider, currentApkInfoProvider],
+        () => updateActions());
+    final apkInfo = ref.watch(currentApkInfoProvider);
+    final fileState = ref.watch(currentFileStateProvider);
+    final isParsing = ref.watch(isParsingProvider);
+    final enableSignature = ref
+        .watch(settingStateProvider.select((value) => value.enableSignature));
+    final textMaxLines =
+        ref.watch(uiConfigStateProvider.select((value) => value.textMaxLines));
+
+    return Stack(
+      children: [
+        DropTarget(
+          onDragDone: (details) {
+            // 只处理第一个文件
+            if (details.files.isNotEmpty) {
+              final file = details.files.first;
+              if (file.path.toLowerCase().endsWith('.apk')) {
+                openApk(file.path);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(t.open.select_apk_file),
+                  ),
+                );
               }
-            },
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        // 指定上下左右的内边距为 10 像素
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: ListView(
-                          shrinkWrap: true,
-                          children: [
-                            Card(
-                                child: TitleValueLayout(
-                                    title: t.file_info.file,
-                                    value: selectedFilePath ?? "",
-                                    end: _buildFileActionMenu())),
-                            Card(
-                                child: TitleValueLayout(
-                              title: t.file_info.size,
-                              value: fileSize != null
-                                  ? "${formatFileSize(fileSize)} ($fileSize Bytes)"
-                                  : "",
-                            )),
-                            Card(
-                                child: TitleValueLayout(
-                              title: t.apk_info.app_name,
-                              value: apkInfo?.label ?? "",
-                              end: _buildCopyButton(
-                                  apkInfo?.label, apkInfo?.label != null),
-                            )),
-                            Card(
-                                child: TitleValueLayout(
-                              title: t.apk_info.package_name,
-                              value: apkInfo?.packageName ?? "",
-                              end: _buildCopyButton(apkInfo?.packageName,
-                                  apkInfo?.packageName != null),
-                            )),
-                            Row(children: [
-                              Expanded(
-                                  child: Column(
-                                children: [
-                                  Card(
-                                      child: TitleValueLayout(
-                                    title: t.apk_info.version_code,
-                                    value: "${apkInfo?.versionCode ?? ""}",
-                                  )),
-                                  Card(
-                                      child: TitleValueLayout(
-                                    title: t.apk_info.version_name,
-                                    value: apkInfo?.versionName ?? "",
-                                  )),
-                                ],
-                              )),
-                              Card(
-                                  child: Container(
-                                margin: const EdgeInsets.all(4),
-                                width: 72,
-                                height: 72,
-                                child: RawImage(
-                                  image: apkInfo?.mainIconImage,
-                                  fit: BoxFit.contain,
-                                ),
-                              )),
-                            ]),
-                            Card(
+            }
+          },
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      // 指定上下左右的内边距为 10 像素
+                      padding: const EdgeInsets.only(left: 10, right: 10),
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: [
+                          Card(
                               child: TitleValueLayout(
-                                title: t.apk_info.min_sdk,
-                                value: getSdkVersionText(apkInfo?.sdkVersion),
+                                  title: t.file_info.file,
+                                  value: fileState.filePath ?? "",
+                                  end: _buildFileActionMenu())),
+                          Card(
+                              child: TitleValueLayout(
+                            title: t.file_info.size,
+                            value: fileState.fileSize != null
+                                ? "${formatFileSize(fileState.fileSize)} (${fileState.fileSize} Bytes)"
+                                : "",
+                          )),
+                          Card(
+                              child: TitleValueLayout(
+                            title: t.apk_info.app_name,
+                            value: apkInfo?.label ?? "",
+                            end: _buildCopyButton(
+                                apkInfo?.label, apkInfo?.label != null),
+                          )),
+                          Card(
+                              child: TitleValueLayout(
+                            title: t.apk_info.package_name,
+                            value: apkInfo?.packageName ?? "",
+                            end: _buildCopyButton(apkInfo?.packageName,
+                                apkInfo?.packageName != null),
+                          )),
+                          Row(children: [
+                            Expanded(
+                                child: Column(
+                              children: [
+                                Card(
+                                    child: TitleValueLayout(
+                                  title: t.apk_info.version_code,
+                                  value: "${apkInfo?.versionCode ?? ""}",
+                                )),
+                                Card(
+                                    child: TitleValueLayout(
+                                  title: t.apk_info.version_name,
+                                  value: apkInfo?.versionName ?? "",
+                                )),
+                              ],
+                            )),
+                            Card(
+                                child: Container(
+                              margin: const EdgeInsets.all(4),
+                              width: 72,
+                              height: 72,
+                              child: RawImage(
+                                image: apkInfo?.mainIconImage,
+                                fit: BoxFit.contain,
                               ),
+                            )),
+                          ]),
+                          Card(
+                            child: TitleValueLayout(
+                              title: t.apk_info.min_sdk,
+                              value: getSdkVersionText(apkInfo?.sdkVersion),
                             ),
+                          ),
+                          Card(
+                              child: TitleValueLayout(
+                            title: t.apk_info.target_sdk,
+                            value: getSdkVersionText(apkInfo?.targetSdkVersion),
+                          )),
+                          Card(
+                              child: TitleValueLayout(
+                            title: t.apk_info.screen_size,
+                            value: apkInfo?.supportsScreens.join(" ") ?? "",
+                          )),
+                          Card(
+                              child: TitleValueLayout(
+                            title: t.apk_info.screen_density,
+                            value: apkInfo?.densities.join(" ") ?? "",
+                          )),
+                          Card(
+                              child: TitleValueLayout(
+                            title: t.apk_info.abi,
+                            value: apkInfo?.nativeCodes.join(" ") ?? "",
+                          )),
+                          Card(
+                              child: TitleValueLayout(
+                            title: t.apk_info.languages,
+                            value: apkInfo?.locales.join(" ") ?? "",
+                          )),
+                          Card(
+                              child: TitleValueLayout(
+                            title: t.apk_info.permissions,
+                            value: apkInfo?.usesPermissions.join("\n") ?? "",
+                            minLines: 1,
+                            maxLines: textMaxLines,
+                            selectable: true,
+                          )),
+                          if (enableSignature)
                             Card(
                                 child: TitleValueLayout(
-                              title: t.apk_info.target_sdk,
-                              value:
-                                  getSdkVersionText(apkInfo?.targetSdkVersion),
-                            )),
-                            Card(
-                                child: TitleValueLayout(
-                              title: t.apk_info.screen_size,
-                              value: apkInfo?.supportsScreens.join(" ") ?? "",
-                            )),
-                            Card(
-                                child: TitleValueLayout(
-                              title: t.apk_info.screen_density,
-                              value: apkInfo?.densities.join(" ") ?? "",
-                            )),
-                            Card(
-                                child: TitleValueLayout(
-                              title: t.apk_info.abi,
-                              value: apkInfo?.nativeCodes.join(" ") ?? "",
-                            )),
-                            Card(
-                                child: TitleValueLayout(
-                              title: t.apk_info.languages,
-                              value: apkInfo?.locales.join(" ") ?? "",
-                            )),
-                            Card(
-                                child: TitleValueLayout(
-                              title: t.apk_info.permissions,
-                              value: apkInfo?.usesPermissions.join("\n") ?? "",
+                              title: t.apk_info.signature_info,
+                              value: apkInfo?.signatureInfo ?? "",
                               minLines: 1,
-                              maxLines: Config.maxLines,
+                              maxLines: textMaxLines,
                               selectable: true,
                             )),
-                            if (Config.enableSignature)
-                              Card(
-                                  child: TitleValueLayout(
-                                title: t.apk_info.signature_info,
-                                value: apkInfo?.signatureInfo ?? "",
-                                minLines: 1,
-                                maxLines: Config.maxLines,
-                                selectable: true,
-                              )),
-                          ],
-                        ),
+                        ],
                       ),
                     ),
                   ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // 解析状态指示器
+        if (isParsing)
+          Positioned(
+            top: 10,
+            right: 10,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(t.parse.parsing),
                 ],
               ),
             ),
           ),
-
-          // 解析状态指示器
-          if (_isParsing)
-            Positioned(
-              top: 10,
-              right: 10,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(t.parse.parsing),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
+      ],
     );
   }
 
   PopupMenuButton<String> _buildMoreMenuButton(BuildContext context) {
+    final apkInfo = ref.watch(currentApkInfoProvider);
+    final state = ref.watch(currentFileStateProvider);
+    log.info(
+        "_buildMoreMenuButton: state.filePath=${state.filePath}, apkInfo=$apkInfo");
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_horiz),
       tooltip: t.home.more_actions,
-      enabled: selectedFilePath != null,
+      enabled: state.filePath != null,
       offset: const Offset(0, 0),
       position: PopupMenuPosition.under,
       itemBuilder: (context) => [
-        PopupMenuItem(
-          height: 32,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          value: 'rename',
-          enabled: selectedFilePath != null,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.drive_file_rename_outline, size: 16),
-              const SizedBox(width: 8),
-              Text(
-                t.rename.rename_file,
-                style: const TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          height: 32,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          value: 'text_info',
-          enabled: selectedFilePath != null && apkInfo != null,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.text_snippet, size: 16),
-              const SizedBox(width: 8),
-              Text(
-                t.apk_info.text_info,
-                style: const TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-        ),
+        _buildMenuItem(
+            'rename', Icons.drive_file_rename_outline, t.rename.rename_file,
+            enabled: state.filePath != null),
+        _buildMenuItem('text_info', Icons.text_snippet, t.apk_info.text_info,
+            enabled: state.filePath != null && apkInfo != null),
+        _buildMenuItem('close_file', Icons.close, t.open.close_file,
+            enabled: state.filePath != null),
       ],
-      onSelected: (value) {
-        switch (value) {
-          case 'rename':
-            _showRenameDialog();
-            break;
-          case 'text_info':
-            if (apkInfo != null) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TextInfoPage(
-                    text: apkInfo!.originalText,
-                  ),
-                ),
-              );
-            }
-            break;
-        }
-      },
+      onSelected: onMenuActionSelected,
     );
   }
 
   // 显示重命名对话框
   void _showRenameDialog() {
-    if (selectedFilePath == null || apkInfo == null) return;
+    final apkInfo = ref.read(currentApkInfoProvider);
+    final state = ref.read(currentFileStateProvider);
+    if (state.filePath == null || apkInfo == null) return;
 
-    final fileName = apkInfo!.label ?? '';
-    final versionName = apkInfo!.versionName ?? '';
+    final fileName = apkInfo.label ?? '';
+    final versionName = apkInfo.versionName ?? '';
     final defaultName = '$fileName-$versionName.apk';
 
     final controller = TextEditingController(text: defaultName);
@@ -629,7 +557,7 @@ class _APKInfoPageState extends State<APKInfoPage> {
             onPressed: () {
               if (formKey.currentState?.validate() ?? false) {
                 final newName = controller.text;
-                final oldFile = File(selectedFilePath!);
+                final oldFile = File(state.filePath!);
                 final directory = oldFile.parent;
                 final newPath =
                     '${directory.path}${Platform.pathSeparator}$newName';
@@ -654,5 +582,56 @@ class _APKInfoPageState extends State<APKInfoPage> {
         ],
       ),
     );
+  }
+
+  void updateActions() {
+    final page = ref.read(currentPageProvider);
+    final fileState = ref.read(currentFileStateProvider);
+    if (page == widget.pageIndex) {
+      ref
+          .read(pageActionsProvider.notifier)
+          .setActions(_buildActions(fileState));
+    }
+  }
+
+  void onMenuActionSelected(String value) async {
+    switch (value) {
+      case 'close_file':
+        closeApk();
+        break;
+      case 'rename':
+        _showRenameDialog();
+        break;
+      case 'text_info':
+        final apkInfo = ref.read(currentApkInfoProvider);
+        if (apkInfo != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TextInfoPage(
+                text: apkInfo.originalText,
+              ),
+            ),
+          );
+        }
+        break;
+      case 'open_directory':
+        final fileState = ref.read(currentFileStateProvider);
+        openFileInExplorer(fileState.filePath!);
+        break;
+      case 'copy_path':
+        final fileState = ref.read(currentFileStateProvider);
+        await Clipboard.setData(ClipboardData(text: fileState.filePath!));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  t.home.copied_content(content: fileState.filePath ?? '')),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        break;
+    }
   }
 }

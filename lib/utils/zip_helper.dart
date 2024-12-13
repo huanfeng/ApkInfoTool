@@ -38,6 +38,4 @@ class ZipHelper {
     }
     return null;
   }
-
-  
 }

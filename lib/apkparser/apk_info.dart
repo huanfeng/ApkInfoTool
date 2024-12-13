@@ -1,13 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
-import 'dart:async';
+
+import 'package:apk_info_tool/config.dart';
 import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:apk_info_tool/utils/command_tools.dart';
+import 'package:apk_info_tool/utils/logger.dart';
 import 'package:apk_info_tool/utils/zip_helper.dart';
-
-import 'config.dart';
-import 'utils/logger.dart';
 
 Future<ApkInfo?> getApkInfo(String apk) async {
   log.info("getApkInfo: apk=[$apk] start");
@@ -40,7 +40,7 @@ Future<ApkInfo?> getApkInfo(String apk) async {
       parseApkInfoFromOutput(result.stdout.toString(), apkInfo);
 
       // 如果启用了签名检查，获取签名信息
-      if (Config.enableSignature) {
+      if (Config.enableSignature.value) {
         try {
           final signInfo = await getSignatureInfo(apk);
           apkInfo.signatureInfo = signInfo;
@@ -69,7 +69,7 @@ Future<ApkInfo?> getApkInfo(String apk) async {
 }
 
 Future<String> getSignatureInfo(String apkPath) async {
-  final apksigner = Config.apksignerPath;
+  final apksigner = Config.apksignerPath.value;
   if (apksigner.isEmpty) {
     throw Exception(t.parse.please_set_path(name: "apksigner"));
   }

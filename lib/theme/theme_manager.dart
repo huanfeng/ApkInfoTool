@@ -1,24 +1,28 @@
 import 'dart:io';
 
+import 'package:apk_info_tool/config.dart';
 import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../config.dart';
 
 class ThemeManager extends ChangeNotifier {
   static final ThemeManager _instance = ThemeManager._internal();
   factory ThemeManager() => _instance;
   ThemeManager._internal();
 
+  int _themeColor = Config.themeColor.value;
+
+  int get themeColor => _themeColor;
+
   ThemeData get themeData => ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Config.themeColor),
+        colorScheme: ColorScheme.fromSeed(seedColor: Color(themeColor)),
         useMaterial3: true,
         fontFamily: getFontFamily(),
       );
 
   void updateThemeColor(Color color) {
-    Config.themeColor = color;
+    _themeColor = color.value;
+    Config.themeColor.updateValue(color.value);
     notifyListeners();
   }
 

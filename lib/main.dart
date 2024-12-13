@@ -1,16 +1,15 @@
+import 'package:apk_info_tool/config.dart';
 import 'package:apk_info_tool/gen/strings.g.dart';
-import 'package:apk_info_tool/pages/setting.dart';
+import 'package:apk_info_tool/pages/home_page.dart';
+import 'package:apk_info_tool/pages/setting_page.dart';
+import 'package:apk_info_tool/theme/theme_manager.dart';
+import 'package:apk_info_tool/utils/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:window_manager/window_manager.dart';
-
-import 'config.dart';
-import 'pages/home.dart';
-import 'theme/theme_manager.dart';
-import 'utils/logger.dart';
 
 late PackageInfo packageInfo;
 
@@ -35,7 +34,7 @@ void main(List<String> arguments) async {
 
   await LoggerInit.instance.init();
 
-  log.info("main: args=$arguments");
+  log.info("main: arguments=$arguments");
   if (arguments.isNotEmpty) {
     apkByArgs = arguments.first;
   }

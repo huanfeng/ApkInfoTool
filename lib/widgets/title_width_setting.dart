@@ -1,25 +1,28 @@
 import 'package:apk_info_tool/gen/strings.g.dart';
+import 'package:apk_info_tool/providers/ui_config_provider.dart';
 import 'package:flutter/material.dart';
-import '../config.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class TitleWidthSetting extends StatefulWidget {
+final currentTitleWidthProvider = StateProvider<double>((ref) {
+  return ref.read(uiConfigStateProvider.select((value) => value.titleWidth));
+});
+
+class TitleWidthSetting extends ConsumerStatefulWidget {
   const TitleWidthSetting({super.key});
 
   @override
-  State<TitleWidthSetting> createState() => _TitleWidthSettingState();
+  ConsumerState<TitleWidthSetting> createState() => _TitleWidthSettingState();
 }
 
-class _TitleWidthSettingState extends State<TitleWidthSetting> {
-  late double _currentWidth;
-
+class _TitleWidthSettingState extends ConsumerState<TitleWidthSetting> {
   @override
   void initState() {
     super.initState();
-    _currentWidth = Config.titleWidth;
   }
 
   @override
   Widget build(BuildContext context) {
+    double currentWidth = ref.watch(currentTitleWidthProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -29,22 +32,24 @@ class _TitleWidthSettingState extends State<TitleWidthSetting> {
             Text(t.settings.title_width),
             Expanded(
               child: Slider(
-                value: _currentWidth,
+                value: currentWidth,
                 min: 40,
                 max: 200,
                 divisions: 24,
-                label: _currentWidth.round().toString(),
+                label: currentWidth.round().toString(),
                 onChanged: (value) {
-                  setState(() {
-                    _currentWidth = value;
-                    Config.titleWidth = value;
-                  });
+                  ref.read(currentTitleWidthProvider.notifier).state = value;
+                },
+                onChangeEnd: (value) {
+                  ref
+                      .read(uiConfigStateProvider.notifier)
+                      .updateTitleWidth(value);
                 },
               ),
             ),
             SizedBox(
               width: 50,
-              child: Text('${_currentWidth.round()}'),
+              child: Text('${currentWidth.round()}'),
             ),
           ],
         ),
@@ -66,7 +71,7 @@ class _TitleWidthSettingState extends State<TitleWidthSetting> {
                   children: [
                     Container(
                       alignment: Alignment.centerLeft,
-                      width: _currentWidth,
+                      width: currentWidth,
                       child: Text(
                         'Title',
                         style: TextStyle(

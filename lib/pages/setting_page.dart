@@ -1,37 +1,38 @@
 import 'dart:io';
 
 import 'package:apk_info_tool/gen/strings.g.dart';
+import 'package:apk_info_tool/main.dart';
+import 'package:apk_info_tool/providers/setting_provider.dart';
+import 'package:apk_info_tool/providers/ui_config_provider.dart';
+import 'package:apk_info_tool/theme/theme_manager.dart';
+import 'package:apk_info_tool/utils/file_association.dart';
+import 'package:apk_info_tool/utils/logger.dart';
+import 'package:apk_info_tool/utils/platform.dart';
 import 'package:apk_info_tool/widgets/title_value_layout.dart';
+import 'package:apk_info_tool/widgets/title_width_setting.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../config.dart';
-import '../main.dart';
-import '../theme/theme_manager.dart';
-import '../utils/file_association.dart';
-import '../utils/logger.dart';
-import '../utils/platform.dart';
-import '../widgets/title_width_setting.dart';
-
 const githubUrl = 'https://github.com/huanfeng/ApkInfoTool';
 
-class SettingPage extends StatefulWidget {
+class SettingPage extends ConsumerStatefulWidget {
   const SettingPage({super.key});
 
   @override
-  State<SettingPage> createState() => _SettingPageState();
+  ConsumerState<SettingPage> createState() => _SettingPageState();
 }
 
-class _SettingPageState extends State<SettingPage> {
+class _SettingPageState extends ConsumerState<SettingPage> {
   final _maxLinesController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _maxLinesController.text = Config.maxLines.toString();
+    _maxLinesController.text = ref.read(
+        uiConfigStateProvider.select((value) => value.textMaxLines.toString()));
   }
 
   void openFilePicker(ValueChanged<String> cb) async {
@@ -51,16 +52,15 @@ class _SettingPageState extends State<SettingPage> {
   void resetToDefaultPath(String toolType) async {
     switch (toolType) {
       case 'aapt2':
-        Config.aapt2Path = '';
+        ref.read(settingStateProvider.notifier).setAapt2Path('');
         break;
       case 'adb':
-        Config.adbPath = '';
+        ref.read(settingStateProvider.notifier).setAdbPath('');
         break;
       case 'apksigner':
-        Config.apksignerPath = '';
+        ref.read(settingStateProvider.notifier).setApksignerPath('');
         break;
     }
-    setState(() {});
   }
 
   List<String> getExecutableExtensions() {
@@ -77,14 +77,15 @@ class _SettingPageState extends State<SettingPage> {
       context: context,
       builder: (BuildContext context) {
         return Consumer(builder: (context, ref, child) {
+          final themeColor = ref
+              .watch(themeManagerProvider.select((value) => value.themeColor));
           return AlertDialog(
             title: Text(t.settings.theme_color),
             content: SingleChildScrollView(
               child: ColorPicker(
-                pickerColor: Config.themeColor,
+                pickerColor: Color(themeColor),
                 onColorChanged: (Color color) {
-                  final themeManager = ref.read(themeManagerProvider);
-                  themeManager.updateThemeColor(color);
+                  ref.read(themeManagerProvider).updateThemeColor(color);
                 },
                 pickerAreaHeightPercent: 0.8,
                 enableAlpha: false,
@@ -136,6 +137,13 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildEnvironmentSection() {
+    final aapt2Path =
+        ref.watch(settingStateProvider.select((value) => value.aapt2Path));
+    final apksignerPath =
+        ref.watch(settingStateProvider.select((value) => value.apksignerPath));
+    final adbPath =
+        ref.watch(settingStateProvider.select((value) => value.adbPath));
+
     return _buildSettingCard(
       title: t.settings.environment,
       icon: Icons.computer,
@@ -143,14 +151,12 @@ class _SettingPageState extends State<SettingPage> {
       children: [
         TitleValueLayout(
             title: t.settings.aapt_path,
-            value: Config.aapt2Path,
+            value: aapt2Path,
             end: Row(children: [
               TextButton(
                 onPressed: () {
                   openFilePicker((path) {
-                    setState(() {
-                      Config.aapt2Path = path;
-                    });
+                    ref.read(settingStateProvider.notifier).setAapt2Path(path);
                   });
                 },
                 child: Text(t.base.select),
@@ -163,14 +169,14 @@ class _SettingPageState extends State<SettingPage> {
         if (!Platform.isMacOS)
           TitleValueLayout(
               title: t.settings.apksigner_path,
-              value: Config.apksignerPath,
+              value: apksignerPath,
               end: Row(children: [
                 TextButton(
                   onPressed: () {
                     openFilePicker((path) {
-                      setState(() {
-                        Config.apksignerPath = path;
-                      });
+                      ref
+                          .read(settingStateProvider.notifier)
+                          .setApksignerPath(path);
                     });
                   },
                   child: Text(t.base.select),
@@ -182,14 +188,12 @@ class _SettingPageState extends State<SettingPage> {
               ])),
         TitleValueLayout(
           title: t.settings.adb_path,
-          value: Config.adbPath,
+          value: adbPath,
           end: Row(children: [
             TextButton(
               onPressed: () {
                 openFilePicker((path) {
-                  setState(() {
-                    Config.adbPath = path;
-                  });
+                  ref.read(settingStateProvider.notifier).setAdbPath(path);
                 });
               },
               child: Text(t.base.select),
@@ -205,6 +209,8 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildFeaturesSection() {
+    final enableSignature = ref
+        .watch(settingStateProvider.select((value) => value.enableSignature));
     return _buildSettingCard(
       title: t.settings.features,
       icon: Icons.featured_play_list,
@@ -212,11 +218,9 @@ class _SettingPageState extends State<SettingPage> {
         if (!Platform.isMacOS)
           SwitchListTile(
             title: Text(t.settings.enable_signature),
-            value: Config.enableSignature,
+            value: enableSignature,
             onChanged: (bool value) {
-              setState(() {
-                Config.enableSignature = value;
-              });
+              ref.read(settingStateProvider.notifier).setEnableSignature(value);
             },
           ),
         if (FileAssociationManager.isSupported)
@@ -243,6 +247,8 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildAppearanceSection() {
+    final themeColor =
+        ref.watch(themeManagerProvider.select((value) => value.themeColor));
     return _buildSettingCard(
       title: t.settings.appearance,
       icon: Icons.palette,
@@ -253,7 +259,7 @@ class _SettingPageState extends State<SettingPage> {
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: Config.themeColor,
+              color: Color(themeColor),
               shape: BoxShape.circle,
               border: Border.all(
                 color: Theme.of(context).dividerColor.withOpacity(0.2),
@@ -281,7 +287,9 @@ class _SettingPageState extends State<SettingPage> {
                   onChanged: (value) {
                     final lines = int.tryParse(value);
                     if (lines != null) {
-                      Config.maxLines = lines;
+                      ref
+                          .read(uiConfigStateProvider.notifier)
+                          .updateTextMaxLines(lines);
                     }
                   },
                 ),
@@ -298,17 +306,17 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildDebugSection() {
+    final enableDebug =
+        ref.watch(settingStateProvider.select((value) => value.enableDebug));
     return _buildSettingCard(
       title: t.settings.debug,
       icon: Icons.bug_report,
       children: [
         SwitchListTile(
           title: Text(t.settings.enable_debug),
-          value: Config.enableDebug,
+          value: enableDebug,
           onChanged: (bool value) async {
-            setState(() {
-              Config.enableDebug = value;
-            });
+            ref.read(settingStateProvider.notifier).setEnableDebug(value);
             // 重新初始化日志系统
             if (!value) {
               await LoggerInit.instance.dispose();
@@ -319,7 +327,7 @@ class _SettingPageState extends State<SettingPage> {
           },
         ),
         ListTile(
-          enabled: Config.enableDebug,
+          enabled: enableDebug,
           title: Text(t.settings.open_debug_log),
           leading: const Icon(Icons.description),
           onTap: () {
@@ -330,7 +338,7 @@ class _SettingPageState extends State<SettingPage> {
           },
         ),
         ListTile(
-          enabled: Config.enableDebug,
+          enabled: enableDebug,
           title: Text(t.settings.open_debug_directory),
           leading: const Icon(Icons.folder),
           onTap: () {

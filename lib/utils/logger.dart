@@ -26,7 +26,7 @@ class LoggerInit {
   }
 
   Future<void> init() async {
-    if (Config.enableDebug) {
+    if (Config.enableDebug.value) {
       final appDir = await getApplicationSupportDirectory();
       final logPath = path.join(appDir.path, 'debug.log');
       _logFile = File(logPath);
@@ -35,7 +35,7 @@ class LoggerInit {
   }
 
   void log(LogRecord record) {
-    if (Config.enableDebug && _logSink != null) {
+    if (Config.enableDebug.value && _logSink != null) {
       _logSink
           ?.writeln('${record.level.name}: ${record.time}: ${record.message}');
     }

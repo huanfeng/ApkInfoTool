@@ -47,3 +47,7 @@ untranslated.txt
 .vscode/
 
 lib/gen
+
+# Ignore generated dart files
+**/*.g.dart
+**/*.freezed.dart

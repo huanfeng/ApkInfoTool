@@ -10,7 +10,10 @@
     "copy_file_path": "Copy file path",
     "copy_content": "Copy content",
     "copied_content": "Copied content: {content}",
-    "more_actions": "More Actions"
+    "more_actions": "More Actions",
+    "info_page": "Info Page",
+    "install_page": "Install Page",
+    "page_in_development": "Page in development"
   },
   "settings": {
     "title": "Settings",
@@ -47,7 +50,8 @@
   "open": {
     "open_apk": "Open APK",
     "open_file_directory": "Open file location",
-    "select_apk_file": "Please select APK file"
+    "select_apk_file": "Please select APK file",
+    "close_file": "Close file"
   },
   "file_info": {
     "file": "File",

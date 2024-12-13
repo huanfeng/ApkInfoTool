@@ -1,6 +1,7 @@
 import 'dart:io';
+
+import 'package:apk_info_tool/config.dart';
 import 'package:path/path.dart' as path;
-import '../config.dart';
 
 // 辅助获取命令行路径
 class CommandTools {
@@ -18,14 +19,14 @@ class CommandTools {
     if (Platform.isMacOS) {
       return _getMacOsCmdPath(adb);
     }
-    return Config.adbPath.isEmpty ? adb : Config.adbPath;
+    return Config.adbPath.value.isEmpty ? adb : Config.adbPath.value;
   }
 
   static String getAapt2Path() {
     if (Platform.isMacOS) {
       return _getMacOsCmdPath(aapt2);
     }
-    return Config.aapt2Path.isEmpty ? aapt2 : Config.aapt2Path;
+    return Config.aapt2Path.value.isEmpty ? aapt2 : Config.aapt2Path.value;
   }
 
   static String getApkSignerPath() {
@@ -33,6 +34,8 @@ class CommandTools {
       // macOS 暂不支持
       return "";
     }
-    return Config.apksignerPath.isEmpty ? apksigner : Config.apksignerPath;
+    return Config.apksignerPath.value.isEmpty
+        ? apksigner
+        : Config.apksignerPath.value;
   }
 }

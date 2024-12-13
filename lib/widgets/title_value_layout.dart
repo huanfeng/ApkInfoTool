@@ -1,8 +1,8 @@
+import 'package:apk_info_tool/providers/ui_config_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:apk_info_tool/config.dart';
-
-class TitleValueLayout extends StatelessWidget {
+class TitleValueLayout extends ConsumerWidget {
   final String title;
   final String value;
   final Widget? end;
@@ -23,7 +23,9 @@ class TitleValueLayout extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final configTitleWidth =
+        ref.watch(uiConfigStateProvider.select((value) => value.titleWidth));
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -31,7 +33,7 @@ class TitleValueLayout extends StatelessWidget {
         children: [
           // 标题部分
           SizedBox(
-            width: titleWidth ?? Config.titleWidth,
+            width: titleWidth ?? configTitleWidth,
             child: Text(
               title,
               style: TextStyle(

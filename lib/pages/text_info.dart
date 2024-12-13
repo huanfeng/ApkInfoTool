@@ -1,6 +1,6 @@
+import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../gen/strings.g.dart';
 
 class TextInfoPage extends StatelessWidget {
   final String text;

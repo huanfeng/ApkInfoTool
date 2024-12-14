@@ -1,3 +1,4 @@
+import 'package:apk_info_tool/pages/pages.dart';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -16,9 +17,9 @@ class PageActions extends _$PageActions {
 @riverpod
 class CurrentPage extends _$CurrentPage {
   @override
-  int build() => 0;
+  Pages build() => Pages.info;
 
-  void setIndex(int index) {
-    state = index;
+  void setPage(Pages page) {
+    state = page;
   }
 }

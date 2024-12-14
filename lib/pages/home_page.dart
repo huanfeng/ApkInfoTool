@@ -1,6 +1,7 @@
 import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:apk_info_tool/pages/info_page.dart';
 import 'package:apk_info_tool/pages/install_page.dart';
+import 'package:apk_info_tool/pages/pages.dart';
 import 'package:apk_info_tool/providers/home_page_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +31,8 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   Widget build(BuildContext context) {
     final actions = ref.watch(pageActionsProvider);
+    final pages = [Pages.info, Pages.install];
+    final currPage = ref.watch(currentPageProvider);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -42,22 +45,25 @@ class _HomePageState extends ConsumerState<HomePage>
               icon: Icon(Icons.info_outline),
               tooltip: t.home.info_page,
               onPressed: () => {
-                    ref.read(currentPageProvider.notifier).setIndex(0),
+                    ref.read(currentPageProvider.notifier).setPage(Pages.info),
                   }),
           IconButton(
               icon: Icon(Icons.android_outlined),
               tooltip: t.home.install_page,
               onPressed: () => {
-                    ref.read(currentPageProvider.notifier).setIndex(1),
+                    ref
+                        .read(currentPageProvider.notifier)
+                        .setPage(Pages.install),
                   }),
         ]),
         actions: actions,
       ),
       body: IndexedStack(
-        index: ref.watch(currentPageProvider),
+        key: ObjectKey(currPage), // 这里是为了解决 IndexedStack 的子页语言不正确的问题
+        index: pages.indexOf(currPage),
         children: const [
-          APKInfoPage(0),
-          APKInstallPage(1),
+          APKInfoPage(),
+          APKInstallPage(),
         ],
       ),
     );

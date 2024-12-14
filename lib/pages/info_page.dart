@@ -4,6 +4,7 @@ import 'package:apk_info_tool/apkparser/apk_info.dart';
 import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:apk_info_tool/main.dart';
 import 'package:apk_info_tool/pages/install_dialog.dart';
+import 'package:apk_info_tool/pages/pages.dart';
 import 'package:apk_info_tool/pages/text_info.dart';
 import 'package:apk_info_tool/providers/home_page_provider.dart';
 import 'package:apk_info_tool/providers/info_page_provider.dart';
@@ -21,12 +22,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class APKInfoPage extends ConsumerStatefulWidget {
-  final int pageIndex;
-  const APKInfoPage(this.pageIndex, {super.key});
+class APKInfoPage extends ConsumerStatefulWidget implements PageBase {
+  const APKInfoPage({super.key});
 
   @override
   ConsumerState<APKInfoPage> createState() => _APKInfoPageState();
+
+  @override
+  Pages get page => Pages.info;
 }
 
 class _APKInfoPageState extends ConsumerState<APKInfoPage> {
@@ -587,7 +590,7 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
   void updateActions() {
     final page = ref.read(currentPageProvider);
     final fileState = ref.read(currentFileStateProvider);
-    if (page == widget.pageIndex) {
+    if (page == widget.page) {
       ref
           .read(pageActionsProvider.notifier)
           .setActions(_buildActions(fileState));

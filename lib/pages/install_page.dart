@@ -1,15 +1,18 @@
 import 'package:apk_info_tool/gen/strings.g.dart';
+import 'package:apk_info_tool/pages/pages.dart';
 import 'package:apk_info_tool/providers/home_page_provider.dart';
+import 'package:apk_info_tool/providers/setting_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class APKInstallPage extends ConsumerStatefulWidget {
-  final int pageIndex;
-
-  const APKInstallPage(this.pageIndex, {super.key});
+class APKInstallPage extends ConsumerStatefulWidget implements PageBase {
+  const APKInstallPage({super.key});
 
   @override
   ConsumerState<APKInstallPage> createState() => _APKInstallPageState();
+
+  @override
+  Pages get page => Pages.install;
 }
 
 class _APKInstallPageState extends ConsumerState<APKInstallPage> {
@@ -24,16 +27,20 @@ class _APKInstallPageState extends ConsumerState<APKInstallPage> {
   @override
   Widget build(BuildContext context) {
     ref.listen(currentPageProvider, ((previous, next) {
-      if (next == widget.pageIndex) {
-        ref.read(pageActionsProvider.notifier).setActions(_buildActions());
-      }
+      updateActions();
     }));
 
     return Center(
-      child: Text(t.home.page_in_development,
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis),
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Text(t.home.install_page,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis),
+        Text(t.home.page_in_development,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis),
+      ]),
     );
   }
 
@@ -43,7 +50,7 @@ class _APKInstallPageState extends ConsumerState<APKInstallPage> {
 
   void updateActions() {
     final page = ref.read(currentPageProvider);
-    if (page == widget.pageIndex) {
+    if (page == widget.page) {
       ref.read(pageActionsProvider.notifier).setActions(_buildActions());
     }
   }

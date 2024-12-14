@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:apk_info_tool/utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,8 +12,10 @@ class ConfigItem<T> {
 
   ConfigItem(this.key, this._value);
 
-  void updateValue(T value) {
-    this._value = value;
+  Timer? _applyTimer;
+
+  void _applyValue() {
+    final value = this._value;
     if (value is String) {
       Config.gPrefs.setString(key, value);
     } else if (value is bool) {
@@ -21,6 +25,15 @@ class ConfigItem<T> {
     } else if (value is double) {
       Config.gPrefs.setDouble(key, value);
     }
+  }
+
+  Future<void> updateValue(T value) async {
+    this._value = value;
+    _applyTimer?.cancel();
+    _applyTimer = Timer(const Duration(milliseconds: 100), () {
+      _applyTimer = null;
+      _applyValue();
+    });
   }
 
   void loadValue() {

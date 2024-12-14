@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:apk_info_tool/config.dart';
 import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:apk_info_tool/main.dart';
 import 'package:apk_info_tool/providers/setting_provider.dart';
@@ -253,6 +254,32 @@ class _SettingPageState extends ConsumerState<SettingPage> {
       title: t.settings.appearance,
       icon: Icons.palette,
       children: [
+        ListTile(
+          title: Text(t.settings.language),
+          trailing: DropdownButton<String>(
+            value: ref
+                .watch(settingStateProvider.select((value) => value.language)),
+            items: [
+              DropdownMenuItem(
+                value: Config.kLanguageAuto,
+                child: Text(t.settings.language_auto),
+              ),
+              DropdownMenuItem(
+                value: AppLocale.en.languageCode,
+                child: Text('English'),
+              ),
+              DropdownMenuItem(
+                value: AppLocale.zhCn.languageCode,
+                child: Text('简体中文'),
+              ),
+            ],
+            onChanged: (String? value) {
+              if (value != null) {
+                ref.read(settingStateProvider.notifier).setLanguage(value);
+              }
+            },
+          ),
+        ),
         ListTile(
           title: Text(t.settings.theme_color),
           trailing: Container(

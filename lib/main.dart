@@ -49,7 +49,12 @@ void main(List<String> arguments) async {
       // await windowManager.setPreventClose(true);
     });
   }
-  LocaleSettings.useDeviceLocale();
+  final lang = Config.language.value;
+  if (lang.isEmpty || lang == Config.kLanguageAuto) {
+    LocaleSettings.useDeviceLocale();
+  } else {
+    LocaleSettings.setLocaleRaw(lang);
+  }
   runApp(ProviderScope(child: TranslationProvider(child: const MyApp())));
 }
 

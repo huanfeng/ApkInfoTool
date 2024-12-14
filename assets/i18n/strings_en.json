@@ -37,7 +37,9 @@
     "cannot_open_settings": "Unable to open system settings, possibly due to unsupported system version",
     "title_width": "Title Width",
     "title_width_preview": "Preview",
-    "reset": "Reset"
+    "reset": "Reset",
+    "language": "Language",
+    "language_auto": "Auto (System)"
   },
   "parse": {
     "signature_verify_failed": "Signature verification failed",

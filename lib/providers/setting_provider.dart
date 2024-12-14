@@ -1,4 +1,5 @@
 import 'package:apk_info_tool/config.dart';
+import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -13,6 +14,7 @@ class Settings with _$Settings {
     required String adbPath,
     required bool enableSignature,
     required bool enableDebug,
+    required String language,
   }) = _Settings;
 }
 
@@ -25,6 +27,7 @@ class SettingState extends _$SettingState {
         adbPath: Config.adbPath.value,
         enableSignature: Config.enableSignature.value,
         enableDebug: Config.enableDebug.value,
+        language: Config.language.value,
       );
 
   void setAapt2Path(String value) {
@@ -50,5 +53,15 @@ class SettingState extends _$SettingState {
   void setEnableDebug(bool value) {
     state = state.copyWith(enableDebug: value);
     Config.enableDebug.updateValue(value);
+  }
+
+  void setLanguage(String value) {
+    state = state.copyWith(language: value);
+    Config.language.updateValue(value);
+    if (value.isEmpty || value == Config.kLanguageAuto) {
+      LocaleSettings.useDeviceLocale();
+    } else {
+      LocaleSettings.setLocaleRaw(value);
+    }
   }
 }

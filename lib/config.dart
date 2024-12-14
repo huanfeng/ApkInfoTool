@@ -39,6 +39,8 @@ class ConfigItem<T> {
 class Config {
   static late SharedPreferences gPrefs;
 
+  static const kLanguageAuto = "auto";
+
   static final aapt2Path = ConfigItem("aapt2_path", "");
   static final apksignerPath = ConfigItem("apksigner_path", "");
   static final adbPath = ConfigItem("adb_path", "");
@@ -47,6 +49,7 @@ class Config {
   static final maxLines = ConfigItem("max_lines", 6);
   static final themeColor = ConfigItem("theme_color", Colors.blue.value);
   static final titleWidth = ConfigItem("title_width", 100.0);
+  static final language = ConfigItem("language", kLanguageAuto);
 
   static final List<ConfigItem> _globalItems = [
     aapt2Path,
@@ -56,7 +59,8 @@ class Config {
     enableDebug,
     maxLines,
     themeColor,
-    titleWidth
+    titleWidth,
+    language
   ];
 
   static Future<void> init() async {

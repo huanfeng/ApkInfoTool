@@ -11,9 +11,8 @@
 - APK 文件安装
 
 ## 已知问题
-- 某些 APK 解析速度慢：本工具使用 aapt2 作为解析工具，速度依赖于 aapt2 的性能表现。使用旧版的 aapt 在一些场景下速度会更快，但有兼容性问题。
+- 某些 APK 解析速度慢：本工具使用 aapt2 作为解析工具，速度依赖于 aapt2 的性能表现。
 - 某些 APK 不显示图标：目前仅支持 png 和 webp 格式的图标，xml 格式的图标目前不支持显示，后续会尝试优化。
-- 某些 APK 的图标不够清晰：目前是从默认图标加载，后续会尝试优化。
 - macOS 因沙箱原因，有以下问题
   - 重命名功能无法工作
   - 无法指定外部的 adb 和 aapt2，只能使用内置的
@@ -47,6 +46,7 @@
 从 [Releases](https://github.com/huanfeng/ApkInfoTool/releases) 页面下载对应平台的安装包：
 
 - Windows: `.exe` 安装包
+- Windows: `.zip` 压缩包, 解压后运行
 - macOS: `.dmg` 安装包
 - Linux: `.AppImage` 可执行文件
 
@@ -57,6 +57,8 @@
 ```bash
 # 获取依赖
 flutter pub get
+# 运行代码生成
+dart run build_runner build
 # 运行调试版本
 flutter run
 # 构建发布版本
@@ -72,7 +74,7 @@ flutter build linux # Linux
 - 简体中文
 - English
 
-语言文件位于 `lib/l10n` 目录下。
+语言文件位于 `lib/i18n` 目录下。
 
 ## 贡献代码
 

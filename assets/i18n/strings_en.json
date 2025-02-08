@@ -89,14 +89,26 @@
   "install": {
     "apk": "Install APK",
     "installing": "Installing...",
-    "success": "Success",
-    "failed": "Failed",
-    "error": "Error",
+    "success": "Installation Successful",
+    "failed": "Installation Failed",
+    "error": "Installation Error",
     "no_devices": "No devices found",
     "please_select_device": "Please select at least one device",
     "allow_downgrade": "Allow Downgrade (-d)",
     "allow_test": "Allow Test (-t)",
     "force_install": "Force Install (-r)",
-    "advanced_options": "Advanced Options"
+    "advanced_options": "Advanced Options",
+    "title": "Install APK",
+    "select_device": "Select Device",
+    "split_options": "Split Options",
+    "select_all": "Select All",
+    "base_only": "Base Only",
+    "split_type": {
+      "base": "Base Package",
+      "language": "Language Pack",
+      "abi": "CPU Architecture",
+      "density": "Screen Density",
+      "unknown": "Others"
+    }
   }
 }

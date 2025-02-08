@@ -87,16 +87,26 @@
     "default_name": "默认名称"
   },
   "install": {
-    "apk": "安装APK",
+    "title": "安装APK",
+    "select_device": "请选择设备",
     "installing": "正在安装...",
     "success": "安装成功",
     "failed": "安装失败",
-    "error": "安装错误",
-    "no_devices": "未发现设备",
-    "please_select_device": "请至少选择一个设备",
-    "allow_downgrade": "允许降级安装 (-d)",
-    "allow_test": "允许测试版 (-t)",
-    "force_install": "强制安装 (-r)",
-    "advanced_options": "高级选项"
+    "error": "安装出错",
+    "no_devices": "没有找到设备",
+    "advanced_options": "高级选项",
+    "allow_test": "允许安装测试包",
+    "allow_downgrade": "允许降级安装",
+    "force_install": "强制安装",
+    "split_options": "分包选项",
+    "select_all": "全选",
+    "base_only": "仅基础包",
+    "split_type": {
+      "base": "基础包",
+      "language": "语言包",
+      "abi": "处理器架构",
+      "density": "屏幕密度",
+      "unknown": "其他"
+    }
   }
 }

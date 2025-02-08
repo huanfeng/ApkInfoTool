@@ -35,7 +35,7 @@ Future<ApkInfo?> getApkInfo(String apk) async {
     apkInfo.label = manifest.name;
     apkInfo.xapkName = manifest.name;
     apkInfo.usesPermissions = manifest.permissions;
-    apkInfo.splitConfigs = manifest.splitConfigs;
+    apkInfo.splitConfigs = manifest.splitConfigs ?? [];
     apkInfo.splitApks = manifest.splitApks.map((e) => e.file).toList();
     apkInfo.totalSize = manifest.totalSize;
 
@@ -142,7 +142,7 @@ extension StringExt on String {
 class ApkInfo {
   String apkPath = "";
   int apkSize = 0;
-  bool isXapk = false;  // 是否为XAPK格式
+  bool isXapk = false; // 是否为XAPK格式
 
   String? packageName;
   int? versionCode;

@@ -1,41 +1,56 @@
+import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:apk_info_tool/utils/logger.dart';
 import 'package:archive/archive.dart';
+import 'package:apk_info_tool/utils/logger.dart';
+import 'package:path/path.dart' as path;
 
 class ZipHelper {
-  InputFileStream? _inputStream;
   Archive? _archive;
+  String? _filePath;
 
-  bool open(String path) {
-    if (isOpen()) return false;
-    _inputStream = InputFileStream(path);
-    _archive = ZipDecoder().decodeStream(_inputStream!);
-    return true;
-  }
-
-  bool isOpen() => _inputStream != null && _archive != null;
-
-  void close() async {
-    if (_archive != null) {
-      await _archive!.clear();
-      _archive = null;
-    }
-    if (_inputStream != null) {
-      _inputStream!.close();
-      _inputStream = null;
-    }
-  }
-
-  Future<Uint8List?> readFileContent(String path) async {
-    if (!isOpen()) return null;
-    final archive = _archive!;
+  bool open(String filePath) {
     try {
-      final file = archive.findFile(path);
-      return file?.content;
+      _filePath = filePath;
+      final bytes = File(filePath).readAsBytesSync();
+      _archive = ZipDecoder().decodeBytes(bytes);
+      return true;
     } catch (e) {
-      log.info('readFileContent: 找不到文件: $path');
+      log.severe('Failed to open zip file: $e');
+      return false;
     }
-    return null;
+  }
+
+  Future<Uint8List?> readFileContent(String fileName) async {
+    try {
+      final file = _archive?.findFile(fileName);
+      return file?.content as Uint8List?;
+    } catch (e) {
+      log.severe('Failed to read file content: $e');
+      return null;
+    }
+  }
+
+  Future<bool> extractFile(String fileName, String outputPath) async {
+    try {
+      final file = _archive?.findFile(fileName);
+      if (file == null) {
+        log.severe('File not found in zip: $fileName');
+        return false;
+      }
+
+      final outputDir = path.dirname(outputPath);
+      await Directory(outputDir).create(recursive: true);
+      await File(outputPath).writeAsBytes(file.content as List<int>);
+      return true;
+    } catch (e) {
+      log.severe('Failed to extract file: $e');
+      return false;
+    }
+  }
+
+  void close() {
+    _archive = null;
+    _filePath = null;
   }
 }

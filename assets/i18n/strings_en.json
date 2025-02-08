@@ -52,8 +52,9 @@
   "open": {
     "open_apk": "Open APK",
     "open_file_directory": "Open file location",
-    "select_apk_file": "Please select APK file",
-    "close_file": "Close file"
+    "select_apk_file": "Please select APK or XAPK file",
+    "close_file": "Close file",
+    "invalid_file_type": "Invalid file type, please select APK or XAPK file"
   },
   "file_info": {
     "file": "File",

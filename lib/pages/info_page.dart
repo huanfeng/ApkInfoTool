@@ -37,7 +37,7 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
     var result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       dialogTitle: t.open.select_apk_file,
-      allowedExtensions: ['apk'],
+      allowedExtensions: ['apk', 'xapk'],
       lockParentWindow: true,
     );
     log.fine('openFilePicker: result=$result');
@@ -78,41 +78,37 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
   Future<void> loadApkInfo(String filePath) async {
     final apkInfoState = ref.read(currentApkInfoProvider.notifier);
     final isParsingState = ref.read(isParsingProvider.notifier);
+    final fileState = ref.read(currentFileStateProvider.notifier);
     final enableSignature =
         ref.read(settingStateProvider.select((value) => value.enableSignature));
     apkInfoState.reset();
     isParsingState.update(true);
     try {
       final apkInfo = await getApkInfo(filePath);
-      if (apkInfo != null && enableSignature) {
-        // 获取签名信息
-        try {
-          final signatureInfo = await getSignatureInfo(filePath);
-          apkInfo.signatureInfo = signatureInfo;
-        } catch (e) {
-          // 显示签名验证失败提示
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(t.parse.signature_verify_failed)));
+      if (apkInfo != null) {
+        if (enableSignature) {
+          // 获取签名信息
+          try {
+            final signatureInfo = await getSignatureInfo(filePath);
+            apkInfo.signatureInfo = signatureInfo;
+          } catch (e) {
+            // 显示签名验证失败提示
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(t.parse.signature_verify_failed)));
+            }
           }
         }
+        apkInfoState.update(apkInfo);
+        // 更新 FileState 中的 apkInfo
+        fileState.update(FileState(
+          filePath: filePath,
+          fileSize: File(filePath).lengthSync(),
+          apkInfo: apkInfo,
+        ));
       }
-      apkInfoState.update(apkInfo);
+    } finally {
       isParsingState.update(false);
-      if (!mounted) return;
-
-      if (apkInfo == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(t.parse.parse_apk_info_fail)),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      isParsingState.update(false);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.parse.parse_apk_info_fail)),
-      );
     }
   }
 
@@ -188,6 +184,7 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
                     context: context,
                     builder: (context) => InstallDialog(
                       apkPath: fileState.filePath!,
+                      isXapk: fileState.apkInfo?.isXapk ?? false,
                     ),
                   );
                 }),
@@ -300,12 +297,13 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
             // 只处理第一个文件
             if (details.files.isNotEmpty) {
               final file = details.files.first;
-              if (file.path.toLowerCase().endsWith('.apk')) {
+              final extension = file.path.toLowerCase();
+              if (extension.endsWith('.apk') || extension.endsWith('.xapk')) {
                 openApk(file.path);
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(t.open.select_apk_file),
+                    content: Text(t.open.invalid_file_type),
                   ),
                 );
               }

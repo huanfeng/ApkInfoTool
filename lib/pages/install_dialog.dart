@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:apk_info_tool/utils/command_tools.dart';
 import 'package:apk_info_tool/utils/logger.dart';
+import 'package:apk_info_tool/utils/xapk_installer.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as path;
 
 class InstallOptions {
   bool allowDowngrade = false;
@@ -48,8 +50,13 @@ class AdbDevice {
 
 class InstallDialog extends StatefulWidget {
   final String apkPath;
+  final bool isXapk;
 
-  const InstallDialog({super.key, required this.apkPath});
+  const InstallDialog({
+    super.key,
+    required this.apkPath,
+    this.isXapk = false,
+  });
 
   @override
   State<InstallDialog> createState() => _InstallDialogState();
@@ -125,28 +132,45 @@ class _InstallDialogState extends State<InstallDialog> {
   }
 
   Future<void> _installApk() async {
+    if (!canInstall) return;
+
     setState(() {
       isInstalling = true;
+      for (var device in devices) {
+        if (device.selected) {
+          device.installStatus = t.install.installing;
+          device.errorMessage = null;
+        }
+      }
     });
 
     for (var device in devices.where((d) => d.selected)) {
-      setState(() {
-        device.installStatus = t.install.installing;
-        device.errorMessage = null;
-      });
+      log.info('Installing on device: ${device.id}');
 
-      List<String> args = ['install'];
+      if (widget.isXapk) {
+        final (success, error) = await XapkInstaller.installXapk(
+          device.id,
+          widget.apkPath,
+          options.allowDowngrade,
+          options.forceInstall,
+          options.allowTest,
+        );
 
-      if (options.allowDowngrade) {
-        args.add('-d');
-      }
-      if (options.forceInstall) {
-        args.add('-r');
-      }
-      if (options.allowTest) {
-        args.add('-t');
+        setState(() {
+          if (success) {
+            device.installStatus = t.install.success;
+          } else {
+            device.installStatus = t.install.failed;
+            device.errorMessage = error;
+          }
+        });
+        continue;
       }
 
+      final args = ['install'];
+      if (options.allowDowngrade) args.add('-d');
+      if (options.forceInstall) args.add('-r');
+      if (options.allowTest) args.add('-t');
       args.add(widget.apkPath);
 
       try {

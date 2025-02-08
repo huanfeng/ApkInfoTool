@@ -15,6 +15,13 @@
     "install_page": "安装页面",
     "page_in_development": "页面开发中"
   },
+  "open": {
+    "open_apk": "打开APK",
+    "open_file_directory": "打开文件位置",
+    "select_apk_file": "请选择 APK 或 XAPK 文件",
+    "close_file": "关闭文件",
+    "invalid_file_type": "请选择 APK 或 XAPK 文件"
+  },
   "settings": {
     "title": "设置",
     "open_settings": "打开设置",
@@ -48,12 +55,6 @@
     "parsing": "正在解析中...",
     "parse_timeout": "解析超时,文件可能过大",
     "parse_apk_info_fail": "解析APK信息失败!"
-  },
-  "open": {
-    "open_apk": "打开APK",
-    "open_file_directory": "打开文件位置",
-    "select_apk_file": "请选择 APK 文件",
-    "close_file": "关闭文件"
   },
   "file_info": {
     "file": "文件",

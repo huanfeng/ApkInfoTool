@@ -34,19 +34,23 @@ class IsParsing extends _$IsParsing {
 class FileState {
   final String? filePath;
   final int? fileSize;
+  final ApkInfo? apkInfo;
 
   FileState({
     this.filePath,
     this.fileSize,
+    this.apkInfo,
   });
 
   FileState copyWith({
     String? filePath,
     int? fileSize,
+    ApkInfo? apkInfo,
   }) {
     return FileState(
       filePath: filePath ?? this.filePath,
       fileSize: fileSize ?? this.fileSize,
+      apkInfo: apkInfo ?? this.apkInfo,
     );
   }
 }

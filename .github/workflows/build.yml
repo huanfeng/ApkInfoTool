@@ -200,6 +200,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           name: Release ${{ github.ref_name }}
+          generate_release_notes: true
           files: |
             windows-release/*.exe
             windows-release/*.zip
@@ -256,12 +257,35 @@ jobs:
           version = os.environ["VERSION"]
           sha256 = os.environ["SHA256"]
 
-          with open(manifest, "r", encoding="utf-8") as f:
-              data = json.load(f)
+          if os.path.exists(manifest):
+              with open(manifest, "r", encoding="utf-8") as f:
+                  data = json.load(f)
+          else:
+              data = {
+                  "version": version,
+                  "architecture": {
+                      "64bit": {
+                          "url": url,
+                          "bin": ["apk_info_tool.exe"],
+                          "hash": sha256,
+                      }
+                  },
+                  "homepage": "https://github.com/huanfeng/ApkInfoTool",
+                  "license": "MIT",
+                  "description": "A simple tool for viewing APK/XAPK/APKM file information and installation.",
+              }
 
           data["version"] = version
-          data["url"] = url
-          data["hash"] = sha256
+          data.setdefault("architecture", {}).setdefault("64bit", {})
+          data["architecture"]["64bit"]["url"] = url
+          data["architecture"]["64bit"]["hash"] = sha256
+          data["architecture"]["64bit"].setdefault("bin", ["apk_info_tool.exe"])
+          data.setdefault("homepage", "https://github.com/huanfeng/ApkInfoTool")
+          data.setdefault("license", "MIT")
+          data.setdefault(
+              "description",
+              "A simple tool for viewing APK/XAPK/APKM file information and installation.",
+          )
 
           with open(manifest, "w", encoding="utf-8") as f:
               json.dump(data, f, indent=2, ensure_ascii=True)

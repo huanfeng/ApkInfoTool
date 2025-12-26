@@ -6,7 +6,7 @@ part 'ui_config_provider.freezed.dart';
 part 'ui_config_provider.g.dart';
 
 @freezed
-class UiConfig with _$UiConfig {
+abstract class UiConfig with _$UiConfig {
   const factory UiConfig({
     required int textMaxLines,
     required double titleWidth,

@@ -52,25 +52,28 @@
   "open": {
     "open_apk": "Open APK",
     "open_file_directory": "Open file location",
-    "select_apk_file": "Please select APK or XAPK file",
+    "select_apk_file": "Please select APK/XAPK/APKM file",
     "close_file": "Close file",
-    "invalid_file_type": "Invalid file type, please select APK or XAPK file"
+    "invalid_file_type": "Invalid file type, please select APK/XAPK/APKM file"
   },
   "file_info": {
     "file": "File",
     "size": "Size"
   },
   "apk_info": {
+    "archive_type": "Archive Type",
     "package_name": "Package",
     "app_name": "Name",
     "min_sdk": "Min SDK",
     "target_sdk": "Target SDK",
     "version_code": "Version Code",
     "version_name": "Version Name",
+    "split_apks": "Split APKs",
     "screen_size": "Screen Size",
     "screen_density": "Screen Density",
     "abi": "ABI",
     "languages": "Languages",
+    "obb_files": "OBB Files",
     "permissions": "Permissions",
     "signature_info": "Signature Info",
     "text_info": "Text Info"
@@ -83,11 +86,11 @@
     "failed": "Rename failed",
     "new_file_name": "New File Name",
     "name_cannot_be_empty": "File name cannot be empty",
-    "must_end_with_apk": "File name must end with .apk",
+    "must_end_with_apk": "File name must end with .apk/.xapk/.apkm",
     "default_name": "Default Name"
   },
   "install": {
-    "apk": "Install APK",
+    "apk": "Install APK/XAPK/APKM",
     "installing": "Installing...",
     "success": "Installation Successful",
     "failed": "Installation Failed",
@@ -98,7 +101,7 @@
     "allow_test": "Allow Test (-t)",
     "force_install": "Force Install (-r)",
     "advanced_options": "Advanced Options",
-    "title": "Install APK",
+    "title": "Install APK/XAPK/APKM",
     "select_device": "Select Device",
     "split_options": "Split Options",
     "select_all": "Select All",

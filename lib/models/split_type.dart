@@ -8,7 +8,12 @@ enum SplitType {
   unknown;
 
   static SplitType fromId(String id) {
-    if (id == 'base') return SplitType.base;
+    if (id == 'base' ||
+        id.startsWith('base-') ||
+        id.startsWith('base_') ||
+        id.startsWith('base.')) {
+      return SplitType.base;
+    }
     if (id.contains('hdpi')) return SplitType.density;
     if (id.contains('v7a') || id.contains('v8a') || id.contains('x86')) {
       return SplitType.abi;

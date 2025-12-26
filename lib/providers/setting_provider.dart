@@ -7,7 +7,7 @@ part 'setting_provider.freezed.dart';
 part 'setting_provider.g.dart';
 
 @freezed
-class Settings with _$Settings {
+abstract class Settings with _$Settings {
   factory Settings({
     required String aapt2Path,
     required String apksignerPath,

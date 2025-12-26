@@ -3,9 +3,19 @@ import 'package:apk_info_tool/providers/ui_config_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final currentTitleWidthProvider = StateProvider<double>((ref) {
-  return ref.read(uiConfigStateProvider.select((value) => value.titleWidth));
-});
+class CurrentTitleWidth extends Notifier<double> {
+  @override
+  double build() {
+    return ref.read(uiConfigStateProvider.select((value) => value.titleWidth));
+  }
+
+  void setWidth(double value) {
+    state = value;
+  }
+}
+
+final currentTitleWidthProvider =
+    NotifierProvider<CurrentTitleWidth, double>(CurrentTitleWidth.new);
 
 class TitleWidthSetting extends ConsumerStatefulWidget {
   const TitleWidthSetting({super.key});
@@ -38,7 +48,9 @@ class _TitleWidthSettingState extends ConsumerState<TitleWidthSetting> {
                 divisions: 24,
                 label: currentWidth.round().toString(),
                 onChanged: (value) {
-                  ref.read(currentTitleWidthProvider.notifier).state = value;
+                  ref
+                      .read(currentTitleWidthProvider.notifier)
+                      .setWidth(value);
                 },
                 onChangeEnd: (value) {
                   ref

@@ -11,6 +11,32 @@ import 'package:apk_info_tool/utils/zip_helper.dart';
 import 'package:path/path.dart' as path;
 import 'xapk_info.dart';
 
+bool _isArchiveApk(String apkPath) {
+  final extension = path.extension(apkPath).toLowerCase();
+  return extension == '.xapk' || extension == '.apkm';
+}
+
+String _archiveTypeFromExtension(String extension) {
+  return extension == '.apkm' ? 'APKM' : 'XAPK';
+}
+
+String? _findBaseApkEntry(List<String> apkEntries) {
+  if (apkEntries.isEmpty) return null;
+  for (final entry in apkEntries) {
+    final name = path.basename(entry).toLowerCase();
+    if (name == 'base.apk' || name.endsWith('/base.apk')) {
+      return entry;
+    }
+  }
+  for (final entry in apkEntries) {
+    final name = path.basename(entry).toLowerCase();
+    if (!name.contains('config.')) {
+      return entry;
+    }
+  }
+  return apkEntries.first;
+}
+
 Future<ApkInfo?> getApkInfo(String apk) async {
   log.info("getApkInfo: apk=[$apk] start");
   final apkInfo = ApkInfo();
@@ -18,31 +44,118 @@ Future<ApkInfo?> getApkInfo(String apk) async {
   apkInfo.apkSize = File(apk).lengthSync();
 
   // 检查是否为XAPK格式
-  if (path.extension(apk).toLowerCase() == '.xapk') {
-    log.info("getApkInfo: parsing XAPK file");
+  if (_isArchiveApk(apk)) {
+    final extension = path.extension(apk).toLowerCase();
+    log.info("getApkInfo: parsing XAPK/APKM file");
+    apkInfo.isXapk = true;
+    apkInfo.archiveType = _archiveTypeFromExtension(extension);
+
     final manifest = await parseXapkManifest(apk);
-    if (manifest == null) {
-      log.info("getApkInfo: failed to parse XAPK manifest");
-      return null;
+    final zip = ZipHelper();
+    Directory? tempDir;
+    String? baseApkPath;
+    try {
+      if (zip.open(apk)) {
+        apkInfo.archiveApks = zip.listFiles(extension: '.apk');
+        apkInfo.obbFiles = zip.listFiles(extension: '.obb');
+
+        final baseEntry = _findBaseApkEntry(apkInfo.archiveApks);
+        if (baseEntry != null) {
+          tempDir = await Directory.systemTemp.createTemp('apk_info_base');
+          baseApkPath = path.join(tempDir.path, path.basename(baseEntry));
+          final extracted = await zip.extractFile(baseEntry, baseApkPath);
+          if (extracted) {
+            try {
+              final aaptPath = CommandTools.getAapt2Path();
+              final result = await Process.run(
+                aaptPath,
+                ['dump', 'badging', baseApkPath],
+                stdoutEncoding: utf8,
+                stderrEncoding: utf8,
+              ).timeout(
+                const Duration(seconds: 120),
+                onTimeout: () {
+                  throw TimeoutException('Parse timeout');
+                },
+              );
+              if (result.exitCode == 0) {
+                final originalPath = apkInfo.apkPath;
+                apkInfo.apkPath = baseApkPath;
+                parseApkInfoFromOutput(result.stdout.toString(), apkInfo);
+                final iconImage = await apkInfo.loadIcon();
+                if (iconImage != null) {
+                  apkInfo.mainIconImage ??= iconImage;
+                }
+                apkInfo.apkPath = originalPath;
+              }
+            } catch (e) {
+              log.info("getApkInfo: base APK parse failed: $e");
+            }
+          }
+        }
+      }
+    } finally {
+      zip.close();
+      if (tempDir != null && await tempDir.exists()) {
+        await tempDir.delete(recursive: true);
+      }
     }
 
-    apkInfo.isXapk = true;
-    apkInfo.packageName = manifest.packageName;
-    apkInfo.versionCode = manifest.versionCode;
-    apkInfo.versionName = manifest.versionName;
-    apkInfo.sdkVersion = manifest.minSdkVersion;
-    apkInfo.targetSdkVersion = manifest.targetSdkVersion;
-    apkInfo.label = manifest.name;
-    apkInfo.xapkName = manifest.name;
-    apkInfo.usesPermissions = manifest.permissions;
-    apkInfo.splitConfigs = manifest.splitConfigs ?? [];
-    apkInfo.splitApks = manifest.splitApks.map((e) => e.file).toList();
-    apkInfo.totalSize = manifest.totalSize;
+    if (manifest != null) {
+      if (manifest.packageName?.isNotEmpty == true) {
+        apkInfo.packageName = manifest.packageName;
+      }
+      if (manifest.versionCode != null && manifest.versionCode! > 0) {
+        apkInfo.versionCode = manifest.versionCode;
+      }
+      if (manifest.versionName?.isNotEmpty == true) {
+        apkInfo.versionName = manifest.versionName;
+      }
+      if (manifest.minSdkVersion != null && manifest.minSdkVersion! > 0) {
+        apkInfo.sdkVersion = manifest.minSdkVersion;
+      }
+      if (manifest.targetSdkVersion != null && manifest.targetSdkVersion! > 0) {
+        apkInfo.targetSdkVersion = manifest.targetSdkVersion;
+      }
+      if (manifest.name?.isNotEmpty == true) {
+        apkInfo.label = manifest.name;
+        apkInfo.xapkName = manifest.name;
+      }
+      if (apkInfo.usesPermissions.isEmpty && manifest.permissions.isNotEmpty) {
+        apkInfo.usesPermissions = manifest.permissions;
+      }
+      if (manifest.splitConfigs.isNotEmpty) {
+        apkInfo.splitConfigs = manifest.splitConfigs;
+      }
+      if (manifest.splitApks.isNotEmpty) {
+        apkInfo.splitApks = manifest.splitApks.map((e) => e.file).toList();
+      }
+      if (manifest.totalSize != null && manifest.totalSize! > 0) {
+        apkInfo.totalSize = manifest.totalSize;
+      }
+      final iconImage = await loadXapkIcon(apk, iconPath: manifest.icon);
+      if (iconImage != null && apkInfo.mainIconImage == null) {
+        apkInfo.mainIconImage = iconImage;
+      }
+    } else {
+      final iconImage = await loadXapkIcon(apk);
+      if (iconImage != null && apkInfo.mainIconImage == null) {
+        apkInfo.mainIconImage = iconImage;
+      }
+    }
 
-    // 加载图标
-    final iconImage = await loadXapkIcon(apk);
-    if (iconImage != null) {
-      apkInfo.mainIconImage = iconImage;
+    if (apkInfo.splitApks.isEmpty) {
+      apkInfo.splitApks = apkInfo.archiveApks;
+    }
+    apkInfo.totalSize ??= apkInfo.apkSize;
+
+    if (apkInfo.packageName == null &&
+        apkInfo.versionName == null &&
+        apkInfo.label == null &&
+        apkInfo.archiveApks.isEmpty &&
+        manifest == null) {
+      log.info("getApkInfo: failed to parse XAPK/APKM");
+      return null;
     }
 
     return apkInfo;
@@ -143,6 +256,7 @@ class ApkInfo {
   String apkPath = "";
   int apkSize = 0;
   bool isXapk = false; // 是否为XAPK格式
+  String? archiveType; // XAPK/APKM
 
   String? packageName;
   int? versionCode;
@@ -177,6 +291,8 @@ class ApkInfo {
   String? xapkName;
   List<String> splitConfigs = [];
   List<String> splitApks = [];
+  List<String> archiveApks = [];
+  List<String> obbFiles = [];
   int? totalSize;
 
   // 原始文本
@@ -388,13 +504,14 @@ class ApkInfo {
 
   @override
   String toString() {
-    return 'ApkInfo{apkPath: $apkPath, apkSize: $apkSize, isXapk: $isXapk, packageName: $packageName, versionCode: $versionCode, versionName: $versionName, platformBuildVersionName: $platformBuildVersionName, platformBuildVersionCode: $platformBuildVersionCode, compileSdkVersion: $compileSdkVersion, compileSdkVersionCodename: $compileSdkVersionCodename, sdkVersion: $sdkVersion, targetSdkVersion: $targetSdkVersion, label: $label, mainIcon: $mainIconPath, labels: $labels, usesPermissions: $usesPermissions, icons: $icons, application: $application, launchableActivity: $launchableActivity, userFeatures: $userFeatures, userFeaturesNotRequired: $userFeaturesNotRequired, userImpliedFeatures: $userImpliedFeatures, supportsScreens: $supportsScreens, locales: $locales, densities: $densities, supportsAnyDensity: $supportsAnyDensity, nativeCodes: $nativeCodes, others: $others, signatureInfo: $signatureInfo, xapkName: $xapkName, splitConfigs: $splitConfigs, splitApks: $splitApks, totalSize: $totalSize}';
+    return 'ApkInfo{apkPath: $apkPath, apkSize: $apkSize, isXapk: $isXapk, archiveType: $archiveType, packageName: $packageName, versionCode: $versionCode, versionName: $versionName, platformBuildVersionName: $platformBuildVersionName, platformBuildVersionCode: $platformBuildVersionCode, compileSdkVersion: $compileSdkVersion, compileSdkVersionCodename: $compileSdkVersionCodename, sdkVersion: $sdkVersion, targetSdkVersion: $targetSdkVersion, label: $label, mainIcon: $mainIconPath, labels: $labels, usesPermissions: $usesPermissions, icons: $icons, application: $application, launchableActivity: $launchableActivity, userFeatures: $userFeatures, userFeaturesNotRequired: $userFeaturesNotRequired, userImpliedFeatures: $userImpliedFeatures, supportsScreens: $supportsScreens, locales: $locales, densities: $densities, supportsAnyDensity: $supportsAnyDensity, nativeCodes: $nativeCodes, others: $others, signatureInfo: $signatureInfo, xapkName: $xapkName, splitConfigs: $splitConfigs, splitApks: $splitApks, archiveApks: $archiveApks, obbFiles: $obbFiles, totalSize: $totalSize}';
   }
 
   void reset() {
     apkPath = "";
     apkSize = 0;
     isXapk = false;
+    archiveType = null;
     packageName = null;
     versionCode = null;
     versionName = null;
@@ -425,6 +542,8 @@ class ApkInfo {
     xapkName = null;
     splitConfigs.clear();
     splitApks.clear();
+    archiveApks.clear();
+    obbFiles.clear();
     totalSize = null;
     originalText = "";
   }

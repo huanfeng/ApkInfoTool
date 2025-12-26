@@ -86,7 +86,9 @@ class _SettingPageState extends ConsumerState<SettingPage> {
               child: ColorPicker(
                 pickerColor: Color(themeColor),
                 onColorChanged: (Color color) {
-                  ref.read(themeManagerProvider).updateThemeColor(color);
+                  ref
+                      .read(themeManagerProvider.notifier)
+                      .updateThemeColor(color);
                 },
                 pickerAreaHeightPercent: 0.8,
                 enableAlpha: false,

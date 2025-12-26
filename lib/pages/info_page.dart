@@ -14,13 +14,13 @@ import 'package:apk_info_tool/utils/android_version.dart';
 import 'package:apk_info_tool/utils/format.dart';
 import 'package:apk_info_tool/utils/logger.dart';
 import 'package:apk_info_tool/utils/platform.dart';
-import 'package:apk_info_tool/utils/riverpod_utils.dart';
 import 'package:apk_info_tool/widgets/title_value_layout.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as path;
 
 class APKInfoPage extends ConsumerStatefulWidget implements PageBase {
   const APKInfoPage({super.key});
@@ -37,7 +37,7 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
     var result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       dialogTitle: t.open.select_apk_file,
-      allowedExtensions: ['apk', 'xapk'],
+      allowedExtensions: ['apk', 'xapk', 'apkm'],
       lockParentWindow: true,
     );
     log.fine('openFilePicker: result=$result');
@@ -86,7 +86,9 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
     try {
       final apkInfo = await getApkInfo(filePath);
       if (apkInfo != null) {
-        if (enableSignature) {
+        if (enableSignature &&
+            !apkInfo.isXapk &&
+            apkInfo.signatureInfo.isEmpty) {
           // 获取签名信息
           try {
             final signatureInfo = await getSignatureInfo(filePath);
@@ -279,9 +281,9 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
   @override
   Widget build(BuildContext context) {
     // 在当前页/文件/APK信息变化时需要更新Actions, 因为Actions的变化会修改按钮的使能状态
-    ref.listenAll(
-        [currentPageProvider, currentFileStateProvider, currentApkInfoProvider],
-        () => updateActions());
+    ref.listen(currentPageProvider, (_, __) => updateActions());
+    ref.listen(currentFileStateProvider, (_, __) => updateActions());
+    ref.listen(currentApkInfoProvider, (_, __) => updateActions());
     final apkInfo = ref.watch(currentApkInfoProvider);
     final fileState = ref.watch(currentFileStateProvider);
     final isParsing = ref.watch(isParsingProvider);
@@ -298,7 +300,9 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
             if (details.files.isNotEmpty) {
               final file = details.files.first;
               final extension = file.path.toLowerCase();
-              if (extension.endsWith('.apk') || extension.endsWith('.xapk')) {
+              if (extension.endsWith('.apk') ||
+                  extension.endsWith('.xapk') ||
+                  extension.endsWith('.apkm')) {
                 openApk(file.path);
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -361,6 +365,12 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
                                   title: t.apk_info.version_name,
                                   value: apkInfo?.versionName ?? "",
                                 )),
+                                if (apkInfo?.isXapk ?? false)
+                                  Card(
+                                      child: TitleValueLayout(
+                                    title: t.apk_info.archive_type,
+                                    value: apkInfo?.archiveType ?? "",
+                                  )),
                               ],
                             )),
                             Card(
@@ -385,6 +395,24 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
                             title: t.apk_info.target_sdk,
                             value: getSdkVersionText(apkInfo?.targetSdkVersion),
                           )),
+                          if (apkInfo?.isXapk ?? false)
+                            Card(
+                                child: TitleValueLayout(
+                              title: t.apk_info.split_apks,
+                              value: apkInfo?.splitApks.join("\n") ?? "",
+                              minLines: 1,
+                              maxLines: textMaxLines,
+                              selectable: true,
+                            )),
+                          if ((apkInfo?.obbFiles.isNotEmpty ?? false))
+                            Card(
+                                child: TitleValueLayout(
+                              title: t.apk_info.obb_files,
+                              value: apkInfo?.obbFiles.join("\n") ?? "",
+                              minLines: 1,
+                              maxLines: textMaxLines,
+                              selectable: true,
+                            )),
                           Card(
                               child: TitleValueLayout(
                             title: t.apk_info.screen_size,
@@ -413,7 +441,7 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
                             maxLines: textMaxLines,
                             selectable: true,
                           )),
-                          if (enableSignature)
+                          if (enableSignature && !(apkInfo?.isXapk ?? false))
                             Card(
                                 child: TitleValueLayout(
                               title: t.apk_info.signature_info,
@@ -494,7 +522,9 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
 
     final fileName = apkInfo.label ?? '';
     final versionName = apkInfo.versionName ?? '';
-    final defaultName = '$fileName-$versionName.apk';
+    final extension = path.extension(state.filePath!).toLowerCase();
+    final targetExtension = extension.isNotEmpty ? extension : '.apk';
+    final defaultName = '$fileName-$versionName$targetExtension';
 
     final controller = TextEditingController(text: defaultName);
     final formKey = GlobalKey<FormFieldState>();
@@ -516,7 +546,9 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
                 if (value == null || value.isEmpty) {
                   return t.rename.name_cannot_be_empty;
                 }
-                if (!value.toLowerCase().endsWith('.apk')) {
+                if (!(value.toLowerCase().endsWith('.apk') ||
+                    value.toLowerCase().endsWith('.xapk') ||
+                    value.toLowerCase().endsWith('.apkm'))) {
                   return t.rename.must_end_with_apk;
                 }
                 return null;
@@ -535,13 +567,13 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
                 ),
                 OutlinedButton(
                   onPressed: () {
-                    controller.text = '$fileName.apk';
+                    controller.text = '$fileName$targetExtension';
                   },
                   child: Text(t.rename.app_name_only),
                 ),
                 OutlinedButton(
                   onPressed: () {
-                    controller.text = '$fileName-v$versionName.apk';
+                    controller.text = '$fileName-v$versionName$targetExtension';
                   },
                   child: Text(t.rename.name_with_version),
                 ),

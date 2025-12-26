@@ -5,41 +5,42 @@ import 'package:apk_info_tool/gen/strings.g.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ThemeManager extends ChangeNotifier {
-  static final ThemeManager _instance = ThemeManager._internal();
-  factory ThemeManager() => _instance;
-  ThemeManager._internal();
+String? getFontFamily() {
+  if (Platform.isWindows) {
+    final locale = LocaleSettings.currentLocale;
+    return switch (locale) {
+      AppLocale.ja => 'Yu Gothic UI',
+      AppLocale.ko => 'Malgun Gothic',
+      AppLocale.zhCn => 'Microsoft YaHei UI',
+      AppLocale.zhHk || AppLocale.zhTw => 'Microsoft JhengHei UI',
+      _ => 'Segoe UI Variable Display',
+    };
+  } else {
+    return null;
+  }
+}
 
-  int _themeColor = Config.themeColor.value;
+class ThemeState {
+  final int themeColor;
 
-  int get themeColor => _themeColor;
+  const ThemeState({required this.themeColor});
 
   ThemeData get themeData => ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Color(themeColor)),
         useMaterial3: true,
         fontFamily: getFontFamily(),
       );
+}
+
+class ThemeManager extends Notifier<ThemeState> {
+  @override
+  ThemeState build() => ThemeState(themeColor: Config.themeColor.value);
 
   void updateThemeColor(Color color) {
-    _themeColor = color.value;
+    state = ThemeState(themeColor: color.value);
     Config.themeColor.updateValue(color.value);
-    notifyListeners();
-  }
-
-  String? getFontFamily() {
-    if (Platform.isWindows) {
-      final locale = LocaleSettings.currentLocale;
-      return switch (locale) {
-        AppLocale.ja => 'Yu Gothic UI',
-        AppLocale.ko => 'Malgun Gothic',
-        AppLocale.zhCn => 'Microsoft YaHei UI',
-        AppLocale.zhHk || AppLocale.zhTw => 'Microsoft JhengHei UI',
-        _ => 'Segoe UI Variable Display',
-      };
-    } else {
-      return null;
-    }
   }
 }
 
-final themeManagerProvider = ChangeNotifierProvider((ref) => ThemeManager());
+final themeManagerProvider =
+    NotifierProvider<ThemeManager, ThemeState>(ThemeManager.new);

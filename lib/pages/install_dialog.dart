@@ -277,7 +277,8 @@ class _InstallDialogState extends State<InstallDialog> {
                       onPressed: () {
                         setState(() {
                           for (var split in splitApks!) {
-                            if (path.basenameWithoutExtension(split) != 'base') {
+                            final name = path.basenameWithoutExtension(split);
+                            if (SplitType.fromId(name) != SplitType.base) {
                               options.selectedSplits[split] = false;
                             }
                           }
@@ -305,7 +306,7 @@ class _InstallDialogState extends State<InstallDialog> {
                         children: splits.map((split) {
                           final name = path.basenameWithoutExtension(split);
                           // base包不允许取消选择
-                          final isBase = name == 'base';
+                          final isBase = SplitType.fromId(name) == SplitType.base;
                           return FilterChip(
                             label: Text(name),
                             selected: options.selectedSplits[split] ?? false,

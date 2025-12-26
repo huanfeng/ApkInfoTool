@@ -31,6 +31,18 @@ class ZipHelper {
     }
   }
 
+  List<String> listFiles({String? extension}) {
+    final files = _archive?.files ?? [];
+    final lowerExtension = extension?.toLowerCase();
+    return files
+        .where((file) => file.isFile)
+        .map((file) => file.name)
+        .where((name) =>
+            lowerExtension == null ||
+            name.toLowerCase().endsWith(lowerExtension))
+        .toList();
+  }
+
   Future<bool> extractFile(String fileName, String outputPath) async {
     try {
       final file = _archive?.findFile(fileName);

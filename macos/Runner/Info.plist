@@ -35,6 +35,7 @@
             <array>
                 <string>apk</string>
                 <string>xapk</string>
+                <string>apkm</string>
             </array>
             <key>CFBundleTypeName</key>
             <string>APK File</string>
@@ -72,6 +73,7 @@
                 <array>
                     <string>apk</string>
                     <string>xapk</string>
+                    <string>apkm</string>
                 </array>
             </dict>
         </dict>

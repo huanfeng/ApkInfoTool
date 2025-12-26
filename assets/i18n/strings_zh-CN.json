@@ -18,9 +18,9 @@
   "open": {
     "open_apk": "打开APK",
     "open_file_directory": "打开文件位置",
-    "select_apk_file": "请选择 APK 或 XAPK 文件",
+    "select_apk_file": "请选择 APK/XAPK/APKM 文件",
     "close_file": "关闭文件",
-    "invalid_file_type": "请选择 APK 或 XAPK 文件"
+    "invalid_file_type": "请选择 APK/XAPK/APKM 文件"
   },
   "settings": {
     "title": "设置",
@@ -61,16 +61,19 @@
     "size": "大小"
   },
   "apk_info": {
+    "archive_type": "文件类型",
     "package_name": "包名",
     "app_name": "名称",
     "min_sdk": "最低SDK",
     "target_sdk": "目标SDK",
     "version_code": "版本号",
     "version_name": "版本名",
+    "split_apks": "分包列表",
     "screen_size": "屏幕尺寸",
     "screen_density": "屏幕密度",
     "abi": "ABI",
     "languages": "语言列表",
+    "obb_files": "OBB文件",
     "permissions": "权限列表",
     "signature_info": "签名信息",
     "text_info": "文本信息"
@@ -83,11 +86,12 @@
     "failed": "重命名失败",
     "new_file_name": "新文件名",
     "name_cannot_be_empty": "文件名不能为空",
-    "must_end_with_apk": "文件名必须以.apk结尾",
+    "must_end_with_apk": "文件名必须以 .apk/.xapk/.apkm 结尾",
     "default_name": "默认名称"
   },
   "install": {
-    "title": "安装APK",
+    "apk": "安装APK/XAPK/APKM",
+    "title": "安装APK/XAPK/APKM",
     "select_device": "请选择设备",
     "installing": "正在安装...",
     "success": "安装成功",

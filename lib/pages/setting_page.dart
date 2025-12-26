@@ -406,7 +406,7 @@ class _SettingPageState extends ConsumerState<SettingPage> {
                 width: 64,
                 height: 64,
               ),
-              applicationLegalese: '2024 Fengware',
+              applicationLegalese: '2025 huanfeng',
               children: [
                 const SizedBox(height: 16),
                 InkWell(

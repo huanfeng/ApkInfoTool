@@ -11,4 +11,4 @@ PRODUCT_NAME = apk_info_tool
 PRODUCT_BUNDLE_IDENTIFIER = com.fengware.app.apkinfotool.apkInfoTool
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2023 com.fengware.app.apkinfotool. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2025 com.fengware.app.apkinfotool. All rights reserved.

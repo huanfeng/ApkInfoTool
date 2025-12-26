@@ -16,6 +16,23 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Sync pubspec version from tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          export VERSION="${GITHUB_REF_NAME#v}"
+          python - << 'PY'
+          import os
+          import re
+
+          version = os.environ["VERSION"]
+          with open("pubspec.yaml", "r", encoding="utf-8") as f:
+              content = f.read()
+          content = re.sub(r"^version:\s*.*$", f"version: {version}", content, flags=re.M)
+          with open("pubspec.yaml", "w", encoding="utf-8") as f:
+              f.write(content)
+          PY
+
       - name: Get version from pubspec
         id: version
         shell: bash
@@ -55,6 +72,23 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+
+      - name: Sync pubspec version from tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          export VERSION="${GITHUB_REF_NAME#v}"
+          python - << 'PY'
+          import os
+          import re
+
+          version = os.environ["VERSION"]
+          with open("pubspec.yaml", "r", encoding="utf-8") as f:
+              content = f.read()
+          content = re.sub(r"^version:\s*.*$", f"version: {version}", content, flags=re.M)
+          with open("pubspec.yaml", "w", encoding="utf-8") as f:
+              f.write(content)
+          PY
 
       - name: Get version from pubspec
         id: version
@@ -98,6 +132,23 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+
+      - name: Sync pubspec version from tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          export VERSION="${GITHUB_REF_NAME#v}"
+          python - << 'PY'
+          import os
+          import re
+
+          version = os.environ["VERSION"]
+          with open("pubspec.yaml", "r", encoding="utf-8") as f:
+              content = f.read()
+          content = re.sub(r"^version:\s*.*$", f"version: {version}", content, flags=re.M)
+          with open("pubspec.yaml", "w", encoding="utf-8") as f:
+              f.write(content)
+          PY
 
       - name: Get version from pubspec
         id: version

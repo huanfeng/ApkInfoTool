@@ -205,3 +205,80 @@ jobs:
             windows-release/*.zip
             macos-dmg/*.dmg
             linux-appimage/*.AppImage
+
+  publish-scoop:
+    needs: [create-release]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: windows-release
+
+      - name: Prepare Scoop Metadata
+        id: scoop
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP_PATH=$(ls windows-release/*.zip | head -n 1)
+          ZIP_NAME=$(basename "$ZIP_PATH")
+          VERSION="${GITHUB_REF_NAME#v}"
+          SHA256=$(sha256sum "$ZIP_PATH" | awk '{print $1}')
+          echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout Scoop Bucket
+        uses: actions/checkout@v4
+        with:
+          repository: huanfeng/scoop-bucket
+          token: ${{ secrets.SCOOP_BUCKET_GITHUB_TOKEN }}
+          path: scoop-bucket
+
+      - name: Update Scoop Manifest
+        shell: bash
+        env:
+          MANIFEST: scoop-bucket/bucket/apk-info-tool.json
+          URL: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.scoop.outputs.zip_name }}
+          VERSION: ${{ steps.scoop.outputs.version }}
+          SHA256: ${{ steps.scoop.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          python - << 'PY'
+          import json
+          import os
+
+          manifest = os.environ["MANIFEST"]
+          url = os.environ["URL"]
+          version = os.environ["VERSION"]
+          sha256 = os.environ["SHA256"]
+
+          with open(manifest, "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          data["version"] = version
+          data["url"] = url
+          data["hash"] = sha256
+
+          with open(manifest, "w", encoding="utf-8") as f:
+              json.dump(data, f, indent=2, ensure_ascii=True)
+              f.write("\n")
+          PY
+
+      - name: Commit and Push
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd scoop-bucket
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bucket/apk-info-tool.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Update apk-info-tool to ${{ steps.scoop.outputs.version }}"
+          git push

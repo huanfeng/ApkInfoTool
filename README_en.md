@@ -2,17 +2,19 @@
 
 [简体中文](README.md) | [English](README_en.md)
 
-A simple tool for viewing APK file information and installation.
+A simple tool for viewing APK/XAPK/APKM file information and installation.
 
 ## Features
 
-- View APK basic information
-- APK renaming
-- APK file installation
+- View APK/XAPK/APKM basic information (package, version, SDK, permissions, etc.)
+- Show XAPK/APKM split details (split APK list, OBB list)
+- Icon preview (PNG/WebP, XAPK/APKM supports icon.png or manifest path)
+- File renaming (APK/XAPK/APKM)
+- Install via ADB (split APK install and OBB push supported)
 
 ## Known Issues
-- Slow parsing of certain APKs: This tool uses aapt2 as the parsing tool, and speed depends on aapt2's performance.
-- Some APK icons are not displayed: Currently only supports PNG and WebP format icons. XML format icons are not supported yet, will try to optimize in the future.
+- Slow parsing of certain APK/XAPK/APKM: This tool uses aapt2 to parse APK, and speed depends on aapt2's performance.
+- Some APK icons are not displayed: Currently only supports PNG and WebP format icons. XML format icons are not supported yet.
 - Due to sandbox restrictions on macOS, there are the following issues:
   - Rename function does not work
   - Cannot specify external adb and aapt2, can only use built-in ones
@@ -74,7 +76,7 @@ The application supports the following languages:
 - Simplified Chinese
 - English
 
-Language files are located in the `lib/i18n` directory.
+Language files are located in the `assets/i18n` directory.
 
 ## Contributing
 

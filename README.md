@@ -2,17 +2,19 @@
 
 [简体中文](README.md) | [English](README_en.md)
 
-一个用于查看 APK 文件信息和安装的简单工具。
+一个用于查看 APK/XAPK/APKM 文件信息并进行安装的简单工具。
 
 ## 功能特性
 
-- 查看 APK 基本信息
-- APK 重命名
-- APK 文件安装
+- 查看 APK/XAPK/APKM 基本信息（包名、版本、SDK、权限等）
+- XAPK/APKM 分包信息展示（Split APK 列表、OBB 列表）
+- 图标显示（PNG/WebP，XAPK/APKM 支持 icon.png 或 manifest 指定路径）
+- 文件重命名（APK/XAPK/APKM）
+- 通过 ADB 安装（支持 split APK 与 OBB 推送）
 
 ## 已知问题
-- 某些 APK 解析速度慢：本工具使用 aapt2 作为解析工具，速度依赖于 aapt2 的性能表现。
-- 某些 APK 不显示图标：目前仅支持 png 和 webp 格式的图标，xml 格式的图标目前不支持显示，后续会尝试优化。
+- 某些 APK/XAPK/APKM 解析速度慢：使用 aapt2 解析 base.apk，速度依赖于 aapt2 的性能表现。
+- 某些 APK 不显示图标：目前仅支持 png 和 webp 格式的图标，xml 格式的图标目前不支持显示。
 - macOS 因沙箱原因，有以下问题
   - 重命名功能无法工作
   - 无法指定外部的 adb 和 aapt2，只能使用内置的
@@ -74,7 +76,7 @@ flutter build linux # Linux
 - 简体中文
 - English
 
-语言文件位于 `lib/i18n` 目录下。
+语言文件位于 `assets/i18n` 目录下。
 
 ## 贡献代码
 
@@ -90,3 +92,4 @@ flutter build linux # Linux
 ## 开源协议
 
 本项目采用 MIT 协议开源。
+

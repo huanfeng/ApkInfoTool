@@ -13,3 +13,13 @@ Future<void> openFileInExplorer(String filePath) async {
     await Process.run('xdg-open', [directory]);
   }
 }
+
+Future<void> openDirectoryInExplorer(String directoryPath) async {
+  if (Platform.isWindows) {
+    await Process.run('explorer.exe', [directoryPath]);
+  } else if (Platform.isMacOS) {
+    await Process.run('open', [directoryPath]);
+  } else if (Platform.isLinux) {
+    await Process.run('xdg-open', [directoryPath]);
+  }
+}

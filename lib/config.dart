@@ -53,10 +53,18 @@ class Config {
   static late SharedPreferences gPrefs;
 
   static const kLanguageAuto = "auto";
+  static const kToolSourceSystem = "system";
+  static const kToolSourceBuiltin = "builtin";
+  static const kToolSourceCustom = "custom";
 
   static final aapt2Path = ConfigItem("aapt2_path", "");
   static final apksignerPath = ConfigItem("apksigner_path", "");
   static final adbPath = ConfigItem("adb_path", "");
+  static final aapt2Source = ConfigItem("aapt2_source", kToolSourceSystem);
+  static final apksignerSource =
+      ConfigItem("apksigner_source", kToolSourceSystem);
+  static final adbSource = ConfigItem("adb_source", kToolSourceSystem);
+  static final downloadDir = ConfigItem("download_dir", "");
   static final enableSignature = ConfigItem("enable_signature", false);
   static final enableDebug = ConfigItem("enable_debug", false);
   static final maxLines = ConfigItem("max_lines", 6);
@@ -68,6 +76,10 @@ class Config {
     aapt2Path,
     apksignerPath,
     adbPath,
+    aapt2Source,
+    apksignerSource,
+    adbSource,
+    downloadDir,
     enableSignature,
     enableDebug,
     maxLines,

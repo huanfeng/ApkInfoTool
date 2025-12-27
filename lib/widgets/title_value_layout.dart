@@ -10,6 +10,7 @@ class TitleValueLayout extends ConsumerWidget {
   final int? maxLines;
   final double? titleWidth;
   final bool selectable;
+  final bool singleLine;
 
   const TitleValueLayout({
     super.key,
@@ -20,6 +21,7 @@ class TitleValueLayout extends ConsumerWidget {
     this.maxLines,
     this.titleWidth,
     this.selectable = false,
+    this.singleLine = false,
   });
 
   @override
@@ -45,12 +47,22 @@ class TitleValueLayout extends ConsumerWidget {
           const SizedBox(width: 16),
           // 内容部分
           Expanded(
-            child: SelectableText(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium,
-              minLines: minLines,
-              maxLines: maxLines,
-            ),
+            child: singleLine
+                ? SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SelectableText(
+                      value,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      minLines: 1,
+                      maxLines: 1,
+                    ),
+                  )
+                : SelectableText(
+                    value,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    minLines: minLines,
+                    maxLines: maxLines,
+                  ),
           ),
           if (end != null) ...[
             const SizedBox(width: 8),

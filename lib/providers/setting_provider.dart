@@ -12,6 +12,10 @@ abstract class Settings with _$Settings {
     required String aapt2Path,
     required String apksignerPath,
     required String adbPath,
+    required String aapt2Source,
+    required String apksignerSource,
+    required String adbSource,
+    required String downloadDir,
     required bool enableSignature,
     required bool enableDebug,
     required String language,
@@ -25,6 +29,10 @@ class SettingState extends _$SettingState {
         aapt2Path: Config.aapt2Path.value,
         apksignerPath: Config.apksignerPath.value,
         adbPath: Config.adbPath.value,
+        aapt2Source: Config.aapt2Source.value,
+        apksignerSource: Config.apksignerSource.value,
+        adbSource: Config.adbSource.value,
+        downloadDir: Config.downloadDir.value,
         enableSignature: Config.enableSignature.value,
         enableDebug: Config.enableDebug.value,
         language: Config.language.value,
@@ -43,6 +51,26 @@ class SettingState extends _$SettingState {
   void setAdbPath(String value) {
     state = state.copyWith(adbPath: value);
     Config.adbPath.updateValue(value);
+  }
+
+  void setAapt2Source(String value) {
+    state = state.copyWith(aapt2Source: value);
+    Config.aapt2Source.updateValue(value);
+  }
+
+  void setApksignerSource(String value) {
+    state = state.copyWith(apksignerSource: value);
+    Config.apksignerSource.updateValue(value);
+  }
+
+  void setAdbSource(String value) {
+    state = state.copyWith(adbSource: value);
+    Config.adbSource.updateValue(value);
+  }
+
+  void setDownloadDir(String value) {
+    state = state.copyWith(downloadDir: value);
+    Config.downloadDir.updateValue(value);
   }
 
   void setEnableSignature(bool value) {

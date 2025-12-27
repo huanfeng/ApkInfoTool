@@ -207,8 +207,8 @@ Future<ApkInfo?> getApkInfo(String apk) async {
 }
 
 Future<String> getSignatureInfo(String apkPath) async {
-  final apksigner = Config.apksignerPath.value;
-  if (apksigner.isEmpty) {
+  final apksigner = CommandTools.findApkSignerPath();
+  if (apksigner == null || apksigner.isEmpty) {
     throw Exception(t.parse.please_set_path(name: "apksigner"));
   }
 

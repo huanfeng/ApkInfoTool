@@ -50,7 +50,7 @@
     "parse_apk_info_fail": "Failed to parse APK information!"
   },
   "open": {
-    "open_apk": "Open APK",
+    "open_apk": "Open APK/XAPK/APKM",
     "open_file_directory": "Open file location",
     "select_apk_file": "Please select APK/XAPK/APKM file",
     "close_file": "Close file",

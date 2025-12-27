@@ -723,6 +723,22 @@ class _DependencyDownloadDialogState extends State<DependencyDownloadDialog> {
     }
   }
 
+  String _formatSourceLabel(String source) {
+    final uri = Uri.tryParse(source);
+    if (uri == null || !uri.hasScheme) {
+      return source;
+    }
+    final host = uri.host.isEmpty ? source : uri.host;
+    final segments = uri.pathSegments;
+    if (segments.isEmpty) {
+      return host;
+    }
+    final tail = segments.length >= 2
+        ? segments.sublist(segments.length - 2).join('/')
+        : segments.join('/');
+    return '$host/$tail';
+  }
+
   void _updateProgress(ToolDownloadProgress progress) {
     if (!mounted) return;
     setState(() {
@@ -823,10 +839,35 @@ class _DependencyDownloadDialogState extends State<DependencyDownloadDialog> {
       );
     } catch (e) {
       if (!mounted) return;
+      String reason = t.settings.download_error_generic;
+      if (e is ToolDownloadException) {
+        switch (e.code) {
+          case ToolDownloadError.repositoryIndex:
+            reason = t.settings.download_error_repository;
+            break;
+          case ToolDownloadError.platformToolsMissing:
+            reason = t.settings.download_error_platform_tools;
+            break;
+          case ToolDownloadError.buildToolsMissing:
+            reason = t.settings.download_error_build_tools;
+            break;
+          case ToolDownloadError.archiveDownload:
+            reason = t.settings.download_error_archive;
+            break;
+          case ToolDownloadError.fileNotFound:
+            reason = t.settings.download_error_file_missing;
+            break;
+          case ToolDownloadError.unknown:
+            reason = t.settings.download_error_generic;
+            break;
+        }
+        log.warning('download failed: code=${e.code}, detail=${e.detail}');
+      } else {
+        log.warning('download failed: $e');
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text(t.settings.download_dependencies_failed(error: e.toString())),
+          content: Text(t.settings.download_dependencies_failed(error: reason)),
         ),
       );
     } finally {
@@ -904,7 +945,14 @@ class _DependencyDownloadDialogState extends State<DependencyDownloadDialog> {
                   for (final source in _sourceOptions)
                     DropdownMenuItem(
                       value: source,
-                      child: Text(source),
+                      child: Tooltip(
+                        message: source,
+                        child: Text(
+                          _formatSourceLabel(source),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
                 ],
               ),

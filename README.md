@@ -52,6 +52,13 @@
 - macOS: `.dmg` 安装包
 - Linux: `.AppImage` 可执行文件
 
+### Windows Scoop 安装
+
+```bash
+scoop bucket add huanfeng https://github.com/huanfeng/scoop-bucket
+scoop install apk_info_tool
+```
+
 ## 开发构建
 
 本项目使用 Flutter 开发。确保已安装 Flutter SDK 后,执行：

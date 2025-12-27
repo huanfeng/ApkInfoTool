@@ -52,6 +52,13 @@ Download the installation package for your platform from the [Releases](https://
 - macOS: `.dmg` installer
 - Linux: `.AppImage` executable
 
+### Windows Scoop Install
+
+```bash
+scoop bucket add huanfeng https://github.com/huanfeng/scoop-bucket
+scoop install apk_info_tool
+```
+
 ## Development & Building
 
 This project is developed using Flutter. After ensuring Flutter SDK is installed, run:

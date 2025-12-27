@@ -121,7 +121,10 @@ class ToolDownloader {
         log.warning('download repository index failed: $url, error=$e');
       }
     }
-    throw Exception('下载仓库索引失败: $lastError');
+    throw ToolDownloadException(
+      ToolDownloadError.repositoryIndex,
+      detail: lastError?.toString(),
+    );
   }
 
   static Future<String> _downloadText(
@@ -131,7 +134,10 @@ class ToolDownloader {
     if (uri.scheme == 'file') {
       final file = File(uri.toFilePath());
       if (!file.existsSync()) {
-        throw Exception('File not found: ${uri.toFilePath()}');
+        throw ToolDownloadException(
+          ToolDownloadError.fileNotFound,
+          detail: uri.toFilePath(),
+        );
       }
       return file.readAsString();
     }
@@ -182,7 +188,10 @@ class ToolDownloader {
         log.warning('download archive failed: $candidate, error=$e');
       }
     }
-    throw Exception('下载组件失败: $lastError');
+    throw ToolDownloadException(
+      ToolDownloadError.archiveDownload,
+      detail: lastError?.toString(),
+    );
   }
 
   static Future<File> _downloadToTemp(
@@ -193,7 +202,10 @@ class ToolDownloader {
     if (uri.scheme == 'file') {
       final source = File(uri.toFilePath());
       if (!source.existsSync()) {
-        throw Exception('File not found: ${uri.toFilePath()}');
+      throw ToolDownloadException(
+        ToolDownloadError.fileNotFound,
+        detail: uri.toFilePath(),
+      );
       }
       final dir = await Directory.systemTemp.createTemp('apk_info_tool_$prefix');
       final target = File(path.join(dir.path, path.basename(uri.path)));
@@ -237,13 +249,16 @@ class ToolDownloader {
   static PlatformArchive _selectPlatformTools(String xmlContent) {
     final package = _findPackage(xmlContent, 'platform-tools');
     if (package == null) {
-      throw Exception('未找到 platform-tools');
+      throw ToolDownloadException(ToolDownloadError.platformToolsMissing);
     }
     final hostOs = _currentHostOs();
     final archive = _findArchive(package, hostOs) ??
         _findArchiveByUrlHint(package, _platformToolsUrlHints());
     if (archive == null) {
-      throw Exception('未找到 platform-tools 的 $hostOs 版本');
+      throw ToolDownloadException(
+        ToolDownloadError.platformToolsMissing,
+        detail: hostOs,
+      );
     }
     return PlatformArchive(
       url: archive.url,
@@ -254,7 +269,7 @@ class ToolDownloader {
   static BuildToolsArchive _selectBuildTools(String xmlContent) {
     final packages = _findPackages(xmlContent, 'build-tools;');
     if (packages.isEmpty) {
-      throw Exception('未找到 build-tools');
+      throw ToolDownloadException(ToolDownloadError.buildToolsMissing);
     }
     packages.sort((a, b) =>
         ToolPaths.compareVersionDescending(a.version ?? '', b.version ?? ''));
@@ -263,7 +278,10 @@ class ToolDownloader {
     final archive = _findArchive(selected, hostOs) ??
         _findArchiveByUrlHint(selected, _buildToolsUrlHints());
     if (archive == null) {
-      throw Exception('未找到 build-tools 的 $hostOs 版本');
+      throw ToolDownloadException(
+        ToolDownloadError.buildToolsMissing,
+        detail: hostOs,
+      );
     }
     return BuildToolsArchive(
       version: selected.version ?? '',
@@ -529,6 +547,27 @@ class ToolDownloadOptions {
     required this.downloadBuildTools,
     this.onProgress,
   });
+}
+
+enum ToolDownloadError {
+  repositoryIndex,
+  platformToolsMissing,
+  buildToolsMissing,
+  archiveDownload,
+  fileNotFound,
+  unknown,
+}
+
+class ToolDownloadException implements Exception {
+  final ToolDownloadError code;
+  final String? detail;
+
+  ToolDownloadException(this.code, {this.detail});
+
+  @override
+  String toString() {
+    return 'ToolDownloadException($code, detail: $detail)';
+  }
 }
 
 class RemotePackage {

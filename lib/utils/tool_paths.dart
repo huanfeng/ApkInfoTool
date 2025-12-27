@@ -18,6 +18,21 @@ class ToolPaths {
   static String get repositoryMirrorFilePath =>
       path.join(installBinDir, 'repository_mirrors.txt');
 
+  static String resolveDownloadDir(String? value) {
+    if (value == null || value.isEmpty) {
+      return installBinDir;
+    }
+    if (path.isAbsolute(value)) {
+      return value;
+    }
+    return path.normalize(path.join(appDir, value));
+  }
+
+  static String toRelativeDownloadDir(String absolutePath) {
+    final relative = path.relative(absolutePath, from: appDir);
+    return relative.isEmpty ? '.' : relative;
+  }
+
   static List<String> loadExtraRepositoryUrls() {
     final file = File(repositoryMirrorFilePath);
     if (!file.existsSync()) {

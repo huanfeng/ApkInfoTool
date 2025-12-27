@@ -55,9 +55,7 @@ class _SettingPageState extends ConsumerState<SettingPage> {
   }
 
   void resetToDefaultPath(String toolType) async {
-    final downloadDir = Config.downloadDir.value.isEmpty
-        ? ToolPaths.installBinDir
-        : Config.downloadDir.value;
+    final downloadDir = ToolPaths.resolveDownloadDir(Config.downloadDir.value);
     switch (toolType) {
       case 'aapt2':
         _autoDetectTool(
@@ -329,8 +327,7 @@ class _SettingPageState extends ConsumerState<SettingPage> {
         ref.watch(settingStateProvider.select((value) => value.adbSource));
     final downloadDir =
         ref.watch(settingStateProvider.select((value) => value.downloadDir));
-    final resolvedDownloadDir =
-        downloadDir.isEmpty ? ToolPaths.installBinDir : downloadDir;
+    final resolvedDownloadDir = ToolPaths.resolveDownloadDir(downloadDir);
 
     final aapt2System = ToolPaths.findInPath(CommandTools.aapt2);
     final apksignerSystem = ToolPaths.findInPath(CommandTools.apksigner);
@@ -692,10 +689,13 @@ class _DependencyDownloadDialogState extends State<DependencyDownloadDialog> {
 
   late List<String> _sourceOptions;
   late String _selectedSource;
+  final _installDirController = TextEditingController();
   bool _downloadPlatformTools = true;
   bool _downloadBuildTools = true;
   bool _downloading = false;
   String _installDir = '';
+  String _installDirDisplay = '';
+  bool _isCustomDirSelected = false;
   double? _platformProgress;
   double? _buildProgress;
 
@@ -707,9 +707,34 @@ class _DependencyDownloadDialogState extends State<DependencyDownloadDialog> {
     sources.add(ToolDownloader.repositoryIndexUrl);
     _sourceOptions = sources.toSet().toList();
     _selectedSource = _autoSourceValue;
-    _installDir = Config.downloadDir.value.isEmpty
-        ? ToolPaths.installBinDir
-        : Config.downloadDir.value;
+    final configDir = Config.downloadDir.value;
+    if (configDir.isEmpty) {
+      _installDir = ToolPaths.installBinDir;
+      _installDirDisplay = ToolPaths.toRelativeDownloadDir(_installDir);
+      _isCustomDirSelected = false;
+    } else if (path.isAbsolute(configDir)) {
+      final defaultDir = ToolPaths.installBinDir;
+      if (path.normalize(configDir) == path.normalize(defaultDir)) {
+        _installDir = defaultDir;
+        _installDirDisplay = ToolPaths.toRelativeDownloadDir(defaultDir);
+        _isCustomDirSelected = false;
+      } else {
+        _installDir = configDir;
+        _installDirDisplay = configDir;
+        _isCustomDirSelected = true;
+      }
+    } else {
+      _installDir = ToolPaths.resolveDownloadDir(configDir);
+      _installDirDisplay = configDir;
+      _isCustomDirSelected = false;
+    }
+    _installDirController.text = _installDirDisplay;
+  }
+
+  @override
+  void dispose() {
+    _installDirController.dispose();
+    super.dispose();
   }
 
   Future<void> _selectDirectory() async {
@@ -719,8 +744,23 @@ class _DependencyDownloadDialogState extends State<DependencyDownloadDialog> {
     if (result != null && result.isNotEmpty) {
       setState(() {
         _installDir = result;
+        _installDirDisplay = result;
+        _installDirController.text = result;
+        _isCustomDirSelected = true;
       });
+      await Config.downloadDir.updateValue(_installDirDisplay);
     }
+  }
+
+  void _resetInstallDir() {
+    final relative = ToolPaths.toRelativeDownloadDir(ToolPaths.installBinDir);
+    setState(() {
+      _installDir = ToolPaths.installBinDir;
+      _installDirDisplay = relative;
+      _installDirController.text = relative;
+      _isCustomDirSelected = false;
+    });
+    Config.downloadDir.updateValue(_installDirDisplay);
   }
 
   String _formatSourceLabel(String source) {
@@ -829,7 +869,7 @@ class _DependencyDownloadDialogState extends State<DependencyDownloadDialog> {
           onProgress: _updateProgress,
         ),
       );
-      await Config.downloadDir.updateValue(_installDir);
+      await Config.downloadDir.updateValue(_installDirDisplay);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -957,15 +997,12 @@ class _DependencyDownloadDialogState extends State<DependencyDownloadDialog> {
                 ],
               ),
               const SizedBox(height: 16),
-              Text(t.settings.download_directory),
-              const SizedBox(height: 8),
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      _installDir,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                  Expanded(child: Text(t.settings.download_directory)),
+                  TextButton(
+                    onPressed: _downloading ? null : _resetInstallDir,
+                    child: Text(t.base.reset),
                   ),
                   TextButton(
                     onPressed: _downloading ? null : _selectDirectory,
@@ -978,6 +1015,16 @@ class _DependencyDownloadDialogState extends State<DependencyDownloadDialog> {
                     child: Text(t.settings.open_download_directory),
                   ),
                 ],
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _installDirController,
+                readOnly: true,
+                maxLines: 1,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
               ),
               const SizedBox(height: 16),
               Text(t.settings.download_content),

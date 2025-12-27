@@ -81,9 +81,7 @@ class CommandTools {
   }
 
   static String _downloadDirOrDefault() {
-    return Config.downloadDir.value.isEmpty
-        ? ToolPaths.installBinDir
-        : Config.downloadDir.value;
+    return ToolPaths.resolveDownloadDir(Config.downloadDir.value);
   }
 
   static String? _resolveToolPath(

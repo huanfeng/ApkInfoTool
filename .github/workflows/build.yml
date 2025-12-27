@@ -293,7 +293,7 @@ jobs:
       - name: Update Scoop Manifest
         shell: bash
         env:
-          MANIFEST: scoop-bucket/bucket/apk-info-tool.json
+          MANIFEST: scoop-bucket/bucket/apk_info_tool.json
           URL: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.scoop.outputs.zip_name }}
           VERSION: ${{ steps.scoop.outputs.version }}
           SHA256: ${{ steps.scoop.outputs.sha256 }}
@@ -350,10 +350,10 @@ jobs:
           cd scoop-bucket
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add bucket/apk-info-tool.json
+          git add bucket/apk_info_tool.json
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
-          git commit -m "Update apk-info-tool to ${{ steps.scoop.outputs.version }}"
+          git commit -m "Update apk_info_tool to ${{ steps.scoop.outputs.version }}"
           git push

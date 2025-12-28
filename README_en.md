@@ -2,18 +2,18 @@
 
 [简体中文](README.md) | [English](README_en.md)
 
-A simple tool for viewing APK/XAPK/APKM file information and installation.
+A simple tool for viewing APK/XAPK/APKM/APKS file information and installation.
 
 ## Features
 
-- View APK/XAPK/APKM basic information (package, version, SDK, permissions, etc.)
-- Show XAPK/APKM split details (split APK list, OBB list)
-- Icon preview (PNG/WebP, XAPK/APKM supports icon.png or manifest path)
-- File renaming (APK/XAPK/APKM)
+- View APK/XAPK/APKM/APKS basic information (package, version, SDK, permissions, etc.)
+- Show XAPK/APKM/APKS split details (split APK list, OBB list)
+- Icon preview (PNG/WebP, XAPK/APKM/APKS supports icon.png or manifest path)
+- File renaming (APK/XAPK/APKM/APKS)
 - Install via ADB (split APK install and OBB push supported)
 
 ## Known Issues
-- Slow parsing of certain APK/XAPK/APKM: This tool uses aapt2 to parse APK, and speed depends on aapt2's performance.
+- Slow parsing of certain APK/XAPK/APKM/APKS: This tool uses aapt2 to parse APK, and speed depends on aapt2's performance.
 - Some APK icons are not displayed: Currently only supports PNG and WebP format icons. XML format icons are not supported yet.
 - Due to sandbox restrictions on macOS, there are the following issues:
   - Rename function does not work

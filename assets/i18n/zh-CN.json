@@ -18,11 +18,11 @@
     "page_in_development": "页面开发中"
   },
   "open": {
-    "open_apk": "打开 APK/XAPK/APKM",
+    "open_apk": "打开 APK/XAPK/APKM/APKS",
     "open_file_directory": "打开文件位置",
-    "select_apk_file": "请选择 APK/XAPK/APKM 文件",
+    "select_apk_file": "请选择 APK/XAPK/APKM/APKS 文件",
     "close_file": "关闭文件",
-    "invalid_file_type": "请选择 APK/XAPK/APKM 文件"
+    "invalid_file_type": "请选择 APK/XAPK/APKM/APKS 文件"
   },
   "settings": {
     "title": "设置",
@@ -118,7 +118,7 @@
     "failed": "重命名失败",
     "new_file_name": "新文件名",
     "name_cannot_be_empty": "文件名不能为空",
-    "must_end_with_apk": "文件名必须以 .apk/.xapk/.apkm 结尾",
+    "must_end_with_apk": "文件名必须以 .apk/.xapk/.apkm/.apks 结尾",
     "default_name": "默认名称"
   },
   "install": {

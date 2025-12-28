@@ -13,11 +13,13 @@ import 'xapk_info.dart';
 
 bool _isArchiveApk(String apkPath) {
   final extension = path.extension(apkPath).toLowerCase();
-  return extension == '.xapk' || extension == '.apkm';
+  return extension == '.xapk' || extension == '.apkm' || extension == '.apks';
 }
 
 String _archiveTypeFromExtension(String extension) {
-  return extension == '.apkm' ? 'APKM' : 'XAPK';
+  if (extension == '.apkm') return 'APKM';
+  if (extension == '.apks') return 'APKS';
+  return 'XAPK';
 }
 
 String? _findBaseApkEntry(List<String> apkEntries) {
@@ -43,10 +45,10 @@ Future<ApkInfo?> getApkInfo(String apk) async {
   apkInfo.apkPath = apk;
   apkInfo.apkSize = File(apk).lengthSync();
 
-  // 检查是否为XAPK格式
+  // 检查是否为XAPK/APKM/APKS格式
   if (_isArchiveApk(apk)) {
     final extension = path.extension(apk).toLowerCase();
-    log.info("getApkInfo: parsing XAPK/APKM file");
+    log.info("getApkInfo: parsing XAPK/APKM/APKS file");
     apkInfo.isXapk = true;
     apkInfo.archiveType = _archiveTypeFromExtension(extension);
 
@@ -154,7 +156,7 @@ Future<ApkInfo?> getApkInfo(String apk) async {
         apkInfo.label == null &&
         apkInfo.archiveApks.isEmpty &&
         manifest == null) {
-      log.info("getApkInfo: failed to parse XAPK/APKM");
+      log.info("getApkInfo: failed to parse XAPK/APKM/APKS");
       return null;
     }
 
@@ -256,7 +258,7 @@ class ApkInfo {
   String apkPath = "";
   int apkSize = 0;
   bool isXapk = false; // 是否为XAPK格式
-  String? archiveType; // XAPK/APKM
+  String? archiveType; // XAPK/APKM/APKS
 
   String? packageName;
   int? versionCode;

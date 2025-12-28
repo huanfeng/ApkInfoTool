@@ -82,11 +82,11 @@
     "parse_apk_info_fail": "Failed to parse APK information!"
   },
   "open": {
-    "open_apk": "Open APK/XAPK/APKM",
+    "open_apk": "Open APK/XAPK/APKM/APKS",
     "open_file_directory": "Open file location",
-    "select_apk_file": "Please select APK/XAPK/APKM file",
+    "select_apk_file": "Please select APK/XAPK/APKM/APKS file",
     "close_file": "Close file",
-    "invalid_file_type": "Invalid file type, please select APK/XAPK/APKM file"
+    "invalid_file_type": "Invalid file type, please select APK/XAPK/APKM/APKS file"
   },
   "file_info": {
     "file": "File",
@@ -118,7 +118,7 @@
     "failed": "Rename failed",
     "new_file_name": "New File Name",
     "name_cannot_be_empty": "File name cannot be empty",
-    "must_end_with_apk": "File name must end with .apk/.xapk/.apkm",
+    "must_end_with_apk": "File name must end with .apk/.xapk/.apkm/.apks",
     "default_name": "Default Name"
   },
   "install": {

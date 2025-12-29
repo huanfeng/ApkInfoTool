@@ -1,18 +1,22 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 class ToolPaths {
   static String get appDir => File(Platform.resolvedExecutable).parent.path;
+  static String? _appSupportDir;
+
+  static Future<void> init() async {
+    if (_appSupportDir != null) return;
+    final dir = await getApplicationSupportDirectory();
+    _appSupportDir = dir.path;
+  }
+
+  static String get appSupportDir => _appSupportDir ?? appDir;
 
   static String get installBinDir {
-    if (Platform.isWindows) {
-      final persist = _getScoopPersistBinDir();
-      if (persist != null) {
-        return persist;
-      }
-    }
-    return path.join(appDir, 'bin');
+    return path.join(appSupportDir, 'bin');
   }
 
   static String get repositoryMirrorFilePath =>
@@ -25,11 +29,11 @@ class ToolPaths {
     if (path.isAbsolute(value)) {
       return value;
     }
-    return path.normalize(path.join(appDir, value));
+    return path.normalize(path.join(appSupportDir, value));
   }
 
   static String toRelativeDownloadDir(String absolutePath) {
-    final relative = path.relative(absolutePath, from: appDir);
+    final relative = path.relative(absolutePath, from: appSupportDir);
     return relative.isEmpty ? '.' : relative;
   }
 
@@ -168,21 +172,4 @@ class ToolPaths {
         .toList();
   }
 
-  static String? _getScoopPersistBinDir() {
-    final exePath = Platform.resolvedExecutable;
-    final lower = exePath.toLowerCase();
-    const marker = '\\scoop\\apps\\';
-    final index = lower.indexOf(marker);
-    if (index == -1) {
-      return null;
-    }
-    final after = exePath.substring(index + marker.length);
-    final parts = after.split(RegExp(r'[\\/]+'));
-    if (parts.isEmpty) {
-      return null;
-    }
-    final appName = parts.first;
-    final root = exePath.substring(0, index + '\\scoop'.length);
-    return path.join(root, 'persist', appName, 'bin');
-  }
 }

@@ -145,6 +145,9 @@ class _SettingPageState extends ConsumerState<SettingPage> {
     if (value == null || value.isEmpty) {
       return t.settings.path_not_found;
     }
+    if (path.isWithin(ToolPaths.appSupportDir, value)) {
+      return path.relative(value, from: ToolPaths.appSupportDir);
+    }
     if (path.isWithin(ToolPaths.appDir, value)) {
       return path.relative(value, from: ToolPaths.appDir);
     }
@@ -187,19 +190,19 @@ class _SettingPageState extends ConsumerState<SettingPage> {
     required String customPath,
     required ValueChanged<String> onSource,
   }) {
-    if (systemPath != null && systemPath.isNotEmpty) {
-      onSource(Config.kToolSourceSystem);
-      return;
-    }
     if (builtinPath != null && builtinPath.isNotEmpty) {
       onSource(Config.kToolSourceBuiltin);
+      return;
+    }
+    if (systemPath != null && systemPath.isNotEmpty) {
+      onSource(Config.kToolSourceSystem);
       return;
     }
     if (customPath.isNotEmpty) {
       onSource(Config.kToolSourceCustom);
       return;
     }
-    onSource(Config.kToolSourceSystem);
+    onSource(Config.kToolSourceBuiltin);
   }
 
   Widget _buildToolSelector({
@@ -236,12 +239,12 @@ class _SettingPageState extends ConsumerState<SettingPage> {
             },
             items: [
               DropdownMenuItem(
-                value: Config.kToolSourceSystem,
-                child: Text(t.settings.tool_source_system),
-              ),
-              DropdownMenuItem(
                 value: Config.kToolSourceBuiltin,
                 child: Text(t.settings.tool_source_builtin),
+              ),
+              DropdownMenuItem(
+                value: Config.kToolSourceSystem,
+                child: Text(t.settings.tool_source_system),
               ),
               DropdownMenuItem(
                 value: Config.kToolSourceCustom,
@@ -919,6 +922,56 @@ class _DependencyDownloadDialogState extends State<DependencyDownloadDialog> {
     }
   }
 
+  Future<bool> _confirmDeleteDownloads() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.settings.download_dependencies_title),
+        content: Text(t.settings.download_dependencies_delete_confirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(t.base.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(t.base.confirm),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  Future<void> _deleteDownloads() async {
+    final confirmed = await _confirmDeleteDownloads();
+    if (!confirmed) return;
+    try {
+      final platformDir = Directory(path.join(_installDir, 'platform-tools'));
+      final buildDir = Directory(path.join(_installDir, 'build-tools'));
+      if (platformDir.existsSync()) {
+        await platformDir.delete(recursive: true);
+      }
+      if (buildDir.existsSync()) {
+        await buildDir.delete(recursive: true);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.settings.download_dependencies_deleted)),
+      );
+    } catch (e) {
+      log.warning('delete downloads failed: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t.settings.download_dependencies_delete_failed(error: '$e'),
+          ),
+        ),
+      );
+    }
+  }
+
   Widget _buildDownloadOption({
     required bool value,
     required String title,
@@ -1057,13 +1110,27 @@ class _DependencyDownloadDialogState extends State<DependencyDownloadDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: _downloading ? null : () => Navigator.of(context).pop(),
-          child: Text(t.base.close),
-        ),
-        TextButton(
-          onPressed: _downloading ? null : _startDownload,
-          child: Text(t.settings.download_dependencies_start),
+        SizedBox(
+          width: double.infinity,
+          child: Row(
+            children: [
+              TextButton(
+                onPressed: _downloading ? null : _deleteDownloads,
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: Text(t.settings.download_dependencies_delete),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed:
+                    _downloading ? null : () => Navigator.of(context).pop(),
+                child: Text(t.base.close),
+              ),
+              TextButton(
+                onPressed: _downloading ? null : _startDownload,
+                child: Text(t.settings.download_dependencies_start),
+              ),
+            ],
+          ),
         ),
       ],
     );

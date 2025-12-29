@@ -4,6 +4,7 @@ import 'package:apk_info_tool/pages/home_page.dart';
 import 'package:apk_info_tool/pages/setting_page.dart';
 import 'package:apk_info_tool/theme/theme_manager.dart';
 import 'package:apk_info_tool/utils/logger.dart';
+import 'package:apk_info_tool/utils/tool_paths.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -27,6 +28,7 @@ bool get isDesktop {
 void main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await ToolPaths.init();
   await Config.init();
   await Config.loadConfig();
 

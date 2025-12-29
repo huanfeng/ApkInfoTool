@@ -279,6 +279,11 @@ Future<ApkInfo?> getApkInfo(String apk) async {
     if (exitCode == 0) {
       parseApkInfoFromOutput(result.stdout.toString(), apkInfo);
 
+      final iconImage = await apkInfo.loadIcon();
+      if (iconImage != null) {
+        apkInfo.mainIconImage ??= iconImage;
+      }
+
       // 如果启用了签名检查，获取签名信息
       if (Config.enableSignature.value) {
         try {
@@ -484,8 +489,7 @@ class ApkInfo {
             labels[key.substring("application-label-".length + 1)] =
                 value.trimSQ();
           } else if (key.startsWith("application-icon-")) {
-            icons[key.substring("application-icon-".length + 1)] =
-                value.trimSQ();
+            icons[key.substring("application-icon-".length)] = value.trimSQ();
           } else {
             others.add(line);
           }
@@ -549,46 +553,62 @@ class ApkInfo {
     }
   }
 
-  // 找到最佳图标
-  String _findBestIconPath(ZipHelper zip, String path) {
-    String best = path;
-    var number = 0;
+  // 从 application-icon-* 中按密度从大到小排列
+  List<String> _buildIconCandidates() {
+    final entries = <MapEntry<int, String>>[];
     icons.forEach((key, value) {
-      final tmp = int.parse(key);
-      if (tmp > number) {
-        number = tmp;
-        best = value;
+      final tmp = int.tryParse(key);
+      if (tmp != null) {
+        entries.add(MapEntry(tmp, value));
       }
-      log.finer("_findBestIconPath: key=$key, value=$value");
+      log.finer("_buildIconCandidates: key=$key, value=$value");
     });
-    log.info("_findBestIconPath: orig=$path, best=$best");
-    return best;
+
+    entries.sort((a, b) => b.key.compareTo(a.key));
+    return entries.map((e) => e.value).toList();
+  }
+
+  bool _isBitmapIcon(String path) {
+    return path.endsWith('.webp') || path.endsWith('.png');
   }
 
   /// 加载APK图标
   /// 返回图标的字节数据，如果加载失败返回null
   Future<Image?> loadIcon() async {
     if (mainIconPath == null || mainIconPath!.isEmpty) {
-      return null;
+      if (icons.isEmpty) {
+        return null;
+      }
     }
 
     try {
-      var iconPath = mainIconPath!;
       final zip = ZipHelper();
       zip.open(apkPath);
-      iconPath = _findBestIconPath(zip, iconPath);
-      if (iconPath.endsWith('.webp') || iconPath.endsWith('.png')) {
-        final data = await zip.readFileContent(iconPath);
-        if (data != null) {
-          final codec = await instantiateImageCodec(data);
-          final frame = await codec.getNextFrame();
-          return frame.image;
-        } else {
-          log.info('loadIcon: 找不到图标文件: $iconPath');
-        }
-      } else if (iconPath.endsWith('.xml')) {
-        log.info('loadIcon: 暂不支持XML格式的图标: $iconPath');
+
+      final candidates = <String>[];
+      if (mainIconPath != null && mainIconPath!.isNotEmpty) {
+        candidates.add(mainIconPath!);
       }
+      candidates.addAll(_buildIconCandidates());
+      log.info('loadIcon: candidates=${candidates.join(", ")}');
+
+      for (final iconPath in candidates) {
+        if (_isBitmapIcon(iconPath)) {
+          final data = await zip.readFileContent(iconPath);
+          if (data != null) {
+            final codec = await instantiateImageCodec(data);
+            final frame = await codec.getNextFrame();
+            log.info('loadIcon: 使用图标: $iconPath');
+            return frame.image;
+          }
+          log.info('loadIcon: 找不到图标文件: $iconPath');
+        } else if (iconPath.endsWith('.xml')) {
+          log.info('loadIcon: 暂不支持XML格式的图标: $iconPath');
+        } else {
+          log.info('loadIcon: 不支持的图标格式: $iconPath');
+        }
+      }
+      log.info('loadIcon: 未找到可用图标');
     } catch (e) {
       log.warning('loadIcon: 加载图标失败: $e');
     }

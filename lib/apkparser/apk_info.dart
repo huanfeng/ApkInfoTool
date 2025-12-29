@@ -22,6 +22,90 @@ String _archiveTypeFromExtension(String extension) {
   return 'XAPK';
 }
 
+final _kSplitAbiTokens = <String>{
+  'armeabi',
+  'armeabi_v7a',
+  'arm64_v8a',
+  'x86',
+  'x86_64',
+  'mips',
+  'mips64',
+};
+
+final _kSplitDensityTokens = <String>{
+  'ldpi',
+  'mdpi',
+  'hdpi',
+  'xhdpi',
+  'xxhdpi',
+  'xxxhdpi',
+  'tvdpi',
+};
+
+bool _looksLikeSplitAbi(String value) {
+  if (_kSplitAbiTokens.contains(value)) return true;
+  return value.contains('v7a') || value.contains('v8a') || value.contains('x86');
+}
+
+bool _looksLikeSplitDensity(String value) {
+  if (_kSplitDensityTokens.contains(value)) return true;
+  return value.endsWith('dpi');
+}
+
+bool _looksLikeSplitLanguage(String value) {
+  return RegExp(r'^[a-z]{2,3}(-r[a-z]{2})?$').hasMatch(value);
+}
+
+bool _hasOnlyPlaceholderLocales(List<String> locales) {
+  if (locales.isEmpty) return false;
+  final normalized = locales.map((e) => e.trim().toLowerCase()).toList();
+  return normalized.every((e) => e == '--_--' || e == '--');
+}
+
+void _inferLocalesAndAbisFromSplits(
+  ApkInfo apkInfo,
+  List<String> splitApks,
+) {
+  final needLocales =
+      apkInfo.locales.isEmpty || _hasOnlyPlaceholderLocales(apkInfo.locales);
+  final needAbis = apkInfo.nativeCodes.isEmpty;
+  if (!needLocales && !needAbis) return;
+
+  final locales = <String>[];
+  final localesSeen = <String>{};
+  final abis = <String>[];
+  final abisSeen = <String>{};
+
+  for (final entry in splitApks) {
+    final baseName = path.basenameWithoutExtension(entry).toLowerCase();
+    String? suffix;
+    if (baseName.startsWith('split_config.')) {
+      suffix = baseName.substring('split_config.'.length);
+    } else if (baseName.startsWith('config.')) {
+      suffix = baseName.substring('config.'.length);
+    } else {
+      continue;
+    }
+
+    if (suffix.isEmpty) continue;
+    if (needAbis && _looksLikeSplitAbi(suffix)) {
+      if (abisSeen.add(suffix)) abis.add(suffix);
+      continue;
+    }
+    if (_looksLikeSplitDensity(suffix)) continue;
+    if (needLocales && _looksLikeSplitLanguage(suffix)) {
+      if (localesSeen.add(suffix)) locales.add(suffix);
+    }
+  }
+
+  if (needLocales && locales.isNotEmpty) {
+    apkInfo.locales = locales;
+  }
+  if (needAbis && abis.isNotEmpty) {
+    apkInfo.nativeCodes = abis;
+  }
+}
+
 String? _findBaseApkEntry(List<String> apkEntries) {
   if (apkEntries.isEmpty) return null;
   for (final entry in apkEntries) {
@@ -152,6 +236,7 @@ Future<ApkInfo?> getApkInfo(String apk) async {
     if (apkInfo.splitApks.isEmpty) {
       apkInfo.splitApks = apkInfo.archiveApks;
     }
+    _inferLocalesAndAbisFromSplits(apkInfo, apkInfo.splitApks);
     apkInfo.totalSize ??= apkInfo.apkSize;
 
     if (apkInfo.packageName == null &&

@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:apk_info_tool/config.dart';
+import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -20,7 +21,10 @@ class LoggerInit {
   static initLogger() async {
     Logger.root.level = Level.FINE;
     Logger.root.onRecord.listen((record) {
-      developer.log('${record.level.name}: ${record.time}: ${record.message}');
+      if (!kReleaseMode) {
+        developer
+            .log('${record.level.name}: ${record.time}: ${record.message}');
+      }
       LoggerInit.instance.log(record);
     });
   }

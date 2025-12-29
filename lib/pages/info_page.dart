@@ -109,6 +109,13 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
           apkInfo: apkInfo,
         ));
       }
+    } catch (e) {
+      log.warning('loadApkInfo: $e');
+      if (mounted) {
+        final message = e.toString().replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message)));
+      }
     } finally {
       isParsingState.update(false);
     }

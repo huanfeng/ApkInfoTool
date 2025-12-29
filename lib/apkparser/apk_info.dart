@@ -68,7 +68,10 @@ Future<ApkInfo?> getApkInfo(String apk) async {
           final extracted = await zip.extractFile(baseEntry, baseApkPath);
           if (extracted) {
             try {
-              final aaptPath = CommandTools.getAapt2Path();
+              final aaptPath = CommandTools.findAapt2Path();
+              if (aaptPath == null || aaptPath.isEmpty) {
+                throw Exception(t.parse.please_set_path(name: 'aapt2'));
+              }
               final result = await Process.run(
                 aaptPath,
                 ['dump', 'badging', baseApkPath],
@@ -164,7 +167,10 @@ Future<ApkInfo?> getApkInfo(String apk) async {
   }
 
   // 原有的APK解析逻辑
-  final aaptPath = CommandTools.getAapt2Path();
+  final aaptPath = CommandTools.findAapt2Path();
+  if (aaptPath == null || aaptPath.isEmpty) {
+    throw Exception(t.parse.please_set_path(name: 'aapt2'));
+  }
   final start = DateTime.now();
 
   try {

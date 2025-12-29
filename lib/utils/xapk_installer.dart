@@ -71,7 +71,11 @@ class XapkInstaller {
 
   Future<String?> _extractPackageNameFromApk(String apkPath) async {
     try {
-      final aaptPath = CommandTools.getAapt2Path();
+      final aaptPath = CommandTools.findAapt2Path();
+      if (aaptPath == null || aaptPath.isEmpty) {
+        log.warning('aapt2 not found');
+        return null;
+      }
       final result = await Process.run(
         aaptPath,
         ['dump', 'badging', apkPath],

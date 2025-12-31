@@ -59,6 +59,12 @@ scoop bucket add huanfeng https://github.com/huanfeng/scoop-bucket
 scoop install apk_info_tool
 ```
 
+### macOS Homebrew Install
+
+```bash
+brew install --cask huanfeng/homebrew-tap/apk-info-tool
+```
+
 ## Development & Building
 
 This project is developed using Flutter. After ensuring Flutter SDK is installed, run:

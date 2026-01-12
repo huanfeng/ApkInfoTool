@@ -82,35 +82,39 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
     final fileState = ref.read(currentFileStateProvider.notifier);
     final enableSignature =
         ref.read(settingStateProvider.select((value) => value.enableSignature));
+    final enableHash =
+        ref.read(settingStateProvider.select((value) => value.enableHash));
     apkInfoState.reset();
     isParsingState.update(true);
 
-    // 标记开始计算哈希
+    // 初始化文件状态
     fileState.update(FileState(
       filePath: filePath,
       fileSize: File(filePath).lengthSync(),
-      isComputingHash: true,
+      isComputingHash: enableHash,
     ));
 
-    // 异步计算哈希值（与 APK 解析并行）
-    computeFileHashes(filePath).then((hashes) {
-      if (mounted) {
-        final currentState = ref.read(currentFileStateProvider);
-        fileState.update(currentState.copyWith(
-          md5Hash: hashes.$1,
-          sha1Hash: hashes.$2,
-          isComputingHash: false,
-        ));
-      }
-    }).catchError((e) {
-      log.warning('loadApkInfo: failed to compute hashes: $e');
-      if (mounted) {
-        final currentState = ref.read(currentFileStateProvider);
-        fileState.update(currentState.copyWith(
-          isComputingHash: false,
-        ));
-      }
-    });
+    // 如果启用哈希计算，异步计算哈希值（与 APK 解析并行）
+    if (enableHash) {
+      computeFileHashes(filePath).then((hashes) {
+        if (mounted) {
+          final currentState = ref.read(currentFileStateProvider);
+          fileState.update(currentState.copyWith(
+            md5Hash: hashes.$1,
+            sha1Hash: hashes.$2,
+            isComputingHash: false,
+          ));
+        }
+      }).catchError((e) {
+        log.warning('loadApkInfo: failed to compute hashes: $e');
+        if (mounted) {
+          final currentState = ref.read(currentFileStateProvider);
+          fileState.update(currentState.copyWith(
+            isComputingHash: false,
+          ));
+        }
+      });
+    }
 
     try {
       final apkInfo = await getApkInfo(filePath);
@@ -324,6 +328,8 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
     final isParsing = ref.watch(isParsingProvider);
     final enableSignature = ref
         .watch(settingStateProvider.select((value) => value.enableSignature));
+    final enableHash = ref
+        .watch(settingStateProvider.select((value) => value.enableHash));
     final textMaxLines =
         ref.watch(uiConfigStateProvider.select((value) => value.textMaxLines));
 
@@ -478,29 +484,31 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
                             selectable: true,
                           )),
                           // MD5 哈希值
-                          Card(
-                              child: TitleValueLayout(
-                            title: t.file_info.md5,
-                            value: fileState.isComputingHash
-                                ? t.file_info.computing_hash
-                                : (fileState.md5Hash ?? ""),
-                            end: _buildCopyButton(
-                                fileState.md5Hash,
-                                fileState.md5Hash != null &&
-                                    !fileState.isComputingHash),
-                          )),
+                          if (enableHash)
+                            Card(
+                                child: TitleValueLayout(
+                              title: t.file_info.md5,
+                              value: fileState.isComputingHash
+                                  ? t.file_info.computing_hash
+                                  : (fileState.md5Hash ?? ""),
+                              end: _buildCopyButton(
+                                  fileState.md5Hash,
+                                  fileState.md5Hash != null &&
+                                      !fileState.isComputingHash),
+                            )),
                           // SHA1 哈希值
-                          Card(
-                              child: TitleValueLayout(
-                            title: t.file_info.sha1,
-                            value: fileState.isComputingHash
-                                ? t.file_info.computing_hash
-                                : (fileState.sha1Hash ?? ""),
-                            end: _buildCopyButton(
-                                fileState.sha1Hash,
-                                fileState.sha1Hash != null &&
-                                    !fileState.isComputingHash),
-                          )),
+                          if (enableHash)
+                            Card(
+                                child: TitleValueLayout(
+                              title: t.file_info.sha1,
+                              value: fileState.isComputingHash
+                                  ? t.file_info.computing_hash
+                                  : (fileState.sha1Hash ?? ""),
+                              end: _buildCopyButton(
+                                  fileState.sha1Hash,
+                                  fileState.sha1Hash != null &&
+                                      !fileState.isComputingHash),
+                            )),
                           if (enableSignature && !(apkInfo?.isXapk ?? false))
                             Card(
                                 child: TitleValueLayout(

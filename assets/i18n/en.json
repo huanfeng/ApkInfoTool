@@ -65,6 +65,7 @@
     "about": "About",
     "debug": "Debug",
     "enable_signature": "Enable Signature Check",
+    "enable_hash": "Enable Hash Calculation",
     "enable_debug": "Enable Debug Log",
     "open_debug_log": "Open Debug Log",
     "open_debug_directory": "Open Debug Directory",

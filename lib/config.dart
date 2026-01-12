@@ -66,6 +66,7 @@ class Config {
   static final adbSource = ConfigItem("adb_source", kToolSourceBuiltin);
   static final downloadDir = ConfigItem("download_dir", "");
   static final enableSignature = ConfigItem("enable_signature", false);
+  static final enableHash = ConfigItem("enable_hash", true);
   static final enableDebug = ConfigItem("enable_debug", false);
   static final maxLines = ConfigItem("max_lines", 6);
   static final themeColor = ConfigItem("theme_color", Colors.blue.value);
@@ -81,6 +82,7 @@ class Config {
     adbSource,
     downloadDir,
     enableSignature,
+    enableHash,
     enableDebug,
     maxLines,
     themeColor,

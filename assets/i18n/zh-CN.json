@@ -72,6 +72,7 @@
     "about": "关于",
     "debug": "调试",
     "enable_signature": "启用签名检查",
+    "enable_hash": "启用哈希计算",
     "enable_debug": "启用调试日志",
     "open_debug_log": "打开调试日志",
     "open_debug_directory": "打开调试目录",

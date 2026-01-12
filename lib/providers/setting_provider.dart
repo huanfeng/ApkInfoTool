@@ -17,6 +17,7 @@ abstract class Settings with _$Settings {
     required String adbSource,
     required String downloadDir,
     required bool enableSignature,
+    required bool enableHash,
     required bool enableDebug,
     required String language,
   }) = _Settings;
@@ -34,6 +35,7 @@ class SettingState extends _$SettingState {
         adbSource: Config.adbSource.value,
         downloadDir: Config.downloadDir.value,
         enableSignature: Config.enableSignature.value,
+        enableHash: Config.enableHash.value,
         enableDebug: Config.enableDebug.value,
         language: Config.language.value,
       );
@@ -76,6 +78,11 @@ class SettingState extends _$SettingState {
   void setEnableSignature(bool value) {
     state = state.copyWith(enableSignature: value);
     Config.enableSignature.updateValue(value);
+  }
+
+  void setEnableHash(bool value) {
+    state = state.copyWith(enableHash: value);
+    Config.enableHash.updateValue(value);
   }
 
   void setEnableDebug(bool value) {

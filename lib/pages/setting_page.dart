@@ -437,6 +437,8 @@ class _SettingPageState extends ConsumerState<SettingPage> {
   Widget _buildFeaturesSection() {
     final enableSignature = ref
         .watch(settingStateProvider.select((value) => value.enableSignature));
+    final enableHash = ref
+        .watch(settingStateProvider.select((value) => value.enableHash));
     return _buildSettingCard(
       title: t.settings.features,
       icon: Icons.featured_play_list,
@@ -446,6 +448,13 @@ class _SettingPageState extends ConsumerState<SettingPage> {
           value: enableSignature,
           onChanged: (bool value) {
             ref.read(settingStateProvider.notifier).setEnableSignature(value);
+          },
+        ),
+        SwitchListTile(
+          title: Text(t.settings.enable_hash),
+          value: enableHash,
+          onChanged: (bool value) {
+            ref.read(settingStateProvider.notifier).setEnableHash(value);
           },
         ),
         if (FileAssociationManager.isSupported)

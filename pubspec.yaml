@@ -29,6 +29,7 @@ dependencies:
   archive:
     git: https://github.com/huanfeng/archive.git
   logging: ^1.3.0
+  crypto: ^3.0.6
   riverpod: ^3.0.3
   flutter_riverpod: ^3.0.3
   riverpod_annotation: ^3.0.3

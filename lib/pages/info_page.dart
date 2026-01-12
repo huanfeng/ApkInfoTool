@@ -11,6 +11,7 @@ import 'package:apk_info_tool/providers/info_page_provider.dart';
 import 'package:apk_info_tool/providers/setting_provider.dart';
 import 'package:apk_info_tool/providers/ui_config_provider.dart';
 import 'package:apk_info_tool/utils/android_version.dart';
+import 'package:apk_info_tool/utils/file_hash.dart';
 import 'package:apk_info_tool/utils/format.dart';
 import 'package:apk_info_tool/utils/logger.dart';
 import 'package:apk_info_tool/utils/platform.dart';
@@ -83,6 +84,34 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
         ref.read(settingStateProvider.select((value) => value.enableSignature));
     apkInfoState.reset();
     isParsingState.update(true);
+
+    // 标记开始计算哈希
+    fileState.update(FileState(
+      filePath: filePath,
+      fileSize: File(filePath).lengthSync(),
+      isComputingHash: true,
+    ));
+
+    // 异步计算哈希值（与 APK 解析并行）
+    computeFileHashes(filePath).then((hashes) {
+      if (mounted) {
+        final currentState = ref.read(currentFileStateProvider);
+        fileState.update(currentState.copyWith(
+          md5Hash: hashes.$1,
+          sha1Hash: hashes.$2,
+          isComputingHash: false,
+        ));
+      }
+    }).catchError((e) {
+      log.warning('loadApkInfo: failed to compute hashes: $e');
+      if (mounted) {
+        final currentState = ref.read(currentFileStateProvider);
+        fileState.update(currentState.copyWith(
+          isComputingHash: false,
+        ));
+      }
+    });
+
     try {
       final apkInfo = await getApkInfo(filePath);
       if (apkInfo != null) {
@@ -102,10 +131,9 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
           }
         }
         apkInfoState.update(apkInfo);
-        // 更新 FileState 中的 apkInfo
-        fileState.update(FileState(
-          filePath: filePath,
-          fileSize: File(filePath).lengthSync(),
+        // 更新 FileState 中的 apkInfo（保留哈希值）
+        final currentState = ref.read(currentFileStateProvider);
+        fileState.update(currentState.copyWith(
           apkInfo: apkInfo,
         ));
       }
@@ -448,6 +476,30 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
                             minLines: 1,
                             maxLines: textMaxLines,
                             selectable: true,
+                          )),
+                          // MD5 哈希值
+                          Card(
+                              child: TitleValueLayout(
+                            title: t.file_info.md5,
+                            value: fileState.isComputingHash
+                                ? t.file_info.computing_hash
+                                : (fileState.md5Hash ?? ""),
+                            end: _buildCopyButton(
+                                fileState.md5Hash,
+                                fileState.md5Hash != null &&
+                                    !fileState.isComputingHash),
+                          )),
+                          // SHA1 哈希值
+                          Card(
+                              child: TitleValueLayout(
+                            title: t.file_info.sha1,
+                            value: fileState.isComputingHash
+                                ? t.file_info.computing_hash
+                                : (fileState.sha1Hash ?? ""),
+                            end: _buildCopyButton(
+                                fileState.sha1Hash,
+                                fileState.sha1Hash != null &&
+                                    !fileState.isComputingHash),
                           )),
                           if (enableSignature && !(apkInfo?.isXapk ?? false))
                             Card(

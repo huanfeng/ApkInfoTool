@@ -35,22 +35,34 @@ class FileState {
   final String? filePath;
   final int? fileSize;
   final ApkInfo? apkInfo;
+  final String? md5Hash;
+  final String? sha1Hash;
+  final bool isComputingHash;
 
   FileState({
     this.filePath,
     this.fileSize,
     this.apkInfo,
+    this.md5Hash,
+    this.sha1Hash,
+    this.isComputingHash = false,
   });
 
   FileState copyWith({
     String? filePath,
     int? fileSize,
     ApkInfo? apkInfo,
+    String? md5Hash,
+    String? sha1Hash,
+    bool? isComputingHash,
   }) {
     return FileState(
       filePath: filePath ?? this.filePath,
       fileSize: fileSize ?? this.fileSize,
       apkInfo: apkInfo ?? this.apkInfo,
+      md5Hash: md5Hash ?? this.md5Hash,
+      sha1Hash: sha1Hash ?? this.sha1Hash,
+      isComputingHash: isComputingHash ?? this.isComputingHash,
     );
   }
 }

@@ -385,6 +385,10 @@ class ApkInfo {
   List<String> others = [];
   String signatureInfo = "";
 
+  // 文件哈希值
+  String? md5Hash;
+  String? sha1Hash;
+
   // XAPK 相关信息
   String? xapkName;
   List<String> splitConfigs = [];
@@ -652,6 +656,8 @@ class ApkInfo {
     nativeCodes.clear();
     others.clear();
     signatureInfo = "";
+    md5Hash = null;
+    sha1Hash = null;
     xapkName = null;
     splitConfigs.clear();
     splitApks.clear();

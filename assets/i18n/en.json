@@ -94,7 +94,10 @@
   },
   "file_info": {
     "file": "File",
-    "size": "Size"
+    "size": "Size",
+    "md5": "MD5",
+    "sha1": "SHA1",
+    "computing_hash": "Computing..."
   },
   "apk_info": {
     "archive_type": "Archive Type",

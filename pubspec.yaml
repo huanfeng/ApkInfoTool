@@ -32,7 +32,7 @@ dependencies:
   crypto: ^3.0.6
   riverpod: ^3.0.3
   flutter_riverpod: ^3.0.3
-  riverpod_annotation: ^3.0.3
+  riverpod_annotation: ^4.0.0
   freezed_annotation: ^3.1.0
 
 dev_dependencies:
@@ -42,7 +42,7 @@ dev_dependencies:
   inno_bundle: ^0.11.2
   slang_build_runner: ^4.3.0
   riverpod_lint: ^3.0.3
-  riverpod_generator: ^3.0.3
+  riverpod_generator: ^4.0.0+1
   build_runner: ^2.4.13
   freezed: ^3.2.3
 

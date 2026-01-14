@@ -205,6 +205,10 @@ class _InstallDialogState extends State<InstallDialog> {
 
           setState(() {
             device.installStatus = success ? t.install.success : t.install.failed;
+            // 安装成功后自动取消选中，避免用户重复点击确定时重新安装
+            if (success) {
+              device.selected = false;
+            }
           });
         } catch (e) {
           setState(() {
@@ -336,18 +340,18 @@ class _InstallDialogState extends State<InstallDialog> {
       title: Text(t.install.title),
       content: SizedBox(
         width: 400,
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(t.install.select_device),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: 200,
-                      child: ListView.builder(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(t.install.select_device),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 200,
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.builder(
                         itemCount: devices.length,
                         itemBuilder: (context, index) {
                           final device = devices[index];
@@ -413,7 +417,7 @@ class _InstallDialogState extends State<InstallDialog> {
                           );
                         },
                       ),
-                    ),
+              ),
                     const SizedBox(height: 8),
                     TextButton(
                       onPressed: () {
@@ -515,28 +519,40 @@ class _InstallDialogState extends State<InstallDialog> {
                         ),
                       ),
                     ],
-                    if (widget.isXapk) ...[
-                      const SizedBox(height: 16),
-                      _buildSplitApksSection(),
-                    ],
-                  ],
-                ),
-              ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: isInstalling ? null : () => Navigator.of(context).pop(),
-          child: Text(t.base.cancel),
+              if (widget.isXapk) ...[
+                const SizedBox(height: 16),
+                _buildSplitApksSection(),
+              ],
+            ],
+          ),
         ),
-        ElevatedButton(
-          onPressed: canInstall ? _installApk : null,
-          child: isInstalling
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(t.base.confirm),
+      ),
+      actionsAlignment: MainAxisAlignment.spaceBetween,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: isInstalling || isLoading ? null : _loadDevices,
+          tooltip: t.install.refresh_devices,
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextButton(
+              onPressed: isInstalling ? null : () => Navigator.of(context).pop(),
+              child: Text(t.base.cancel),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              onPressed: canInstall ? _installApk : null,
+              child: isInstalling
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(t.base.confirm),
+            ),
+          ],
         ),
       ],
     );

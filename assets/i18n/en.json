@@ -131,6 +131,7 @@
   },
   "install": {
     "apk": "Install",
+    "refresh_devices": "Refresh Devices",
     "installing": "Installing...",
     "success": "Installation Successful",
     "failed": "Installation Failed",

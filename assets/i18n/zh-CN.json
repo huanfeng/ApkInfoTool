@@ -133,6 +133,7 @@
     "apk": "安装",
     "title": "安装",
     "select_device": "请选择设备",
+    "refresh_devices": "刷新设备列表",
     "installing": "正在安装...",
     "success": "安装成功",
     "failed": "安装失败",

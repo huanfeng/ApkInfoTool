@@ -539,7 +539,7 @@ class _InstallDialogState extends State<InstallDialog> {
           children: [
             TextButton(
               onPressed: isInstalling ? null : () => Navigator.of(context).pop(),
-              child: Text(t.base.cancel),
+              child: Text(t.base.close),
             ),
             const SizedBox(width: 8),
             ElevatedButton(
@@ -550,7 +550,7 @@ class _InstallDialogState extends State<InstallDialog> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(t.base.confirm),
+                  : Text(t.install.apk),
             ),
           ],
         ),

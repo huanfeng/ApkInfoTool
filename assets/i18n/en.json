@@ -147,6 +147,10 @@
     "split_options": "Split Options",
     "select_all": "Select All",
     "base_only": "Base Only",
+    "stop": "Stop",
+    "stopped": "Stopped",
+    "stop_confirm_title": "Confirm Stop",
+    "stop_confirm_message": "Are you sure you want to stop the installation? Completed installations will not be affected.",
     "split_type": {
       "base": "Base Package",
       "language": "Language Pack",

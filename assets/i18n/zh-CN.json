@@ -146,6 +146,10 @@
     "split_options": "分包选项",
     "select_all": "全选",
     "base_only": "仅基础包",
+    "stop": "停止",
+    "stopped": "已停止",
+    "stop_confirm_title": "确认停止",
+    "stop_confirm_message": "确定要停止安装吗？已完成的安装不会受到影响。",
     "split_type": {
       "base": "基础包",
       "language": "语言包",

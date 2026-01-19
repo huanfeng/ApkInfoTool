@@ -68,6 +68,9 @@ class _InstallDialogState extends State<InstallDialog> {
   List<AdbDevice> devices = [];
   bool isLoading = true;
   bool isInstalling = false;
+  bool _isCancelled = false;  // 是否已取消安装
+  Process? _currentProcess;  // 当前正在执行的进程
+  XapkInstaller? _currentInstaller;  // 当前正在执行的XAPK安装器
   bool showAdvancedOptions = false;
   bool showSplitOptions = false;  // 新增：是否显示分包选择
   final InstallOptions options = InstallOptions();
@@ -162,6 +165,7 @@ class _InstallDialogState extends State<InstallDialog> {
 
     setState(() {
       isInstalling = true;
+      _isCancelled = false;
     });
 
     try {
@@ -176,6 +180,11 @@ class _InstallDialogState extends State<InstallDialog> {
 
       // 安装到每个选中的设备
       for (final device in selectedDevices) {
+        // 检查是否已取消
+        if (_isCancelled) {
+          break;
+        }
+
         try {
           setState(() {
             device.installStatus = t.install.installing;
@@ -183,34 +192,72 @@ class _InstallDialogState extends State<InstallDialog> {
           });
 
           bool success;
+          String? errorMessage;
+
           if (widget.isXapk) {
             final installer = XapkInstaller();
+            _currentInstaller = installer;
             success = await installer.install(
               widget.apkPath,
               device.id,
               installOptions,
               selectedSplits: options.selectedSplits,
+              isCancelled: () => _isCancelled,
             );
+            _currentInstaller = null;
           } else {
-            // 安装普通APK
-            final result = await Process.run(
+            // 安装普通APK - 使用 Process.start 以支持中断
+            final process = await Process.start(
               CommandTools.getAdbPath(),
               ['-s', device.id, 'install', ...installOptions, widget.apkPath],
             );
-            success = result.exitCode == 0;
+            _currentProcess = process;
+
+            // 收集输出
+            final stdoutBuffer = StringBuffer();
+            final stderrBuffer = StringBuffer();
+            process.stdout.transform(const SystemEncoding().decoder).listen((data) {
+              stdoutBuffer.write(data);
+            });
+            process.stderr.transform(const SystemEncoding().decoder).listen((data) {
+              stderrBuffer.write(data);
+            });
+
+            final exitCode = await process.exitCode;
+            _currentProcess = null;
+
+            success = exitCode == 0;
             if (!success) {
-              device.errorMessage = result.stderr.toString();
+              errorMessage = stderrBuffer.toString();
             }
+          }
+
+          // 检查是否被中断
+          if (_isCancelled) {
+            setState(() {
+              device.installStatus = t.install.stopped;
+              device.errorMessage = null;
+            });
+            break;
           }
 
           setState(() {
             device.installStatus = success ? t.install.success : t.install.failed;
+            device.errorMessage = errorMessage;
             // 安装成功后自动取消选中，避免用户重复点击确定时重新安装
             if (success) {
               device.selected = false;
             }
           });
         } catch (e) {
+          // 如果是被中断导致的异常，显示已停止状态
+          if (_isCancelled) {
+            setState(() {
+              device.installStatus = t.install.stopped;
+              device.errorMessage = null;
+            });
+            break;
+          }
           setState(() {
             device.installStatus = t.install.failed;
             device.errorMessage = e.toString();
@@ -220,7 +267,40 @@ class _InstallDialogState extends State<InstallDialog> {
     } finally {
       setState(() {
         isInstalling = false;
+        _isCancelled = false;
+        _currentProcess = null;
+        _currentInstaller = null;
       });
+    }
+  }
+
+  // 显示停止确认对话框
+  Future<void> _showStopConfirmDialog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.install.stop_confirm_title),
+        content: Text(t.install.stop_confirm_message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(t.base.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(t.install.stop),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() {
+        _isCancelled = true;
+      });
+      // 中断当前正在执行的进程
+      _currentProcess?.kill();
+      _currentInstaller?.cancel();
     }
   }
 
@@ -537,10 +617,16 @@ class _InstallDialogState extends State<InstallDialog> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextButton(
-              onPressed: isInstalling ? null : () => Navigator.of(context).pop(),
-              child: Text(t.base.close),
-            ),
+            if (isInstalling)
+              TextButton(
+                onPressed: _showStopConfirmDialog,
+                child: Text(t.install.stop),
+              )
+            else
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(t.base.close),
+              ),
             const SizedBox(width: 8),
             ElevatedButton(
               onPressed: canInstall ? _installApk : null,

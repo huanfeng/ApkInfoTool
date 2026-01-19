@@ -7,6 +7,15 @@ import 'package:apk_info_tool/utils/zip_helper.dart';
 import 'package:path/path.dart' as path;
 
 class XapkInstaller {
+  bool _isCancelled = false;
+  Process? _currentProcess;
+
+  /// 取消当前安装
+  void cancel() {
+    _isCancelled = true;
+    _currentProcess?.kill();
+  }
+
   Future<Map<String, dynamic>?> _loadManifestData(ZipHelper zip) async {
     final manifestData = await zip.readFileContent('manifest.json') ??
         await zip.readFileContent('info.json') ??
@@ -129,20 +138,42 @@ class XapkInstaller {
     }
   }
 
+  /// 执行进程并支持取消
+  Future<int> _runProcess(String executable, List<String> args) async {
+    if (_isCancelled) return -1;
+
+    final process = await Process.start(executable, args);
+    _currentProcess = process;
+
+    final exitCode = await process.exitCode;
+    _currentProcess = null;
+
+    return exitCode;
+  }
+
   /// 安装XAPK文件
   /// [xapkPath] XAPK文件路径
   /// [deviceId] 设备ID
   /// [installOptions] 安装选项
   /// [selectedSplits] 选中的分包，如果为null则安装所有分包
+  /// [isCancelled] 检查是否已取消的回调
   Future<bool> install(
     String xapkPath,
     String deviceId,
     List<String> installOptions, {
     Map<String, bool>? selectedSplits,
+    bool Function()? isCancelled,
   }) async {
+    _isCancelled = false;
     final tempDir = await Directory.systemTemp.createTemp('xapk_installer');
     final zip = ZipHelper();
     try {
+      // 检查是否已取消
+      if (isCancelled?.call() ?? false) {
+        _isCancelled = true;
+        return false;
+      }
+
       // 解压XAPK
       if (!zip.open(xapkPath)) {
         log.severe('Failed to open XAPK file');
@@ -172,9 +203,18 @@ class XapkInstaller {
         return false;
       }
 
+      // 检查是否已取消
+      if (_isCancelled || (isCancelled?.call() ?? false)) {
+        return false;
+      }
+
       // 解压需要安装的APK
       String? baseApkPath;
       for (final apk in apksToInstall) {
+        if (_isCancelled || (isCancelled?.call() ?? false)) {
+          return false;
+        }
+
         final apkPath = path.join(tempDir.path, apk);
         final apkDir = Directory(path.dirname(apkPath));
         if (!await apkDir.exists()) {
@@ -189,6 +229,11 @@ class XapkInstaller {
         }
       }
 
+      // 检查是否已取消
+      if (_isCancelled || (isCancelled?.call() ?? false)) {
+        return false;
+      }
+
       // 构建安装命令
       final adbPath = CommandTools.getAdbPath();
       final apkPaths = apksToInstall.map((apk) => path.join(tempDir.path, apk));
@@ -201,9 +246,12 @@ class XapkInstaller {
       ];
 
       // 执行安装命令
-      final result = await Process.run(adbPath, args);
-      if (result.exitCode != 0) {
-        log.severe('Failed to install APKs: ${result.stderr}');
+      final exitCode = await _runProcess(adbPath, args);
+      if (_isCancelled || (isCancelled?.call() ?? false)) {
+        return false;
+      }
+      if (exitCode != 0) {
+        log.severe('Failed to install APKs, exit code: $exitCode');
         return false;
       }
 
@@ -221,6 +269,11 @@ class XapkInstaller {
               );
 
         for (final obb in obbEntries) {
+          // 检查是否已取消
+          if (_isCancelled || (isCancelled?.call() ?? false)) {
+            return false;
+          }
+
           final obbLocalPath = path.join(tempDir.path, obb);
           final obbDir = Directory(path.dirname(obbLocalPath));
           if (!await obbDir.exists()) {
@@ -251,20 +304,27 @@ class XapkInstaller {
           }
 
           final deviceDir = path.posix.dirname(devicePath);
-          final mkdirResult = await Process.run(
+          final mkdirExitCode = await _runProcess(
             adbPath,
             ['-s', deviceId, 'shell', 'mkdir', '-p', deviceDir],
           );
-          if (mkdirResult.exitCode != 0) {
-            log.severe('Failed to create OBB dir: ${mkdirResult.stderr}');
+          if (_isCancelled || (isCancelled?.call() ?? false)) {
             return false;
           }
-          final pushResult = await Process.run(
+          if (mkdirExitCode != 0) {
+            log.severe('Failed to create OBB dir');
+            return false;
+          }
+
+          final pushExitCode = await _runProcess(
             adbPath,
             ['-s', deviceId, 'push', obbLocalPath, devicePath],
           );
-          if (pushResult.exitCode != 0) {
-            log.severe('Failed to push OBB: ${pushResult.stderr}');
+          if (_isCancelled || (isCancelled?.call() ?? false)) {
+            return false;
+          }
+          if (pushExitCode != 0) {
+            log.severe('Failed to push OBB');
             return false;
           }
         }
@@ -275,6 +335,7 @@ class XapkInstaller {
       log.severe('Failed to install XAPK: $e');
       return false;
     } finally {
+      _currentProcess = null;
       zip.close();
       // 清理临时文件
       if (await tempDir.exists()) {

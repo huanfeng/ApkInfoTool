@@ -3,6 +3,7 @@ import 'byte_data_reader.dart';
 import 'arsc/string_pool.dart';
 import 'arsc/resource_value.dart';
 import 'arsc/type_spec.dart';
+import 'models.dart';
 
 /// resources.arsc 完整解析器
 ///
@@ -169,6 +170,53 @@ class ArscParser {
       }
     }
     return densities;
+  }
+
+  /// 导出所有资源条目信息，供外部使用（如图标渲染器）
+  /// 按资源 ID 聚合所有 config 变体的值
+  Map<int, ResourceInfo> getAllResources() {
+    final results = <int, ResourceInfo>{};
+    for (final package in _packages) {
+      for (final typeEntry in package.typeSpecs.entries) {
+        final typeId = typeEntry.key;
+        final typeName =
+            package.typeStringPool.get(typeId - 1) ?? 'type$typeId';
+        for (final config in typeEntry.value.configs) {
+          for (final entryKV in config.entries.entries) {
+            final entryIndex = entryKV.key;
+            final entry = entryKV.value;
+            final resourceId =
+                (package.id << 24) | (typeId << 16) | entryIndex;
+            final keyName =
+                package.keyStringPool.get(entry.keyIndex) ?? 'key$entryIndex';
+
+            final info = results.putIfAbsent(
+              resourceId,
+              () => ResourceInfo(
+                resourceId: resourceId,
+                typeName: typeName,
+                keyName: keyName,
+              ),
+            );
+
+            if (entry.value != null) {
+              if (entry.value!.isString) {
+                final str = _globalStringPool.get(entry.value!.data);
+                if (str != null && !info.filePaths.contains(str)) {
+                  info.filePaths.add(str);
+                }
+              } else if (entry.value!.isReference) {
+                final refId = entry.value!.data;
+                if (refId != 0 && !info.references.contains(refId)) {
+                  info.references.add(refId);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return results;
   }
 
   _Package? _findPackage(int id) {

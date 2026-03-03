@@ -88,7 +88,7 @@ class ApkReader {
     if (parser == null) return;
 
     if (meta.label != null && meta.label!.startsWith('@res/0x')) {
-      final resId = int.tryParse(meta.label!.substring(5), radix: 16);
+      final resId = int.tryParse(meta.label!.substring(7), radix: 16);
       if (resId != null) {
         final resolved = parser.getStringValue(resId);
         if (resolved != null) meta.label = resolved;
@@ -110,7 +110,7 @@ class ApkReader {
     final iconRef = meta.applicationIcon;
     if (iconRef == null || !iconRef.startsWith('@res/0x')) return;
 
-    final resId = int.tryParse(iconRef.substring(5), radix: 16);
+    final resId = int.tryParse(iconRef.substring(7), radix: 16);
     if (resId == null) return;
 
     final paths = parser.getAllFilePaths(resId);

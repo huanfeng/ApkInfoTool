@@ -8,6 +8,7 @@ import 'dart:ui';
 import 'package:apk_info_tool/apkparser/binary_xml.dart';
 import 'package:apk_info_tool/utils/logger.dart';
 import 'package:apk_info_tool/utils/zip_helper.dart';
+import 'package:apk_parser/apk_parser.dart' as apk_parser;
 import 'package:path_drawing/path_drawing.dart';
 import 'package:xml/xml.dart' as xml;
 
@@ -52,6 +53,44 @@ class AdaptiveIconRenderer {
     }
     _bitmapCache.clear();
     _failedBitmapPath.clear();
+  }
+
+  /// 从 ArscParser 数据预加载资源表，替代 aapt2 dump resources
+  void preloadResourceTableFromArsc(
+      Map<int, apk_parser.ResourceInfo> resources) {
+    final byId = <String, _ResourceEntry>{};
+    final byName = <String, List<_ResourceEntry>>{};
+
+    for (final info in resources.values) {
+      final id = _normalizeResourceId(info.idHex);
+      final name = info.name.toLowerCase();
+      final entry = byId.putIfAbsent(
+        id,
+        () => _ResourceEntry(id: id, name: name),
+      );
+      entry.name = name;
+
+      for (final path in info.filePaths) {
+        final normalized = _normalizeZipPath(path);
+        if (normalized.isNotEmpty && !entry.filePaths.contains(normalized)) {
+          entry.filePaths.add(normalized);
+        }
+      }
+      for (final refId in info.references) {
+        final refHex =
+            '@res/0x${refId.toRadixString(16).padLeft(8, '0')}';
+        if (!entry.references.contains(refHex)) {
+          entry.references.add(refHex);
+        }
+      }
+
+      final list = byName.putIfAbsent(name, () => []);
+      if (!list.contains(entry)) list.add(entry);
+    }
+
+    _resourceTable = _ResourceTable(byId: byId, byName: byName);
+    _debug(
+        'resourceTable preloaded from arsc: byId=${byId.length}, byName=${byName.length}');
   }
 
   static const int _kCanvasSize = 432;

@@ -59,10 +59,26 @@ class ManifestParser {
     // <supports-screens>
     final screens = _findElement(manifest, 'supports-screens');
     if (screens != null) {
+      // 属性名映射：binary XML 中是 smallScreens 等，aapt2 格式是 small 等
+      const screenNameMap = {
+        'smallScreens': 'small',
+        'normalScreens': 'normal',
+        'largeScreens': 'large',
+        'xlargeScreens': 'xlarge',
+        'anyDensity': 'anyDensity',
+        'resizeable': 'resizeable',
+      };
       for (final attr in screens.attributes.entries) {
         if (attr.value == 'true') {
-          meta.screenSizes.add(attr.key);
+          final mapped = screenNameMap[attr.key];
+          meta.screenSizes.add(mapped ?? attr.key);
         }
+      }
+    } else {
+      // 没有显式 supports-screens 时，与 aapt2 一致使用默认值
+      // targetSdkVersion >= 4 默认支持所有屏幕尺寸
+      if ((meta.targetSdkVersion ?? 0) >= 4) {
+        meta.screenSizes = ['small', 'normal', 'large', 'xlarge'];
       }
     }
 

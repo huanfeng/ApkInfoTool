@@ -526,6 +526,9 @@ Future<ApkInfo?> _getApkInfoBuiltin(String apk, ApkInfo apkInfo) async {
     }
     final openMs = phaseSw.elapsedMilliseconds;
 
+    // 先 yield 让 UI 渲染 loading 指示器，再执行 CPU 密集型解析
+    await Future<void>.delayed(Duration.zero);
+
     phaseSw..reset()..start();
     final meta = await reader.parse();
     final parseMs = phaseSw.elapsedMilliseconds;
@@ -537,12 +540,18 @@ Future<ApkInfo?> _getApkInfoBuiltin(String apk, ApkInfo apkInfo) async {
 
     _applyMetaToApkInfo(meta, apkInfo);
 
+    // 导出 arsc 资源表数据供图标渲染器使用（替代 aapt2 dump resources）
+    if (reader.arscParser != null) {
+      apkInfo.arscResources = reader.arscParser!.getAllResources();
+    }
+
     // 图标加载（复用现有逻辑）
     phaseSw..reset()..start();
     final iconImage = await apkInfo.loadIcon();
     if (iconImage != null) {
       apkInfo.mainIconImage ??= iconImage;
     }
+    apkInfo.arscResources = null; // 图标加载完成后释放资源表数据
     final iconMs = phaseSw.elapsedMilliseconds;
 
     // 签名（仍走 apksigner）
@@ -592,13 +601,22 @@ void _applyMetaToApkInfo(apk_parser.ApkMeta meta, ApkInfo apkInfo) {
   apkInfo.locales = meta.locales;
   apkInfo.densities = meta.densities.map((d) => d.toString()).toList();
 
-  if (meta.applicationIcon != null) {
-    apkInfo.mainIconPath = meta.applicationIcon;
-  }
   // 从 arsc 解析的图标路径填充 icons map
   meta.iconPaths.forEach((dpi, iconPath) {
     apkInfo.icons[dpi.toString()] = iconPath;
   });
+
+  if (meta.applicationIcon != null) {
+    if (meta.applicationIcon!.startsWith('@res/0x') &&
+        meta.iconPaths.isNotEmpty) {
+      // 使用已解析的图标路径替代资源引用，避免重复候选
+      final sorted = meta.iconPaths.entries.toList()
+        ..sort((a, b) => b.key.compareTo(a.key));
+      apkInfo.mainIconPath = sorted.first.value;
+    } else {
+      apkInfo.mainIconPath = meta.applicationIcon;
+    }
+  }
 
   if (meta.launchableActivities.isNotEmpty) {
     apkInfo.launchableActivity = meta.launchableActivities
@@ -668,6 +686,9 @@ class ApkInfo {
   int apkSize = 0;
   bool isXapk = false; // 是否为XAPK格式
   String? archiveType; // XAPK/APKM/APKS
+
+  /// Builtin 解析器的资源表数据（临时字段，用于图标渲染，渲染后清除）
+  Map<int, apk_parser.ResourceInfo>? arscResources;
 
   String? packageName;
   int? versionCode;
@@ -958,17 +979,20 @@ class ApkInfo {
   }
 
   /// 收集所有图标候选路径，构建 iconCandidates 列表（不渲染）
-  Future<void> collectIconCandidates() async {
+  Future<void> collectIconCandidates({
+    ZipHelper? sharedZip,
+    AdaptiveIconRenderer? sharedRenderer,
+  }) async {
     iconCandidates.clear();
 
     if (mainIconPath == null || mainIconPath!.isEmpty) {
       if (icons.isEmpty) return;
     }
 
-    final zip = ZipHelper();
-    AdaptiveIconRenderer? adaptiveIconRenderer;
+    final zip = sharedZip ?? ZipHelper();
+    AdaptiveIconRenderer? adaptiveIconRenderer = sharedRenderer;
     try {
-      await zip.open(apkPath);
+      if (sharedZip == null) await zip.open(apkPath);
       final aaptPath = CommandTools.findAapt2Path();
       final allFiles = zip.listFiles();
 
@@ -1078,23 +1102,27 @@ class ApkInfo {
     } catch (e) {
       log.warning('collectIconCandidates: 收集图标候选失败: $e');
     } finally {
-      adaptiveIconRenderer?.dispose();
-      zip.close();
+      // 只清理自己创建的资源，共享资源由调用者管理
+      if (sharedRenderer == null) adaptiveIconRenderer?.dispose();
+      if (sharedZip == null) zip.close();
     }
   }
 
   /// 渲染指定索引的候选图标，结果缓存到 IconCandidate.renderedImage
-  Future<Image?> renderIcon(int index) async {
+  Future<Image?> renderIcon(int index, {
+    ZipHelper? sharedZip,
+    AdaptiveIconRenderer? sharedRenderer,
+  }) async {
     if (index < 0 || index >= iconCandidates.length) return null;
     final candidate = iconCandidates[index];
 
     // 已有缓存，直接返回
     if (candidate.renderedImage != null) return candidate.renderedImage;
 
-    final zip = ZipHelper();
-    AdaptiveIconRenderer? adaptiveIconRenderer;
+    final zip = sharedZip ?? ZipHelper();
+    AdaptiveIconRenderer? adaptiveIconRenderer = sharedRenderer;
     try {
-      await zip.open(apkPath);
+      if (sharedZip == null) await zip.open(apkPath);
       final aaptPath = CommandTools.findAapt2Path();
       final iconPath = candidate.path;
 
@@ -1112,7 +1140,7 @@ class ApkInfo {
 
       if (_isXmlPath(iconPath)) {
         if (aaptPath != null && aaptPath.isNotEmpty) {
-          adaptiveIconRenderer = AdaptiveIconRenderer(
+          adaptiveIconRenderer ??= AdaptiveIconRenderer(
             apkPath: apkPath,
             aaptPath: aaptPath,
             zip: zip,
@@ -1145,31 +1173,61 @@ class ApkInfo {
     } catch (e) {
       log.warning('renderIcon: 渲染图标失败: $e');
     } finally {
-      adaptiveIconRenderer?.dispose();
-      zip.close();
+      if (sharedRenderer == null) adaptiveIconRenderer?.dispose();
+      if (sharedZip == null) zip.close();
     }
     return null;
   }
 
   /// 加载APK图标（兼容接口）
   /// 先收集候选，再渲染第一个可用的
+  /// 共享 ZipHelper 和 AdaptiveIconRenderer，避免资源表重复加载
   Future<Image?> loadIcon() async {
-    await collectIconCandidates();
-    if (iconCandidates.isEmpty) {
-      log.fine('loadIcon: 未找到可用图标');
-      return null;
-    }
+    final zip = ZipHelper();
+    AdaptiveIconRenderer? sharedRenderer;
+    try {
+      await zip.open(apkPath);
+      final aaptPath = CommandTools.findAapt2Path() ?? '';
 
-    // 按顺序尝试渲染，直到成功
-    for (var i = 0; i < iconCandidates.length; i++) {
-      final image = await renderIcon(i);
-      if (image != null) {
-        return image;
+      // 当有 arsc 数据时，即使没有 aapt2 也能创建渲染器（不需要 aapt2 dump resources）
+      if (aaptPath.isNotEmpty || arscResources != null) {
+        sharedRenderer = AdaptiveIconRenderer(
+          apkPath: apkPath,
+          aaptPath: aaptPath,
+          zip: zip,
+        );
+        // 从 builtin 解析器的 arsc 数据预加载资源表，完全替代 aapt2
+        if (arscResources != null) {
+          sharedRenderer.preloadResourceTableFromArsc(arscResources!);
+        }
       }
-    }
 
-    log.fine('loadIcon: 所有候选图标渲染失败');
-    return null;
+      await collectIconCandidates(
+        sharedZip: zip,
+        sharedRenderer: sharedRenderer,
+      );
+      if (iconCandidates.isEmpty) {
+        log.fine('loadIcon: 未找到可用图标');
+        return null;
+      }
+
+      // 按顺序尝试渲染，直到成功
+      for (var i = 0; i < iconCandidates.length; i++) {
+        final image = await renderIcon(i,
+          sharedZip: zip,
+          sharedRenderer: sharedRenderer,
+        );
+        if (image != null) {
+          return image;
+        }
+      }
+
+      log.fine('loadIcon: 所有候选图标渲染失败');
+      return null;
+    } finally {
+      sharedRenderer?.dispose();
+      zip.close();
+    }
   }
 
   /// 为导出渲染高清图标（XML 矢量图使用更大 canvas + 透明背景）

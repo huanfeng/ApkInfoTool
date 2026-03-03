@@ -52,7 +52,7 @@ class StringPool {
     for (var i = 0; i < stringCount; i++) {
       reader.position = dataStart + stringOffsets[i];
       if (isUtf8) {
-        _readUtf16Length(reader); // skip utf16 length
+        _readUtf8Length(reader); // skip utf16 char count (同样是 1-2 字节变长编码)
         final utf8Len = _readUtf8Length(reader);
         final bytes = reader.readUint8List(utf8Len);
         strings.add(utf8.decode(bytes, allowMalformed: true));

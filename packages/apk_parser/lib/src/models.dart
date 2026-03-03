@@ -37,6 +37,29 @@ class ApkMeta {
   }
 }
 
+/// 资源表条目信息（用于将 ArscParser 数据导出给图标渲染器等外部使用）
+class ResourceInfo {
+  final int resourceId;
+  final String typeName;
+  final String keyName;
+  final List<String> filePaths;
+  final List<int> references;
+
+  ResourceInfo({
+    required this.resourceId,
+    required this.typeName,
+    required this.keyName,
+    List<String>? filePaths,
+    List<int>? references,
+  })  : filePaths = filePaths ?? [],
+        references = references ?? [];
+
+  String get name => '$typeName/$keyName';
+
+  String get idHex =>
+      '0x${resourceId.toRadixString(16).padLeft(8, '0')}';
+}
+
 class ActivityInfo {
   String? name;
   String? label;

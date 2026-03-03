@@ -1,0 +1,15 @@
+name: apk_parser
+description: Pure Dart APK parser - parses AndroidManifest.xml and resources.arsc directly from APK/ZIP files.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  archive:
+    git: https://github.com/huanfeng/archive.git
+  xml: ^6.5.0
+
+dev_dependencies:
+  test: ^1.24.0

@@ -49,6 +49,8 @@ class FileState {
   final String? md5Hash;
   final String? sha1Hash;
   final bool isComputingHash;
+  final String? signatureInfo;
+  final bool isComputingSignature;
 
   FileState({
     this.filePath,
@@ -57,6 +59,8 @@ class FileState {
     this.md5Hash,
     this.sha1Hash,
     this.isComputingHash = false,
+    this.signatureInfo,
+    this.isComputingSignature = false,
   });
 
   FileState copyWith({
@@ -66,6 +70,8 @@ class FileState {
     String? md5Hash,
     String? sha1Hash,
     bool? isComputingHash,
+    String? signatureInfo,
+    bool? isComputingSignature,
   }) {
     return FileState(
       filePath: filePath ?? this.filePath,
@@ -74,6 +80,8 @@ class FileState {
       md5Hash: md5Hash ?? this.md5Hash,
       sha1Hash: sha1Hash ?? this.sha1Hash,
       isComputingHash: isComputingHash ?? this.isComputingHash,
+      signatureInfo: signatureInfo ?? this.signatureInfo,
+      isComputingSignature: isComputingSignature ?? this.isComputingSignature,
     );
   }
 }

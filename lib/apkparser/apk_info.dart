@@ -452,7 +452,6 @@ Future<ApkInfo?> getApkInfo(String apk) async {
   var aapt2BadgingMs = 0;
   var outputParseMs = 0;
   var iconMs = 0;
-  var signatureMs = 0;
 
   try {
     final aapt2Sw = Stopwatch()..start();
@@ -484,25 +483,11 @@ Future<ApkInfo?> getApkInfo(String apk) async {
       }
       iconMs = iconSw.elapsedMilliseconds;
 
-      // 如果启用了签名检查，获取签名信息
-      if (Config.enableSignature.value) {
-        final sigSw = Stopwatch()..start();
-        try {
-          final signInfo = await getSignatureInfo(apk);
-          apkInfo.signatureInfo = signInfo;
-        } catch (e) {
-          log.warning("getApkInfo: 获取签名信息失败: $e");
-          apkInfo.signatureInfo = "获取签名信息失败: $e";
-        }
-        signatureMs = sigSw.elapsedMilliseconds;
-      }
-
       totalSw.stop();
       log.info("[PERF] getApkInfo: total=${totalSw.elapsedMilliseconds}ms"
           " | aapt2_badging=${aapt2BadgingMs}ms"
           " | output_parse=${outputParseMs}ms"
-          " | icon=${iconMs}ms"
-          " | signature=${signatureMs}ms");
+          " | icon=${iconMs}ms");
 
       return apkInfo;
     }
@@ -554,23 +539,10 @@ Future<ApkInfo?> _getApkInfoBuiltin(String apk, ApkInfo apkInfo) async {
     apkInfo.arscResources = null; // 图标加载完成后释放资源表数据
     final iconMs = phaseSw.elapsedMilliseconds;
 
-    // 签名（仍走 apksigner）
-    var signatureMs = 0;
-    if (Config.enableSignature.value) {
-      phaseSw..reset()..start();
-      try {
-        apkInfo.signatureInfo = await getSignatureInfo(apk);
-      } catch (e) {
-        log.warning("_getApkInfoBuiltin: 获取签名信息失败: $e");
-        apkInfo.signatureInfo = "获取签名信息失败: $e";
-      }
-      signatureMs = phaseSw.elapsedMilliseconds;
-    }
-
     totalSw.stop();
     log.info("[PERF] getApkInfo(builtin): total=${totalSw.elapsedMilliseconds}ms"
         " | open=${openMs}ms | parse=${parseMs}ms"
-        " | icon=${iconMs}ms | signature=${signatureMs}ms");
+        " | icon=${iconMs}ms");
 
     return apkInfo;
   } catch (e) {

@@ -92,10 +92,12 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
     isParsingState.update(true);
 
     // 初始化文件状态
+    final isXapk = filePath.toLowerCase().endsWith('.xapk');
     fileState.update(FileState(
       filePath: filePath,
       fileSize: File(filePath).lengthSync(),
       isComputingHash: enableHash,
+      isComputingSignature: enableSignature && !isXapk,
     ));
 
     // 如果启用哈希计算，异步计算哈希值（与 APK 解析并行）
@@ -120,6 +122,28 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
       });
     }
 
+    // 如果启用签名检查，异步获取签名信息（与 APK 解析并行）
+    if (enableSignature && !isXapk) {
+      getSignatureInfo(filePath).then((signatureInfo) {
+        if (mounted) {
+          final currentState = ref.read(currentFileStateProvider);
+          fileState.update(currentState.copyWith(
+            signatureInfo: signatureInfo,
+            isComputingSignature: false,
+          ));
+        }
+      }).catchError((e) {
+        log.warning('loadApkInfo: failed to get signature: $e');
+        if (mounted) {
+          final currentState = ref.read(currentFileStateProvider);
+          fileState.update(currentState.copyWith(
+            signatureInfo: "${t.parse.signature_verify_failed}: $e",
+            isComputingSignature: false,
+          ));
+        }
+      });
+    }
+
     try {
       final apkInfo = await getApkInfo(filePath);
       if (apkInfo == null) {
@@ -129,21 +153,6 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
           );
         }
       } else {
-        if (enableSignature &&
-            !apkInfo.isXapk &&
-            apkInfo.signatureInfo.isEmpty) {
-          // 获取签名信息
-          try {
-            final signatureInfo = await getSignatureInfo(filePath);
-            apkInfo.signatureInfo = signatureInfo;
-          } catch (e) {
-            // 显示签名验证失败提示
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(t.parse.signature_verify_failed)));
-            }
-          }
-        }
         apkInfoState.update(apkInfo);
         // 更新 FileState 中的 apkInfo（保留哈希值）
         final currentState = ref.read(currentFileStateProvider);
@@ -532,10 +541,12 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
                             Card(
                                 child: TitleValueLayout(
                               title: t.apk_info.signature_info,
-                              value: apkInfo?.signatureInfo ?? "",
+                              value: fileState.isComputingSignature
+                                  ? t.file_info.computing_hash
+                                  : (fileState.signatureInfo ?? ""),
                               minLines: 1,
                               maxLines: textMaxLines,
-                              selectable: true,
+                              selectable: !fileState.isComputingSignature,
                             )),
                     ],
                   ),

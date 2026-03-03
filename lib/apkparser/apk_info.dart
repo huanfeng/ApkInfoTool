@@ -11,6 +11,7 @@ import 'package:apk_info_tool/utils/command_tools.dart';
 import 'package:apk_info_tool/utils/logger.dart';
 import 'package:apk_info_tool/utils/vector_to_svg.dart';
 import 'package:apk_info_tool/utils/zip_helper.dart';
+import 'package:apk_parser/apk_parser.dart' as apk_parser;
 import 'package:path/path.dart' as path;
 import 'xapk_info.dart';
 
@@ -437,7 +438,12 @@ Future<ApkInfo?> getApkInfo(String apk) async {
     return apkInfo;
   }
 
-  // 原有的APK解析逻辑
+  // 根据配置选择解析引擎
+  if (Config.parserEngine.value == Config.kParserBuiltin) {
+    return await _getApkInfoBuiltin(apk, apkInfo);
+  }
+
+  // 原有的APK解析逻辑（aapt2）
   final aaptPath = CommandTools.findAapt2Path();
   if (aaptPath == null || aaptPath.isEmpty) {
     throw Exception(t.parse.please_set_path(name: 'aapt2'));
@@ -505,6 +511,105 @@ Future<ApkInfo?> getApkInfo(String apk) async {
   }
 
   return null;
+}
+
+Future<ApkInfo?> _getApkInfoBuiltin(String apk, ApkInfo apkInfo) async {
+  final totalSw = Stopwatch()..start();
+  final phaseSw = Stopwatch();
+
+  final reader = apk_parser.ApkReader();
+  try {
+    phaseSw..reset()..start();
+    if (!await reader.open(apk)) {
+      log.warning("_getApkInfoBuiltin: failed to open APK");
+      return null;
+    }
+    final openMs = phaseSw.elapsedMilliseconds;
+
+    phaseSw..reset()..start();
+    final meta = await reader.parse();
+    final parseMs = phaseSw.elapsedMilliseconds;
+
+    if (meta == null) {
+      log.warning("_getApkInfoBuiltin: failed to parse APK");
+      return null;
+    }
+
+    _applyMetaToApkInfo(meta, apkInfo);
+
+    // 图标加载（复用现有逻辑）
+    phaseSw..reset()..start();
+    final iconImage = await apkInfo.loadIcon();
+    if (iconImage != null) {
+      apkInfo.mainIconImage ??= iconImage;
+    }
+    final iconMs = phaseSw.elapsedMilliseconds;
+
+    // 签名（仍走 apksigner）
+    var signatureMs = 0;
+    if (Config.enableSignature.value) {
+      phaseSw..reset()..start();
+      try {
+        apkInfo.signatureInfo = await getSignatureInfo(apk);
+      } catch (e) {
+        log.warning("_getApkInfoBuiltin: 获取签名信息失败: $e");
+        apkInfo.signatureInfo = "获取签名信息失败: $e";
+      }
+      signatureMs = phaseSw.elapsedMilliseconds;
+    }
+
+    totalSw.stop();
+    log.info("[PERF] getApkInfo(builtin): total=${totalSw.elapsedMilliseconds}ms"
+        " | open=${openMs}ms | parse=${parseMs}ms"
+        " | icon=${iconMs}ms | signature=${signatureMs}ms");
+
+    return apkInfo;
+  } catch (e) {
+    log.warning("_getApkInfoBuiltin: error=$e");
+    return null;
+  } finally {
+    reader.close();
+  }
+}
+
+void _applyMetaToApkInfo(apk_parser.ApkMeta meta, ApkInfo apkInfo) {
+  apkInfo.packageName = meta.packageName;
+  apkInfo.versionCode = meta.versionCode;
+  apkInfo.versionName = meta.versionName;
+  apkInfo.sdkVersion = meta.minSdkVersion;
+  apkInfo.targetSdkVersion = meta.targetSdkVersion;
+  apkInfo.compileSdkVersion = meta.compileSdkVersion;
+  apkInfo.compileSdkVersionCodename = meta.compileSdkVersionCodename;
+  apkInfo.platformBuildVersionName = meta.platformBuildVersionName;
+  apkInfo.platformBuildVersionCode = meta.platformBuildVersionCode;
+  apkInfo.label = meta.label;
+  apkInfo.labels = meta.labels;
+  apkInfo.usesPermissions = meta.permissions;
+  apkInfo.userFeatures = meta.features;
+  apkInfo.userFeaturesNotRequired = meta.featuresNotRequired;
+  apkInfo.supportsScreens = meta.screenSizes;
+  apkInfo.nativeCodes = meta.nativeCodes;
+  apkInfo.locales = meta.locales;
+  apkInfo.densities = meta.densities.map((d) => d.toString()).toList();
+
+  if (meta.applicationIcon != null) {
+    apkInfo.mainIconPath = meta.applicationIcon;
+  }
+  // 从 arsc 解析的图标路径填充 icons map
+  meta.iconPaths.forEach((dpi, iconPath) {
+    apkInfo.icons[dpi.toString()] = iconPath;
+  });
+
+  if (meta.launchableActivities.isNotEmpty) {
+    apkInfo.launchableActivity = meta.launchableActivities
+        .map((a) => Component(name: a.name, label: a.label, icon: a.icon))
+        .toList();
+  }
+  if (meta.applicationName != null) {
+    apkInfo.application.name = meta.applicationName;
+    apkInfo.application.label = meta.label;
+    apkInfo.application.icon = meta.applicationIcon;
+  }
 }
 
 Future<String> getSignatureInfo(String apkPath) async {

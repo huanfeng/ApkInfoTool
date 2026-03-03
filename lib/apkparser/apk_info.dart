@@ -545,8 +545,8 @@ Future<ApkInfo?> _getApkInfoBuiltin(String apk, ApkInfo apkInfo) async {
         " | icon=${iconMs}ms");
 
     return apkInfo;
-  } catch (e) {
-    log.warning("_getApkInfoBuiltin: error=$e");
+  } catch (e, stackTrace) {
+    log.warning("_getApkInfoBuiltin: error=$e\n$stackTrace");
     return null;
   } finally {
     reader.close();

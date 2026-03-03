@@ -247,7 +247,12 @@ class ArscParser {
 
     // Parse packages
     for (var i = 0; i < packageCount && reader.remain > 0; i++) {
-      _packages.add(_parsePackage(reader));
+      try {
+        _packages.add(_parsePackage(reader));
+      } catch (_) {
+        // 跳过解析失败的 package，继续解析剩余部分
+        break;
+      }
     }
   }
 
@@ -307,16 +312,21 @@ class ArscParser {
 
       if (chunkSize < 8) break; // invalid chunk
 
-      switch (chunkType) {
-        case 0x0202: // RES_TABLE_TYPE_SPEC_TYPE
-          _parseTypeSpec(reader, chunkHeaderSize, package);
-          break;
-        case 0x0201: // RES_TABLE_TYPE_TYPE
-          _parseType(reader, chunkStart, chunkHeaderSize, chunkSize, package);
-          break;
-        default:
-          // Skip unknown chunk
-          break;
+      try {
+        switch (chunkType) {
+          case 0x0202: // RES_TABLE_TYPE_SPEC_TYPE
+            _parseTypeSpec(reader, chunkHeaderSize, package);
+            break;
+          case 0x0201: // RES_TABLE_TYPE_TYPE
+            _parseType(
+                reader, chunkStart, chunkHeaderSize, chunkSize, package);
+            break;
+          default:
+            // Skip unknown chunk
+            break;
+        }
+      } catch (_) {
+        // 跳过解析失败的 chunk，继续解析剩余部分
       }
 
       // Ensure we move to the next chunk

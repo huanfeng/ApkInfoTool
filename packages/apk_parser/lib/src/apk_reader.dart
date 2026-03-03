@@ -41,21 +41,31 @@ class ApkReader {
     // 1. 读取并解析 AndroidManifest.xml
     final manifestFile = archive.findFile('AndroidManifest.xml');
     if (manifestFile == null) return null;
-    final manifestBytes = manifestFile.content;
+    final rawManifestBytes = manifestFile.content;
+    final manifestBytes =
+        rawManifestBytes.buffer.lengthInBytes == rawManifestBytes.length
+            ? rawManifestBytes
+            : Uint8List.fromList(rawManifestBytes);
     final meta = ManifestParser.parse(manifestBytes);
 
     // 2. 读取并解析 resources.arsc
     final arscFile = archive.findFile('resources.arsc');
     if (arscFile != null) {
-      final arscBytes = arscFile.content;
+      // 确保 arscBytes 是独立的 Uint8List（而非底层 ZIP 缓冲区的 view），
+      // 避免 ByteDataReader 操作时因 buffer offset 不一致导致 RangeError。
+      final rawArscBytes = arscFile.content;
+      final arscBytes = rawArscBytes.buffer.lengthInBytes == rawArscBytes.length
+          ? rawArscBytes
+          : Uint8List.fromList(rawArscBytes);
       try {
         _arscParser = ArscParser(arscBytes);
         _resolveLabel(meta);
         _resolveIconPaths(meta);
         meta.locales = _arscParser!.getLocales().toList();
         meta.densities = _arscParser!.getDensities().toList();
-      } catch (e) {
-        // arsc 解析失败不影响基本信息
+      } catch (e, stackTrace) {
+        // arsc 解析失败不影响基本信息，但记录详细错误便于排查
+        print('[ApkReader] arsc parse failed: $e\n$stackTrace');
       }
     }
 

@@ -36,7 +36,13 @@ class StringPool {
 
     final isUtf8 = (flags & 0x100) != 0;
 
-    // Read string offsets
+    // Read string offsets (带边界检查，防止损坏的 stringCount 导致越界)
+    final offsetsNeeded = (stringCount + styleCount) * 4;
+    if (offsetsNeeded > reader.remain) {
+      // 数据不足，跳到 chunk 末尾并返回空字符串池
+      reader.position = headerStart + totalSize;
+      return StringPool._([]);
+    }
     final stringOffsets =
         List<int>.generate(stringCount, (_) => reader.readUint32());
 
@@ -47,21 +53,40 @@ class StringPool {
 
     // Parse strings
     final dataStart = headerStart + stringsStart;
+    final chunkEnd = headerStart + totalSize;
     final strings = <String>[];
 
     for (var i = 0; i < stringCount; i++) {
-      reader.position = dataStart + stringOffsets[i];
-      if (isUtf8) {
-        _readUtf8Length(reader); // skip utf16 char count (同样是 1-2 字节变长编码)
-        final utf8Len = _readUtf8Length(reader);
-        final bytes = reader.readUint8List(utf8Len);
-        strings.add(utf8.decode(bytes, allowMalformed: true));
-      } else {
-        final utf16Len = _readUtf16Length(reader);
-        final bytes = reader.readUint8List(utf16Len * 2);
-        final codeUnits =
-            Uint16List.view(bytes.buffer, bytes.offsetInBytes, utf16Len);
-        strings.add(String.fromCharCodes(codeUnits));
+      final stringPos = dataStart + stringOffsets[i];
+      if (stringPos < 0 || stringPos >= chunkEnd) {
+        strings.add('');
+        continue;
+      }
+      reader.position = stringPos;
+      try {
+        if (isUtf8) {
+          _readUtf8Length(reader); // skip utf16 char count
+          final utf8Len = _readUtf8Length(reader);
+          if (utf8Len < 0 || utf8Len > reader.remain) {
+            strings.add('');
+            continue;
+          }
+          final bytes = reader.readUint8List(utf8Len);
+          strings.add(utf8.decode(bytes, allowMalformed: true));
+        } else {
+          final utf16Len = _readUtf16Length(reader);
+          final byteLen = utf16Len * 2;
+          if (utf16Len < 0 || byteLen > reader.remain) {
+            strings.add('');
+            continue;
+          }
+          final bytes = reader.readUint8List(byteLen);
+          final codeUnits =
+              Uint16List.view(bytes.buffer, bytes.offsetInBytes, utf16Len);
+          strings.add(String.fromCharCodes(codeUnits));
+        }
+      } catch (_) {
+        strings.add('');
       }
     }
 

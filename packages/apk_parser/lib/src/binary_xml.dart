@@ -15,6 +15,73 @@ class XmlElement {
 
 class XmlDocument extends XmlElement {}
 
+/// Android 框架属性资源 ID → 属性名的映射
+const Map<int, String> _kFrameworkAttrNames = {
+  0x01010000: 'theme',
+  0x01010001: 'label',
+  0x01010002: 'icon',
+  0x01010003: 'name',
+  0x01010006: 'permission',
+  0x0101000f: 'value',
+  0x01010010: 'resource',
+  0x01010011: 'mimeType',
+  0x01010012: 'scheme',
+  0x01010013: 'host',
+  0x01010018: 'debuggable',
+  0x0101001e: 'authorities',
+  0x0101020c: 'minSdkVersion',
+  0x01010270: 'targetSdkVersion',
+  0x0101021b: 'versionCode',
+  0x0101021c: 'versionName',
+  0x0101028e: 'required',
+  0x010102b7: 'screenOrientation',
+  0x01010572: 'compileSdkVersion',
+  0x01010573: 'compileSdkVersionCodename',
+  0x01010281: 'smallScreens',
+  0x01010282: 'normalScreens',
+  0x01010283: 'largeScreens',
+  0x01010284: 'resizeable',
+  0x010102bf: 'xlargeScreens',
+  0x0101026c: 'anyDensity',
+  0x01010272: 'hardwareAccelerated',
+  0x0101027f: 'configChanges',
+  0x01010280: 'screenSize',
+  0x01010324: 'exported',
+  0x01010398: 'banner',
+  0x010103f2: 'roundIcon',
+  0x0101054b: 'appComponentFactory',
+  0x0101000e: 'persistent',
+  0x01010019: 'enabled',
+  0x01010275: 'installLocation',
+  0x0101042e: 'extractNativeLibs',
+  0x0101054c: 'classLoader',
+  0x010104d8: 'networkSecurityConfig',
+  0x01010009: 'process',
+  0x010102d3: 'targetSandboxVersion',
+  0x01010285: 'requiresSmallestWidthDp',
+  0x01010286: 'compatibleWidthLimitDp',
+  0x0101028d: 'largestWidthLimitDp',
+  0x010104f6: 'isGame',
+  0x010103af: 'requestLegacyExternalStorage',
+  0x010104ec: 'localeConfig',
+  0x0101052c: 'enableOnBackInvokedCallback',
+  0x01010004: 'launchMode',
+  0x01010007: 'taskAffinity',
+  0x01010008: 'multiprocess',
+  0x0101000a: 'allowTaskReparenting',
+  0x01010014: 'port',
+  0x01010015: 'path',
+  0x01010016: 'pathPrefix',
+  0x01010017: 'pathPattern',
+  0x01010020: 'hasCode',
+  0x01010024: 'allowClearUserData',
+  0x01010271: 'maxSdkVersion',
+  0x01010273: 'supportsRtl',
+  0x01010326: 'parentActivityName',
+  0x01010473: 'usesCleartextTraffic',
+  0x0101054a: 'appCategory',
+};
+
 class BinaryXmlDecompressor {
   // Identifiers for XML Chunk Types
   static const int PACKED_XML_IDENTIFIER = 0x00080003;
@@ -92,11 +159,14 @@ class BinaryXmlDecompressor {
 
     List<String> packedStrings = parseStrings(reader);
 
+    // Resource ID Map: 字符串池索引 → 框架资源 ID
+    List<int> resourceIdMap = [];
+
     int ident = 0;
     while (reader.remain >= 8) {
       final chunkStart = reader.position;
       int tag = reader.readInt16();
-      reader.readInt16(); // header size, currently unused
+      int headerSize = reader.readInt16();
       int chunkSize = reader.readInt32();
       if (chunkSize < 8) {
         throw FormatException('Invalid chunk size: $chunkSize');
@@ -110,11 +180,13 @@ class BinaryXmlDecompressor {
       switch (tag) {
         case START_NAMESPACE_TAG:
         case END_NAMESPACE_TAG:
+          break;
         case RES_XML_RESOURCE_MAP_TYPE:
-          // Namespace/resource map are not emitted into plain XML.
+          resourceIdMap = _parseResourceIdMap(
+              reader, chunkStart, headerSize, chunkSize);
           break;
         case START_ELEMENT_TAG:
-          parseStartTag(result, reader, packedStrings, ident);
+          parseStartTag(result, reader, packedStrings, resourceIdMap, ident);
           ident++;
           break;
         case END_ELEMENT_TAG:
@@ -147,13 +219,16 @@ class BinaryXmlDecompressor {
     reader.skipBytes(4);
     List<String> packedStrings = parseStrings(reader);
 
+    // Resource ID Map: 字符串池索引 → 框架资源 ID
+    List<int> resourceIdMap = [];
+
     final doc = XmlDocument();
     final stack = <XmlElement>[doc];
 
     while (reader.remain >= 8) {
       final chunkStart = reader.position;
       int tag = reader.readInt16();
-      reader.readInt16(); // header size
+      int headerSize = reader.readInt16();
       int chunkSize = reader.readInt32();
       if (chunkSize < 8) break;
       final chunkEnd = chunkStart + chunkSize;
@@ -162,10 +237,14 @@ class BinaryXmlDecompressor {
       switch (tag) {
         case START_NAMESPACE_TAG:
         case END_NAMESPACE_TAG:
+          break;
         case RES_XML_RESOURCE_MAP_TYPE:
+          resourceIdMap = _parseResourceIdMap(
+              reader, chunkStart, headerSize, chunkSize);
           break;
         case START_ELEMENT_TAG:
-          final element = _parseStartElement(reader, packedStrings);
+          final element =
+              _parseStartElement(reader, packedStrings, resourceIdMap);
           stack.last.children.add(element);
           stack.add(element);
           break;
@@ -189,14 +268,17 @@ class BinaryXmlDecompressor {
 
   /// Parse a START_ELEMENT_TAG into an [XmlElement] with name and attributes.
   XmlElement _parseStartElement(
-      ByteDataReader reader, List<String> packedStrings) {
+      ByteDataReader reader, List<String> packedStrings,
+      List<int> resourceIdMap) {
     final element = XmlElement();
 
     // Skip line number and comment
     reader.skipBytes(8);
     reader.readInt32(); // namespace
     int nameStringIndex = reader.readInt32();
-    element.name = packedStrings[nameStringIndex];
+    element.name = _resolveStringOrResourceId(
+        packedStrings, resourceIdMap, nameStringIndex);
+    if (element.name.isEmpty) element.name = 'unknown';
 
     // Parse attributes
     int marker = reader.readInt32();
@@ -219,13 +301,24 @@ class BinaryXmlDecompressor {
       int attrValueType = reader.readUint8();
       int attributeResourceId = reader.readInt32();
 
-      String attributeName = packedStrings[attributeNameIndex];
-      if (attributeName.isEmpty) attributeName = "unknown";
+      String attributeName = _resolveStringOrResourceId(
+          packedStrings, resourceIdMap, attributeNameIndex);
+      if (attributeName.isEmpty) attributeName = "attr_$attributeNameIndex";
 
       String attributeValue =
           _resolveAttributeValue(attrValueType, attributeResourceId,
-              attributeValueIndex, packedStrings);
+              attributeValueIndex, packedStrings,
+              resIdMapLength: resourceIdMap.length);
 
+      // 不用空值覆盖已有的有效值（混淆 APK 可能有重复属性名）
+      final existing = element.attributes[attributeName];
+      if (existing != null &&
+          existing.isNotEmpty &&
+          existing != '<empty>' &&
+          existing != '<undefined>' &&
+          (attributeValue == '<empty>' || attributeValue == '<undefined>')) {
+        continue;
+      }
       element.attributes[attributeName] = attributeValue;
     }
 
@@ -234,17 +327,32 @@ class BinaryXmlDecompressor {
 
   /// Resolve an attribute's typed value to a string representation.
   /// Handles all the same type cases as [parseAttributes].
+  /// [resIdMapLength] 用于过滤 rawValue 回退（Resource ID Map 范围内是属性名）
   String _resolveAttributeValue(int attrValueType, int attributeResourceId,
-      int attributeValueIndex, List<String> packedStrings) {
+      int attributeValueIndex, List<String> packedStrings,
+      {int resIdMapLength = 0}) {
     switch (attrValueType) {
       case RES_TYPE_NULL:
+        // 混淆 APK 可能将 typed value 置空，但 rawValue 仍有效
+        // 仅在 rawValue 索引超出 Resource ID Map 范围时使用
+        // (Resource ID Map 范围内的字符串是属性名，不是属性值)
+        if (attributeValueIndex >= resIdMapLength &&
+            attributeValueIndex >= 0 &&
+            attributeValueIndex < packedStrings.length) {
+          final rawStr = packedStrings[attributeValueIndex];
+          if (rawStr.isNotEmpty &&
+              !rawStr.startsWith('http://') &&
+              !rawStr.startsWith('https://')) {
+            return rawStr;
+          }
+        }
         return (attributeResourceId == 0) ? "<undefined>" : "<empty>";
       case RES_TYPE_REFERENCE:
         return '@res/0x${attributeResourceId.toRadixString(16)}';
       case RES_TYPE_ATTRIBUTE:
         return '@attr/0x${attributeResourceId.toRadixString(16)}';
       case RES_TYPE_STRING:
-        return packedStrings[attributeValueIndex];
+        return _safeGet(packedStrings, attributeValueIndex);
       case RES_TYPE_FLOAT:
         final buf = Uint8List(4);
         buf[0] = attributeResourceId & 0xff;
@@ -291,7 +399,7 @@ class BinaryXmlDecompressor {
       sb.write(' ' * (ident * IDENT_SIZE));
       sb.write('<![CDATA[\n');
       sb.write(' ' * (ident * IDENT_SIZE + 1));
-      sb.write(strings[nameStringIndex]);
+      sb.write(_safeGet(strings, nameStringIndex));
       sb.write(' ' * (ident * IDENT_SIZE));
       sb.write(']]>\n');
     }
@@ -308,17 +416,18 @@ class BinaryXmlDecompressor {
     reader.skipBytes(8);
     int namespaceStringIndex = reader.readInt32();
     if (appendNamespaces && namespaceStringIndex >= 0) {
-      sb.write(strings[namespaceStringIndex]);
+      sb.write(_safeGet(strings, namespaceStringIndex));
       sb.write(':');
     }
 
     int nameStringIndex = reader.readInt32();
-    sb.write(strings[nameStringIndex]);
+    sb.write(_safeGet(strings, nameStringIndex));
     sb.write('>\n');
   }
 
   void parseStartTag(
-      StringBuffer sb, ByteDataReader reader, List<String> strings, int ident) {
+      StringBuffer sb, ByteDataReader reader, List<String> strings,
+      List<int> resourceIdMap, int ident) {
     sb.write(' ' * (ident * IDENT_SIZE));
     sb.write('<');
     //Skipping 3 integers:
@@ -328,18 +437,21 @@ class BinaryXmlDecompressor {
     reader.skipBytes(8);
     int namespaceStringIndex = reader.readInt32();
     if (appendNamespaces && namespaceStringIndex >= 0) {
-      sb.write(strings[namespaceStringIndex]);
+      sb.write(_safeGet(strings, namespaceStringIndex));
       sb.write(':');
     }
 
     int nameStringIndex = reader.readInt32();
-    sb.write(strings[nameStringIndex]);
-    parseAttributes(sb, reader, strings, ident);
+    final tagName = _resolveStringOrResourceId(
+        strings, resourceIdMap, nameStringIndex);
+    sb.write(tagName.isNotEmpty ? tagName : 'unknown');
+    parseAttributes(sb, reader, strings, resourceIdMap, ident);
     sb.write('>\n');
   }
 
   void parseAttributes(
-      StringBuffer sb, ByteDataReader reader, List<String> strings, int ident) {
+      StringBuffer sb, ByteDataReader reader, List<String> strings,
+      List<int> resourceIdMap, int ident) {
     int marker = reader.readInt32();
     if (marker != ATTRS_MARKER) {
       // Non-fatal marker mismatch
@@ -365,16 +477,30 @@ class BinaryXmlDecompressor {
       int attributeResourceId = reader.readInt32();
 
       if (appendNamespaces && attributeNamespaceIndex >= 0) {
-        sb.write(strings[attributeNamespaceIndex]);
+        sb.write(_safeGet(strings, attributeNamespaceIndex));
         sb.write(":");
       }
 
-      String attributeName = strings[attributeNameIndex];
-      if (attributeName.isEmpty) attributeName = "unknown";
+      String attributeName = _resolveStringOrResourceId(
+          strings, resourceIdMap, attributeNameIndex);
+      if (attributeName.isEmpty) attributeName = "attr_$attributeNameIndex";
 
       String attributeValue;
       switch (attrValueType) {
         case RES_TYPE_NULL:
+          // 混淆 APK: typed value 为空时尝试 rawValue
+          // 仅在 rawValue 索引超出 Resource ID Map 范围时使用
+          if (attributeValueIndex >= resourceIdMap.length &&
+              attributeValueIndex >= 0 &&
+              attributeValueIndex < strings.length) {
+            final rawStr = strings[attributeValueIndex];
+            if (rawStr.isNotEmpty &&
+                !rawStr.startsWith('http://') &&
+                !rawStr.startsWith('https://')) {
+              attributeValue = rawStr;
+              break;
+            }
+          }
           attributeValue =
               (attributeResourceId == 0) ? "<undefined>" : "<empty>";
           break;
@@ -385,7 +511,7 @@ class BinaryXmlDecompressor {
           attributeValue = '@attr/0x${attributeResourceId.toRadixString(16)}';
           break;
         case RES_TYPE_STRING:
-          attributeValue = strings[attributeValueIndex];
+          attributeValue = _safeGet(strings, attributeValueIndex);
           break;
         case RES_TYPE_FLOAT:
           final buf = Uint8List(4);
@@ -501,23 +627,30 @@ class BinaryXmlDecompressor {
 
     // Read the strings from each offset
     for (int i = 0; i < numStrings; i++) {
-      bdr.position = stringsStart + offsets[i];
-      if (isUtf8Encoded) {
-        // UTF-8 strings encode utf16_length and utf8_length using variable
-        // length prefixes.
-        _readLength8(bdr); // utf16 length, not needed for decoding.
-        final utf8Len = _readLength8(bdr);
-        final bytes = bdr.readUint8List(utf8Len);
-        packedStrings[i] = utf8.decode(bytes, allowMalformed: true);
-      } else {
-        final utf16Len = _readLength16(bdr);
-        final bytes = bdr.readUint8List(utf16Len * 2);
-        final codeUnits = Uint16List.view(
-          bytes.buffer,
-          bytes.offsetInBytes,
-          utf16Len,
-        );
-        packedStrings[i] = String.fromCharCodes(codeUnits);
+      final stringPos = stringsStart + offsets[i];
+      if (stringPos < 0 || stringPos >= bdr.length) continue;
+      bdr.position = stringPos;
+      try {
+        if (isUtf8Encoded) {
+          _readLength8(bdr); // utf16 length, not needed for decoding.
+          final utf8Len = _readLength8(bdr);
+          if (utf8Len < 0 || utf8Len > bdr.remain) continue;
+          final bytes = bdr.readUint8List(utf8Len);
+          packedStrings[i] = utf8.decode(bytes, allowMalformed: true);
+        } else {
+          final utf16Len = _readLength16(bdr);
+          final byteLen = utf16Len * 2;
+          if (utf16Len < 0 || byteLen > bdr.remain) continue;
+          final bytes = bdr.readUint8List(byteLen);
+          final codeUnits = Uint16List.view(
+            bytes.buffer,
+            bytes.offsetInBytes,
+            utf16Len,
+          );
+          packedStrings[i] = String.fromCharCodes(codeUnits);
+        }
+      } catch (_) {
+        // 跳过解析失败的字符串
       }
     }
     return packedStrings;
@@ -539,6 +672,38 @@ class BinaryXmlDecompressor {
     }
     final second = reader.readUint16();
     return ((first & 0x7fff) << 16) | second;
+  }
+
+  /// 解析 Resource ID Map chunk (0x0180)
+  /// 返回一个列表，索引对应字符串池索引，值为 Android 框架资源 ID
+  List<int> _parseResourceIdMap(
+      ByteDataReader reader, int chunkStart, int headerSize, int chunkSize) {
+    final dataStart = chunkStart + headerSize;
+    final dataSize = chunkSize - headerSize;
+    final count = dataSize ~/ 4;
+    reader.position = dataStart;
+    return List<int>.generate(count, (_) => reader.readUint32());
+  }
+
+  /// 通过字符串池索引获取名称，优先使用 Resource ID Map
+  /// (混淆 APK 的字符串池可能被篡改，Resource ID Map 更可靠)
+  String _resolveStringOrResourceId(
+      List<String> strings, List<int> resourceIdMap, int index) {
+    // 优先使用 Resource ID Map（对框架属性更可靠）
+    if (index >= 0 && index < resourceIdMap.length) {
+      final resId = resourceIdMap[index];
+      final name = _kFrameworkAttrNames[resId];
+      if (name != null) return name;
+    }
+
+    // 回退到字符串池
+    return _safeGet(strings, index);
+  }
+
+  /// 安全访问字符串列表，越界时返回空字符串
+  static String _safeGet(List<String> strings, int index) {
+    if (index < 0 || index >= strings.length) return '';
+    return strings[index];
   }
 
   static int getUnsignedShort(ByteData data, int position,

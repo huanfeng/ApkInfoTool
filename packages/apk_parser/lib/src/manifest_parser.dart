@@ -14,6 +14,12 @@ class ManifestParser {
     meta.packageName = manifest.attributes['package'];
     meta.versionCode = _parseInt(manifest.attributes['versionCode']);
     meta.versionName = manifest.attributes['versionName'];
+
+    // 混淆 APK 可能无法通过属性名找到 package，
+    // 启发式查找：在 manifest 属性中寻找类似包名的字符串值
+    if (meta.packageName == null) {
+      meta.packageName = _guessPackageName(manifest.attributes);
+    }
     meta.compileSdkVersion =
         _parseInt(manifest.attributes['compileSdkVersion']);
     meta.compileSdkVersionCodename =
@@ -142,5 +148,23 @@ class ManifestParser {
       return int.tryParse(value.substring(2), radix: 16);
     }
     return int.tryParse(value);
+  }
+
+  /// 启发式包名查找：在属性值中寻找符合 Java 包名格式的字符串
+  /// 如 "com.example.app"
+  static final _packageNamePattern =
+      RegExp(r'^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$');
+
+  static String? _guessPackageName(Map<String, String> attributes) {
+    for (final value in attributes.values) {
+      if (value.contains('.') &&
+          !value.startsWith('@') &&
+          !value.startsWith('http') &&
+          !value.contains(' ') &&
+          _packageNamePattern.hasMatch(value)) {
+        return value;
+      }
+    }
+    return null;
   }
 }

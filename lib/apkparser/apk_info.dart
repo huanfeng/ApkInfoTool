@@ -317,6 +317,7 @@ Future<ApkInfo?> getApkInfo(String apk) async {
       if (xapkIcon != null) {
         apkInfo.mainIconImage = xapkIcon;
       }
+      iconMs = iconSw.elapsedMilliseconds;
 
       final baseEntry = _findBaseApkEntry(apkInfo.archiveApks);
       if (baseEntry != null) {
@@ -352,10 +353,12 @@ Future<ApkInfo?> getApkInfo(String apk) async {
               parseMs = parseSw.elapsedMilliseconds;
               // 仅在打包文件不包含图标时，才从 base APK 加载图标
               if (apkInfo.mainIconImage == null) {
+                iconSw..reset()..start();
                 final iconImage = await apkInfo.loadIcon();
                 if (iconImage != null) {
                   apkInfo.mainIconImage = iconImage;
                 }
+                iconMs += iconSw.elapsedMilliseconds;
               }
               apkInfo.apkPath = originalPath;
             }
@@ -364,7 +367,6 @@ Future<ApkInfo?> getApkInfo(String apk) async {
           }
         }
       }
-      iconMs = iconSw.elapsedMilliseconds;
 
       if (manifest != null) {
         if (manifest.packageName?.isNotEmpty == true) {

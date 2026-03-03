@@ -41,6 +41,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.13.10"
+  apk_parser:
+    dependency: "direct main"
+    description:
+      path: "packages/apk_parser"
+      relative: true
+    source: path
+    version: "0.1.0"
   archive:
     dependency: "direct main"
     description:

@@ -36,6 +36,8 @@ dependencies:
   freezed_annotation: ^3.1.0
   xml: ^6.5.0
   path_drawing: ^1.0.1
+  apk_parser:
+    path: packages/apk_parser
 
 dev_dependencies:
   flutter_test:

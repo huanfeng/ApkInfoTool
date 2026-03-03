@@ -68,6 +68,10 @@ class Config {
   static final enableSignature = ConfigItem("enable_signature", false);
   static final enableHash = ConfigItem("enable_hash", true);
   static final enableDebug = ConfigItem("enable_debug", false);
+
+  static const kParserBuiltin = "builtin";
+  static const kParserAapt2 = "aapt2";
+  static final parserEngine = ConfigItem("parser_engine", kParserAapt2);
   static final maxLines = ConfigItem("max_lines", 6);
   static final themeColor = ConfigItem("theme_color", Colors.blue.value);
   static final titleWidth = ConfigItem("title_width", 100.0);
@@ -89,7 +93,8 @@ class Config {
     themeColor,
     titleWidth,
     language,
-    iconRowSpan
+    iconRowSpan,
+    parserEngine,
   ];
 
   static Future<void> init() async {

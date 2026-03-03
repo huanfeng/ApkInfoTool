@@ -84,7 +84,10 @@
     "reset": "重置",
     "language": "語言",
     "language_auto": "自動 (跟隨系統)",
-    "icon_row_span": "圖標顯示行數"
+    "icon_row_span": "圖標顯示行數",
+    "parser_engine": "解析引擎",
+    "parser_engine_aapt2": "aapt2 (外部工具)",
+    "parser_engine_builtin": "內置 (Dart)"
   },
   "parse": {
     "signature_verify_failed": "簽名驗證失敗",

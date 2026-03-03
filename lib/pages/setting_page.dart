@@ -439,10 +439,34 @@ class _SettingPageState extends ConsumerState<SettingPage> {
         .watch(settingStateProvider.select((value) => value.enableSignature));
     final enableHash = ref
         .watch(settingStateProvider.select((value) => value.enableHash));
+    final parserEngine = ref
+        .watch(settingStateProvider.select((value) => value.parserEngine));
     return _buildSettingCard(
       title: t.settings.features,
       icon: Icons.featured_play_list,
       children: [
+        ListTile(
+          title: Text(t.settings.parser_engine),
+          trailing: DropdownButton<String>(
+            value: parserEngine,
+            isDense: true,
+            onChanged: (value) {
+              if (value != null) {
+                ref.read(settingStateProvider.notifier).setParserEngine(value);
+              }
+            },
+            items: [
+              DropdownMenuItem(
+                value: Config.kParserAapt2,
+                child: Text(t.settings.parser_engine_aapt2),
+              ),
+              DropdownMenuItem(
+                value: Config.kParserBuiltin,
+                child: Text(t.settings.parser_engine_builtin),
+              ),
+            ],
+          ),
+        ),
         SwitchListTile(
           title: Text(t.settings.enable_signature),
           value: enableSignature,

@@ -20,6 +20,7 @@ abstract class Settings with _$Settings {
     required bool enableHash,
     required bool enableDebug,
     required String language,
+    required String parserEngine,
   }) = _Settings;
 }
 
@@ -38,6 +39,7 @@ class SettingState extends _$SettingState {
         enableHash: Config.enableHash.value,
         enableDebug: Config.enableDebug.value,
         language: Config.language.value,
+        parserEngine: Config.parserEngine.value,
       );
 
   void setAapt2Path(String value) {
@@ -88,6 +90,11 @@ class SettingState extends _$SettingState {
   void setEnableDebug(bool value) {
     state = state.copyWith(enableDebug: value);
     Config.enableDebug.updateValue(value);
+  }
+
+  void setParserEngine(String value) {
+    state = state.copyWith(parserEngine: value);
+    Config.parserEngine.updateValue(value);
   }
 
   void setLanguage(String value) {

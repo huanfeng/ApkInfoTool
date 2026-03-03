@@ -26,6 +26,41 @@ class ResourceValue {
 
   bool get isString => type == TYPE_STRING;
   bool get isReference => type == TYPE_REFERENCE;
+  bool get isColor =>
+      type == TYPE_INT_COLOR_ARGB8 ||
+      type == TYPE_INT_COLOR_RGB8 ||
+      type == TYPE_INT_COLOR_ARGB4 ||
+      type == TYPE_INT_COLOR_RGB4;
+
+  /// 将颜色值转换为 #AARRGGBB 格式的十六进制字符串
+  String? get colorHex {
+    if (!isColor) return null;
+    switch (type) {
+      case TYPE_INT_COLOR_ARGB8:
+        return '#${data.toUnsigned(32).toRadixString(16).padLeft(8, '0')}';
+      case TYPE_INT_COLOR_RGB8:
+        return '#ff${(data & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
+      case TYPE_INT_COLOR_ARGB4:
+        final a = (data >> 12) & 0xF;
+        final r = (data >> 8) & 0xF;
+        final g = (data >> 4) & 0xF;
+        final b = data & 0xF;
+        return '#${(a * 17).toRadixString(16).padLeft(2, '0')}'
+            '${(r * 17).toRadixString(16).padLeft(2, '0')}'
+            '${(g * 17).toRadixString(16).padLeft(2, '0')}'
+            '${(b * 17).toRadixString(16).padLeft(2, '0')}';
+      case TYPE_INT_COLOR_RGB4:
+        final r = (data >> 8) & 0xF;
+        final g = (data >> 4) & 0xF;
+        final b = data & 0xF;
+        return '#ff'
+            '${(r * 17).toRadixString(16).padLeft(2, '0')}'
+            '${(g * 17).toRadixString(16).padLeft(2, '0')}'
+            '${(b * 17).toRadixString(16).padLeft(2, '0')}';
+      default:
+        return null;
+    }
+  }
 
   static ResourceValue read(ByteDataReader reader) {
     final size = reader.readUint16();

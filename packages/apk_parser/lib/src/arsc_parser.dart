@@ -205,6 +205,11 @@ class ArscParser {
                 if (str != null && !info.filePaths.contains(str)) {
                   info.filePaths.add(str);
                 }
+              } else if (entry.value!.isColor) {
+                final color = entry.value!.colorHex;
+                if (color != null && !info.colors.contains(color)) {
+                  info.colors.add(color);
+                }
               } else if (entry.value!.isReference) {
                 final refId = entry.value!.data;
                 if (refId != 0 && !info.references.contains(refId)) {

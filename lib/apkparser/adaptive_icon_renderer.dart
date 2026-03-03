@@ -76,6 +76,11 @@ class AdaptiveIconRenderer {
           entry.filePaths.add(normalized);
         }
       }
+      for (final color in info.colors) {
+        if (!entry.colors.contains(color)) {
+          entry.colors.add(color);
+        }
+      }
       for (final refId in info.references) {
         final refHex =
             '@res/0x${refId.toRadixString(16).padLeft(8, '0')}';

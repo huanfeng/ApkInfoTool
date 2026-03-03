@@ -43,6 +43,7 @@ class ResourceInfo {
   final String typeName;
   final String keyName;
   final List<String> filePaths;
+  final List<String> colors;
   final List<int> references;
 
   ResourceInfo({
@@ -50,8 +51,10 @@ class ResourceInfo {
     required this.typeName,
     required this.keyName,
     List<String>? filePaths,
+    List<String>? colors,
     List<int>? references,
   })  : filePaths = filePaths ?? [],
+        colors = colors ?? [],
         references = references ?? [];
 
   String get name => '$typeName/$keyName';

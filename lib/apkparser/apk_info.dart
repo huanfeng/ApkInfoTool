@@ -281,24 +281,37 @@ Future<ApkInfo?> getApkInfo(String apk) async {
     apkInfo.archiveType =
         zipAsArchive ? 'ZIP' : _archiveTypeFromExtension(extension);
 
+    final totalSw = Stopwatch()..start();
+    var zipOpenMs = 0;
+    var manifestMs = 0;
+    var extractMs = 0;
+    var aapt2Ms = 0;
+    var parseMs = 0;
+    var iconMs = 0;
+
     // 共享同一个 ZipHelper 实例，避免重复打开同一个大文件
     final zip = ZipHelper();
     Directory? tempDir;
     String? baseApkPath;
     XapkManifest? manifest;
     try {
+      final zipOpenSw = Stopwatch()..start();
       if (!await zip.open(apk)) {
         log.warning("getApkInfo: failed to open XAPK file");
         return null;
       }
+      zipOpenMs = zipOpenSw.elapsedMilliseconds;
 
       // 使用共享的 zip 实例解析清单（不再重新打开文件）
+      final manifestSw = Stopwatch()..start();
       manifest = await parseXapkManifest(apk, sharedZip: zip);
+      manifestMs = manifestSw.elapsedMilliseconds;
 
       apkInfo.archiveApks = zip.listFiles(extension: '.apk');
       apkInfo.obbFiles = zip.listFiles(extension: '.obb');
 
       // 优先加载打包文件自带的图标（xapk/apkm 自身携带的 icon）
+      final iconSw = Stopwatch()..start();
       final xapkIcon = await loadXapkIcon(apk,
           iconPath: manifest?.icon, sharedZip: zip);
       if (xapkIcon != null) {
@@ -309,13 +322,16 @@ Future<ApkInfo?> getApkInfo(String apk) async {
       if (baseEntry != null) {
         tempDir = await Directory.systemTemp.createTemp('apk_info_base');
         baseApkPath = path.join(tempDir.path, path.basename(baseEntry));
+        final extractSw = Stopwatch()..start();
         final extracted = await zip.extractFile(baseEntry, baseApkPath);
+        extractMs = extractSw.elapsedMilliseconds;
         if (extracted) {
           try {
             final aaptPath = CommandTools.findAapt2Path();
             if (aaptPath == null || aaptPath.isEmpty) {
               throw Exception(t.parse.please_set_path(name: 'aapt2'));
             }
+            final aapt2Sw = Stopwatch()..start();
             final result = await Process.run(
               aaptPath,
               ['dump', 'badging', baseApkPath],
@@ -327,10 +343,13 @@ Future<ApkInfo?> getApkInfo(String apk) async {
                 throw TimeoutException('Parse timeout');
               },
             );
+            aapt2Ms = aapt2Sw.elapsedMilliseconds;
             if (result.exitCode == 0) {
               final originalPath = apkInfo.apkPath;
               apkInfo.apkPath = baseApkPath;
+              final parseSw = Stopwatch()..start();
               parseApkInfoFromOutput(result.stdout.toString(), apkInfo);
+              parseMs = parseSw.elapsedMilliseconds;
               // 仅在打包文件不包含图标时，才从 base APK 加载图标
               if (apkInfo.mainIconImage == null) {
                 final iconImage = await apkInfo.loadIcon();
@@ -345,6 +364,7 @@ Future<ApkInfo?> getApkInfo(String apk) async {
           }
         }
       }
+      iconMs = iconSw.elapsedMilliseconds;
 
       if (manifest != null) {
         if (manifest.packageName?.isNotEmpty == true) {
@@ -403,6 +423,15 @@ Future<ApkInfo?> getApkInfo(String apk) async {
       return null;
     }
 
+    totalSw.stop();
+    log.info("[PERF] getApkInfo(archive): total=${totalSw.elapsedMilliseconds}ms"
+        " | zip_open=${zipOpenMs}ms"
+        " | xapk_manifest=${manifestMs}ms"
+        " | zip_extract=${extractMs}ms"
+        " | aapt2_badging=${aapt2Ms}ms"
+        " | output_parse=${parseMs}ms"
+        " | icon=${iconMs}ms");
+
     return apkInfo;
   }
 
@@ -411,9 +440,14 @@ Future<ApkInfo?> getApkInfo(String apk) async {
   if (aaptPath == null || aaptPath.isEmpty) {
     throw Exception(t.parse.please_set_path(name: 'aapt2'));
   }
-  final start = DateTime.now();
+  final totalSw = Stopwatch()..start();
+  var aapt2BadgingMs = 0;
+  var outputParseMs = 0;
+  var iconMs = 0;
+  var signatureMs = 0;
 
   try {
+    final aapt2Sw = Stopwatch()..start();
     var result = await Process.run(
       aaptPath,
       ['dump', 'badging', apk],
@@ -425,22 +459,26 @@ Future<ApkInfo?> getApkInfo(String apk) async {
         throw TimeoutException('Parse timeout');
       },
     );
+    aapt2BadgingMs = aapt2Sw.elapsedMilliseconds;
 
-    final end = DateTime.now();
     var exitCode = result.exitCode;
-    final cost = end.difference(start).inMilliseconds;
-    log.info("getApkInfo: end exitCode=$exitCode, cost=${cost}ms");
+    log.fine("getApkInfo: aapt2 exitCode=$exitCode");
 
     if (exitCode == 0) {
+      final parseSw = Stopwatch()..start();
       parseApkInfoFromOutput(result.stdout.toString(), apkInfo);
+      outputParseMs = parseSw.elapsedMilliseconds;
 
+      final iconSw = Stopwatch()..start();
       final iconImage = await apkInfo.loadIcon();
       if (iconImage != null) {
         apkInfo.mainIconImage ??= iconImage;
       }
+      iconMs = iconSw.elapsedMilliseconds;
 
       // 如果启用了签名检查，获取签名信息
       if (Config.enableSignature.value) {
+        final sigSw = Stopwatch()..start();
         try {
           final signInfo = await getSignatureInfo(apk);
           apkInfo.signatureInfo = signInfo;
@@ -448,7 +486,15 @@ Future<ApkInfo?> getApkInfo(String apk) async {
           log.warning("getApkInfo: 获取签名信息失败: $e");
           apkInfo.signatureInfo = "获取签名信息失败: $e";
         }
+        signatureMs = sigSw.elapsedMilliseconds;
       }
+
+      totalSw.stop();
+      log.info("[PERF] getApkInfo: total=${totalSw.elapsedMilliseconds}ms"
+          " | aapt2_badging=${aapt2BadgingMs}ms"
+          " | output_parse=${outputParseMs}ms"
+          " | icon=${iconMs}ms"
+          " | signature=${signatureMs}ms");
 
       return apkInfo;
     }

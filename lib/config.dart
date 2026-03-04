@@ -71,7 +71,7 @@ class Config {
 
   static const kParserBuiltin = "builtin";
   static const kParserAapt2 = "aapt2";
-  static final parserEngine = ConfigItem("parser_engine", kParserAapt2);
+  static final parserEngine = ConfigItem("parser_engine", kParserBuiltin);
   static final maxLines = ConfigItem("max_lines", 6);
   static final themeColor = ConfigItem("theme_color", Colors.blue.value);
   static final titleWidth = ConfigItem("title_width", 100.0);

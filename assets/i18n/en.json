@@ -79,8 +79,8 @@
     "language_auto": "Auto (System)",
     "icon_row_span": "Icon Row Span",
     "parser_engine": "Parser Engine",
-    "parser_engine_aapt2": "aapt2 (External)",
-    "parser_engine_builtin": "Built-in (Dart)"
+    "parser_engine_aapt2": "aapt2 (External, Better Compatibility)",
+    "parser_engine_builtin": "Built-in (Dart, Faster)"
   },
   "parse": {
     "signature_verify_failed": "Signature verification failed",

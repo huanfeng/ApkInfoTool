@@ -86,8 +86,8 @@
     "language_auto": "自動 (システムに従う)",
     "icon_row_span": "アイコン表示行数",
     "parser_engine": "解析エンジン",
-    "parser_engine_aapt2": "aapt2 (外部ツール)",
-    "parser_engine_builtin": "内蔵 (Dart)"
+    "parser_engine_aapt2": "aapt2 (外部ツール, 互換性良好)",
+    "parser_engine_builtin": "内蔵 (Dart, 高速)"
   },
   "parse": {
     "signature_verify_failed": "署名検証失敗",

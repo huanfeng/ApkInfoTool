@@ -116,7 +116,7 @@ class ResourceConfig {
     final startPos = reader.position;
     final size = reader.readUint32();
 
-    if (size < 28) {
+    if (size < 8) {
       if (size > 4) reader.position = startPos + size;
       return ResourceConfig(size: size);
     }
@@ -124,14 +124,24 @@ class ResourceConfig {
     final mcc = reader.readUint16();
     final mnc = reader.readUint16();
 
-    final langBytes = reader.readUint8List(2);
-    final countryBytes = reader.readUint8List(2);
-    final language = _decodeChars(langBytes);
-    final country = _decodeChars(countryBytes);
+    // 混淆 APK 可能使用截短的 config（如 size=16），
+    // 但 language/country 字段仍在标准位置（offset 8-11）
+    String language = '';
+    String country = '';
+    int density = 0;
 
-    reader.readUint8(); // orientation
-    reader.readUint8(); // touchscreen
-    final density = reader.readUint16();
+    if (size >= 12) {
+      final langBytes = reader.readUint8List(2);
+      final countryBytes = reader.readUint8List(2);
+      language = _decodeChars(langBytes);
+      country = _decodeChars(countryBytes);
+    }
+
+    if (size >= 16) {
+      reader.readUint8(); // orientation
+      reader.readUint8(); // touchscreen
+      density = reader.readUint16();
+    }
 
     // Skip remaining config fields
     final remaining = size - (reader.position - startPos);

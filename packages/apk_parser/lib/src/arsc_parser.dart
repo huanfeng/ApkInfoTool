@@ -224,6 +224,22 @@ class ArscParser {
     return results;
   }
 
+  /// 跳过混淆器注入的非 StringPool chunk（如 type=0x0000 NULL chunk），
+  /// 直到找到 StringPool (type=0x0001) 或到达边界。
+  void _skipNullChunks(ByteDataReader reader, int boundary) {
+    while (reader.position + 8 <= boundary) {
+      final peekPos = reader.position;
+      final chunkType = reader.readUint16();
+      reader.readUint16(); // header size
+      final chunkSize = reader.readUint32();
+      reader.position = peekPos;
+
+      if (chunkType == 0x0001) break; // 找到 StringPool
+      if (chunkSize < 8 || peekPos + chunkSize > boundary) break;
+      reader.skipBytes(chunkSize);
+    }
+  }
+
   _Package? _findPackage(int id) {
     for (final package in _packages) {
       if (package.id == id) return package;
@@ -241,6 +257,9 @@ class ArscParser {
     if (headerSize > 12) {
       reader.skipBytes(headerSize - 12);
     }
+
+    // 跳过混淆器注入的 NULL chunk，寻找 Global string pool
+    _skipNullChunks(reader, reader.length);
 
     // Global string pool
     _globalStringPool = StringPool.parse(reader);
@@ -262,6 +281,7 @@ class ArscParser {
     final type = reader.readUint16(); // RES_TABLE_PACKAGE_TYPE = 0x0200
     final headerSize = reader.readUint16();
     final totalSize = reader.readUint32();
+    final packageEnd = packageStart + totalSize;
     final packageId = reader.readUint32();
 
     assert(type == type); // suppress warning
@@ -287,12 +307,14 @@ class ArscParser {
       reader.skipBytes(headerSize - headerRead);
     }
 
-    // Parse type string pool
+    // Parse type string pool（跳过混淆器注入的 NULL chunk）
     reader.position = packageStart + typeStringsOffset;
+    _skipNullChunks(reader, packageEnd);
     final typeStringPool = StringPool.parse(reader);
 
-    // Parse key string pool
+    // Parse key string pool（跳过混淆器注入的 NULL chunk）
     reader.position = packageStart + keyStringsOffset;
+    _skipNullChunks(reader, packageEnd);
     final keyStringPool = StringPool.parse(reader);
 
     final package = _Package(
@@ -303,7 +325,6 @@ class ArscParser {
     );
 
     // Parse remaining chunks (TypeSpec and Type)
-    final packageEnd = packageStart + totalSize;
     while (reader.position < packageEnd && reader.remain >= 8) {
       final chunkStart = reader.position;
       final chunkType = reader.readUint16();

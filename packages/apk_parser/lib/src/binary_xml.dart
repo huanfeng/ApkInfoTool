@@ -11,6 +11,10 @@ class XmlElement {
   String name = "";
   Map<String, String> attributes = {};
   List<XmlElement> children = [];
+
+  /// 混淆属性中通过非标准字段（如 ns）恢复的额外字符串值，
+  /// 供 ManifestParser 启发式查找使用
+  List<String> extraStrings = [];
 }
 
 class XmlDocument extends XmlElement {}
@@ -244,7 +248,7 @@ class BinaryXmlDecompressor {
           break;
         case START_ELEMENT_TAG:
           final element =
-              _parseStartElement(reader, packedStrings, resourceIdMap);
+              _parseStartElement(reader, packedStrings, resourceIdMap, chunkEnd);
           stack.last.children.add(element);
           stack.add(element);
           break;
@@ -267,9 +271,10 @@ class BinaryXmlDecompressor {
   }
 
   /// Parse a START_ELEMENT_TAG into an [XmlElement] with name and attributes.
+  /// [chunkEnd] 是当前 chunk 的结束位置，用于读取移位属性的溢出数据。
   XmlElement _parseStartElement(
       ByteDataReader reader, List<String> packedStrings,
-      List<int> resourceIdMap) {
+      List<int> resourceIdMap, int chunkEnd) {
     final element = XmlElement();
 
     // Skip line number and comment
@@ -290,24 +295,75 @@ class BinaryXmlDecompressor {
     int numAttributes = reader.readUint16();
     reader.skipBytes(6);
 
+    // 缓冲所有原始属性数据（每个 20 字节: ns, name, rawValue, tvSize+res0+type, tvData）
+    final rawAttrs = <List<int>>[];
     for (int i = 0; i < numAttributes; i++) {
-      reader.readInt32(); // attributeNamespaceIndex
-      int attributeNameIndex = reader.readInt32();
-      int attributeValueIndex = reader.readInt32();
+      rawAttrs.add([
+        reader.readInt32(), // 0: ns
+        reader.readInt32(), // 1: name
+        reader.readInt32(), // 2: rawValue
+        reader.readUint16(), // 3: tvSize
+        reader.readUint8(), // 4: tvRes0
+        reader.readUint8(), // 5: tvType
+        reader.readInt32(), // 6: tvData
+      ]);
+    }
 
-      // typedValue header
-      reader.readUint16(); // size
-      reader.readUint8(); // res0
-      int attrValueType = reader.readUint8();
-      int attributeResourceId = reader.readInt32();
+    // 读取溢出字节（移位属性在最后一个时，值在 chunk 末尾填充区）
+    int overflowValue = 0;
+    bool hasOverflow = false;
+    if (reader.position + 4 <= chunkEnd) {
+      overflowValue = reader.readInt32();
+      hasOverflow = true;
+    }
 
+    // 处理属性：检测移位属性模式并恢复值
+    for (int i = 0; i < rawAttrs.length; i++) {
+      final attr = rawAttrs[i];
+      int attrNs = attr[0];
+      int attrName = attr[1];
+      int attrRawValue = attr[2];
+      int attrType = attr[5];
+      int attrData = attr[6];
+
+      // 检测移位属性：type=0xFF 且 data 看起来像 typedValue header
+      if (_isShiftedAttribute(attrType, attrData)) {
+        final shiftedType = (attrData >> 24) & 0xFF;
+        // 真实属性名在 rawValue 位置
+        final realNameIdx = attrRawValue;
+        // 真实值在下一个属性的 ns 字段或溢出区
+        int? realValue;
+        if (i + 1 < rawAttrs.length) {
+          realValue = rawAttrs[i + 1][0]; // 下一个属性的 ns 字段
+        } else if (hasOverflow) {
+          realValue = overflowValue;
+        }
+
+        if (realValue != null) {
+          String attributeName = _resolveStringOrResourceId(
+              packedStrings, resourceIdMap, realNameIdx);
+          if (attributeName.isEmpty) attributeName = "attr_$realNameIdx";
+
+          String attributeValue = _resolveAttributeValue(
+              shiftedType, realValue, -1, packedStrings,
+              resIdMapLength: resourceIdMap.length);
+
+          if (attributeValue != '<empty>' && attributeValue != '<undefined>') {
+            // 移位属性恢复的值优先级高
+            element.attributes[attributeName] = attributeValue;
+          }
+        }
+        continue;
+      }
+
+      // 普通属性处理
       String attributeName = _resolveStringOrResourceId(
-          packedStrings, resourceIdMap, attributeNameIndex);
-      if (attributeName.isEmpty) attributeName = "attr_$attributeNameIndex";
+          packedStrings, resourceIdMap, attrName);
+      if (attributeName.isEmpty) attributeName = "attr_$attrName";
 
       String attributeValue =
-          _resolveAttributeValue(attrValueType, attributeResourceId,
-              attributeValueIndex, packedStrings,
+          _resolveAttributeValue(attrType, attrData,
+              attrRawValue, packedStrings,
               resIdMapLength: resourceIdMap.length);
 
       // 不用空值覆盖已有的有效值（混淆 APK 可能有重复属性名）
@@ -317,12 +373,38 @@ class BinaryXmlDecompressor {
           existing != '<empty>' &&
           existing != '<undefined>' &&
           (attributeValue == '<empty>' || attributeValue == '<undefined>')) {
+        if (attrType == RES_TYPE_NULL || attrType == 0xFF) {
+          _rescueNsValue(element, packedStrings, resourceIdMap, attrNs);
+        }
         continue;
       }
       element.attributes[attributeName] = attributeValue;
+
+      // 对于混淆属性，也检查 ns 字段中是否有被藏匿的值
+      if (attrType == RES_TYPE_NULL || attrType == 0xFF) {
+        _rescueNsValue(element, packedStrings, resourceIdMap, attrNs);
+      }
     }
 
     return element;
+  }
+
+  /// 检测移位属性：type=0xFF 且 data 字段包含有效的 typedValue header
+  bool _isShiftedAttribute(int type, int data) {
+    if (type != 0xFF) return false;
+    // 提取移位 header 中的字段
+    final shiftedSize = data & 0xFFFF;
+    final shiftedType = (data >> 24) & 0xFF;
+    // 有效的 Res_value size 通常是 8 或 12
+    if (shiftedSize != 0x0008 && shiftedSize != 0x000c) return false;
+    // 有效的类型值
+    return shiftedType == RES_TYPE_REFERENCE ||
+        shiftedType == RES_TYPE_STRING ||
+        shiftedType == RES_TYPE_INT_DEC ||
+        shiftedType == RES_TYPE_INT_HEX ||
+        shiftedType == RES_TYPE_INT_BOOLEAN ||
+        shiftedType == RES_TYPE_INT_COLOR_ARGB8 ||
+        shiftedType == RES_TYPE_INT_COLOR_RGB8;
   }
 
   /// Resolve an attribute's typed value to a string representation.
@@ -672,6 +754,21 @@ class BinaryXmlDecompressor {
     }
     final second = reader.readUint16();
     return ((first & 0x7fff) << 16) | second;
+  }
+
+  /// 从混淆属性的 ns 字段中恢复可能被藏匿的值字符串
+  void _rescueNsValue(XmlElement element, List<String> packedStrings,
+      List<int> resourceIdMap, int nsIndex) {
+    if (nsIndex >= resourceIdMap.length &&
+        nsIndex >= 0 &&
+        nsIndex < packedStrings.length) {
+      final nsStr = packedStrings[nsIndex];
+      if (nsStr.isNotEmpty &&
+          !nsStr.startsWith('http://') &&
+          !nsStr.startsWith('https://')) {
+        element.extraStrings.add(nsStr);
+      }
+    }
   }
 
   /// 解析 Resource ID Map chunk (0x0180)

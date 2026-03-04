@@ -287,15 +287,16 @@ class BinaryXmlDecompressor {
 
     // Parse attributes
     int marker = reader.readInt32();
-    // ATTRS_MARKER check (non-fatal)
-    if (marker != ATTRS_MARKER) {
-      // Proceed anyway
-    }
+    // marker 包含 attrStart (低16位) 和 attrSize (高16位)
+    // 标准值: attrStart=20, attrSize=20 → marker=0x00140014
+    // 混淆 APK 可能修改 attrSize（如 24），需按实际大小跳过额外字节
+    final attrSize = (marker >> 16) & 0xFFFF;
+    final attrExtraBytes = (attrSize > 20) ? attrSize - 20 : 0;
 
     int numAttributes = reader.readUint16();
     reader.skipBytes(6);
 
-    // 缓冲所有原始属性数据（每个 20 字节: ns, name, rawValue, tvSize+res0+type, tvData）
+    // 缓冲所有原始属性数据（标准 20 字节 + 可能的额外填充）
     final rawAttrs = <List<int>>[];
     for (int i = 0; i < numAttributes; i++) {
       rawAttrs.add([
@@ -307,6 +308,10 @@ class BinaryXmlDecompressor {
         reader.readUint8(), // 5: tvType
         reader.readInt32(), // 6: tvData
       ]);
+      // 跳过混淆器注入的额外填充字节
+      if (attrExtraBytes > 0) {
+        reader.skipBytes(attrExtraBytes);
+      }
     }
 
     // 读取溢出字节（移位属性在最后一个时，值在 chunk 末尾填充区）

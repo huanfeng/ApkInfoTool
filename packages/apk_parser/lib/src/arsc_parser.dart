@@ -133,7 +133,7 @@ class ArscParser {
       if (entry == null || entry.value == null) continue;
       if (entry.value!.isString) {
         final path = _globalStringPool.get(entry.value!.data);
-        if (path != null) {
+        if (path != null && _isValidResourcePath(path)) {
           results.add(MapEntry(config.config.density, path));
         }
       }
@@ -163,8 +163,10 @@ class ArscParser {
     for (final package in _packages) {
       for (final typeSpec in package.typeSpecs.values) {
         for (final config in typeSpec.configs) {
-          if (config.config.density > 0) {
-            densities.add(config.config.density);
+          final d = config.config.density;
+          // 过滤无效值: 0 表示默认, >= 0xFFFE (65534) 为 sentinel 值
+          if (d > 0 && d < 0xFFFE) {
+            densities.add(d);
           }
         }
       }
@@ -238,6 +240,29 @@ class ArscParser {
       if (chunkSize < 8 || peekPos + chunkSize > boundary) break;
       reader.skipBytes(chunkSize);
     }
+  }
+
+  /// 验证路径是否为合法的 Android 资源路径
+  ///
+  /// 混淆 APK 的资源表可能包含垃圾路径（如 `AndroidManifest.xml/uF.xml`、
+  /// `classes.dex.png`），需要过滤掉。
+  static bool _isValidResourcePath(String path) {
+    if (!path.startsWith('res/')) return false;
+    final lower = path.toLowerCase();
+    // 排除系统文件名
+    if (lower.contains('classes.dex') ||
+        lower.contains('androidmanifest.xml') ||
+        lower.contains('resources.arsc')) {
+      return false;
+    }
+    // 必须以合法资源扩展名结尾
+    return lower.endsWith('.png') ||
+        lower.endsWith('.9.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.gif') ||
+        lower.endsWith('.xml');
   }
 
   _Package? _findPackage(int id) {

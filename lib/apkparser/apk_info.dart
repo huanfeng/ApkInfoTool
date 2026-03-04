@@ -524,6 +524,7 @@ Future<ApkInfo?> _getApkInfoBuiltin(String apk, ApkInfo apkInfo) async {
     }
 
     _applyMetaToApkInfo(meta, apkInfo);
+    apkInfo.originalText = _generateTextInfo(meta);
 
     // 导出 arsc 资源表数据供图标渲染器使用（替代 aapt2 dump resources）
     if (reader.arscParser != null) {
@@ -600,6 +601,85 @@ void _applyMetaToApkInfo(apk_parser.ApkMeta meta, ApkInfo apkInfo) {
     apkInfo.application.label = meta.label;
     apkInfo.application.icon = meta.applicationIcon;
   }
+}
+
+/// 将 ApkMeta 格式化为 aapt2 dump badging 风格文本
+String _generateTextInfo(apk_parser.ApkMeta meta) {
+  final sb = StringBuffer();
+
+  // package
+  sb.writeln("package: name='${meta.packageName ?? ''}' "
+      "versionCode='${meta.versionCode ?? ''}' "
+      "versionName='${meta.versionName ?? ''}' "
+      "compileSdkVersion='${meta.compileSdkVersion ?? ''}' "
+      "compileSdkVersionCodename='${meta.compileSdkVersionCodename ?? ''}'");
+
+  // SDK versions
+  if (meta.minSdkVersion != null) {
+    sb.writeln("sdkVersion:'${meta.minSdkVersion}'");
+  }
+  if (meta.targetSdkVersion != null) {
+    sb.writeln("targetSdkVersion:'${meta.targetSdkVersion}'");
+  }
+
+  // application labels
+  if (meta.label != null) {
+    sb.writeln("application-label:'${meta.label}'");
+  }
+  for (final entry in meta.labels.entries) {
+    sb.writeln("application-label-${entry.key}:'${entry.value}'");
+  }
+
+  // application icons
+  for (final entry in meta.iconPaths.entries) {
+    sb.writeln("application-icon-${entry.key}:'${entry.value}'");
+  }
+
+  // application
+  sb.writeln("application: label='${meta.label ?? ''}' "
+      "icon='${meta.applicationIcon ?? ''}'");
+
+  // launchable activities
+  for (final activity in meta.launchableActivities) {
+    sb.writeln("launchable-activity: name='${activity.name ?? ''}' "
+        "label='${activity.label ?? ''}' icon='${activity.icon ?? ''}'");
+  }
+
+  // permissions
+  for (final perm in meta.permissions) {
+    sb.writeln("uses-permission: name='$perm'");
+  }
+
+  // features
+  for (final feature in meta.features) {
+    sb.writeln("uses-feature: name='$feature'");
+  }
+  for (final feature in meta.featuresNotRequired) {
+    sb.writeln("uses-feature-not-required: name='$feature'");
+  }
+
+  // supports-screens
+  if (meta.screenSizes.isNotEmpty) {
+    sb.writeln(
+        "supports-screens: ${meta.screenSizes.map((s) => "'$s'").join(' ')}");
+  }
+
+  // locales
+  final localeStrs = meta.locales.map((l) => "'$l'").join(' ');
+  sb.writeln("locales: '--_--' $localeStrs");
+
+  // densities
+  if (meta.densities.isNotEmpty) {
+    sb.writeln("densities: ${meta.densities.map((d) => "'$d'").join(' ')}");
+  }
+
+  // native code
+  if (meta.nativeCodes.isNotEmpty) {
+    sb.writeln(
+        "native-code: ${meta.nativeCodes.map((n) => "'$n'").join(' ')}");
+  }
+
+  return sb.toString();
 }
 
 Future<String> getSignatureInfo(String apkPath) async {

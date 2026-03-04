@@ -95,6 +95,8 @@ class ResourceConfig {
   final int mnc;
   final String language;
   final String country;
+  final String script;
+  final String variant;
   final int density;
 
   ResourceConfig({
@@ -103,13 +105,17 @@ class ResourceConfig {
     this.mnc = 0,
     this.language = '',
     this.country = '',
+    this.script = '',
+    this.variant = '',
     this.density = 0,
   });
 
   String get locale {
     if (language.isEmpty) return '';
-    if (country.isEmpty) return language;
-    return '$language-$country';
+    final parts = <String>[language];
+    if (script.isNotEmpty) parts.add(script);
+    if (country.isNotEmpty) parts.add(country);
+    return parts.join('-');
   }
 
   static ResourceConfig read(ByteDataReader reader) {
@@ -129,12 +135,14 @@ class ResourceConfig {
     String language = '';
     String country = '';
     int density = 0;
+    String script = '';
+    String variant = '';
 
     if (size >= 12) {
       final langBytes = reader.readUint8List(2);
       final countryBytes = reader.readUint8List(2);
       language = _decodeChars(langBytes);
-      country = _decodeChars(countryBytes);
+      country = _decodeChars(countryBytes, base: 0x41);
     }
 
     if (size >= 16) {
@@ -143,11 +151,22 @@ class ResourceConfig {
       density = reader.readUint16();
     }
 
-    // Skip remaining config fields
-    final remaining = size - (reader.position - startPos);
-    if (remaining > 0) {
-      reader.skipBytes(remaining);
+    // localeScript: 4 bytes at offset 36 (when size >= 40)
+    if (size >= 40) {
+      reader.position = startPos + 36;
+      final scriptBytes = reader.readUint8List(4);
+      script = String.fromCharCodes(scriptBytes.where((b) => b != 0));
     }
+
+    // localeVariant: 8 bytes at offset 40 (when size >= 48)
+    if (size >= 48) {
+      reader.position = startPos + 40;
+      final variantBytes = reader.readUint8List(8);
+      variant = String.fromCharCodes(variantBytes.where((b) => b != 0));
+    }
+
+    // Skip remaining config fields
+    reader.position = startPos + size;
 
     return ResourceConfig(
       size: size,
@@ -155,12 +174,26 @@ class ResourceConfig {
       mnc: mnc,
       language: language,
       country: country,
+      script: script,
+      variant: variant,
       density: density,
     );
   }
 
-  static String _decodeChars(Uint8List bytes) {
+  /// 解码 2 字节语言/地区码，支持 BCP-47 packed 3 字母码
+  ///
+  /// packed 格式: byte[0] 高位 (0x80) 置位时，15 位编码 3 个字符
+  /// (每字符 5 bits, base-26)。[base] 为语言码时用 0x61 ('a')，
+  /// 地区码时用 0x41 ('A')。
+  static String _decodeChars(Uint8List bytes, {int base = 0x61}) {
     if (bytes[0] == 0 && bytes[1] == 0) return '';
+    // BCP-47 packed 3-letter code: high bit set on byte[0]
+    if ((bytes[0] & 0x80) != 0) {
+      final first = (bytes[0] >> 2) & 0x1F;
+      final second = ((bytes[0] & 0x03) << 3) | ((bytes[1] >> 5) & 0x07);
+      final third = bytes[1] & 0x1F;
+      return String.fromCharCodes([base + first, base + second, base + third]);
+    }
     return String.fromCharCodes(bytes.where((b) => b != 0));
   }
 }

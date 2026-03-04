@@ -5,7 +5,7 @@
 <h1 align="center">APK Info Tool</h1>
 
 <p align="center">
-  <strong>Lightweight yet powerful cross-platform Android package analyzer</strong><br>
+  <strong>Lightweight yet powerful cross-platform Android package analyzer and installer</strong><br>
   Drag, drop, done — simple and intuitive.
 </p>
 

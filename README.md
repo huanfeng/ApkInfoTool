@@ -5,7 +5,7 @@
 <h1 align="center">APK Info Tool</h1>
 
 <p align="center">
-  <strong>轻量、强大的跨平台 Android 应用包解析工具</strong><br>
+  <strong>轻量、强大的跨平台 Android 应用包解析和安装工具</strong><br>
   拖拽即用，简单直观
 </p>
 

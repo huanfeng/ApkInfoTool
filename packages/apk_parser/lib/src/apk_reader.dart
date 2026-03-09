@@ -1,8 +1,11 @@
 import 'dart:typed_data';
 import 'package:archive/archive.dart';
+import 'package:logging/logging.dart';
 import 'manifest_parser.dart';
 import 'arsc_parser.dart';
 import 'models.dart';
+
+final _log = Logger('ApkReader');
 
 /// APK 文件读取和解析的统一入口
 class ApkReader {
@@ -16,7 +19,8 @@ class ApkReader {
       inputStream = InputFileStream(filePath);
       _archive = ZipDecoder().decodeStream(inputStream);
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      _log.warning('open failed: $e\n$stackTrace');
       return false;
     } finally {
       inputStream?.closeSync();
@@ -28,7 +32,8 @@ class ApkReader {
     try {
       _archive = ZipDecoder().decodeBytes(data);
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      _log.warning('openBytes failed: $e\n$stackTrace');
       return false;
     }
   }
@@ -65,7 +70,7 @@ class ApkReader {
         meta.densities = _arscParser!.getDensities().toList();
       } catch (e, stackTrace) {
         // arsc 解析失败不影响基本信息，但记录详细错误便于排查
-        print('[ApkReader] arsc parse failed: $e\n$stackTrace');
+        _log.warning('arsc parse failed: $e\n$stackTrace');
       }
     }
 

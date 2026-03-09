@@ -44,7 +44,7 @@
             <string>Default</string>
             <key>LSItemContentTypes</key>
             <array>
-                <string>com.fengware.app.apkinfotool.apkInfoTool</string>
+                <string>to.feng.app.apkinfotool.apkInfoTool</string>
             </array>
 
             <!-- 新增以下两个键 -->
@@ -60,7 +60,7 @@
     <array>
         <dict>
             <key>UTTypeIdentifier</key>
-            <string>com.fengware.app.apkinfotool.apkInfoTool</string>
+            <string>to.feng.app.apkinfotool.apkInfoTool</string>
             <key>UTTypeDescription</key>
             <string>APK File</string>
             <key>UTTypeConformsTo</key>

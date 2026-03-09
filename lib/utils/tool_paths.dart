@@ -1,16 +1,64 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+
+final _log = Logger('ToolPaths');
 
 class ToolPaths {
   static String get appDir => File(Platform.resolvedExecutable).parent.path;
   static String? _appSupportDir;
 
+  /// 旧包名对应的 CompanyName，用于数据目录迁移
+  static const _oldCompanyName = 'com.fengware.app.apkinfotool';
+  static const _newCompanyName = 'to.feng.app.apkinfotool';
+  static const _productName = 'apk_info_tool';
+
   static Future<void> init() async {
     if (_appSupportDir != null) return;
+    await _migrateDataDir();
     final dir = await getApplicationSupportDirectory();
     _appSupportDir = dir.path;
+  }
+
+  /// Windows 数据目录迁移：将旧包名目录移动到新包名目录
+  static Future<void> _migrateDataDir() async {
+    if (!Platform.isWindows) return;
+
+    final roamingDir = Platform.environment['APPDATA'];
+    if (roamingDir == null) return;
+
+    final oldDir = Directory(path.join(roamingDir, _oldCompanyName, _productName));
+    final newDir = Directory(path.join(roamingDir, _newCompanyName, _productName));
+
+    if (!oldDir.existsSync() || newDir.existsSync()) return;
+
+    try {
+      // 确保新的父目录存在
+      final newParent = Directory(path.join(roamingDir, _newCompanyName));
+      if (!newParent.existsSync()) {
+        await newParent.create(recursive: true);
+      }
+
+      await oldDir.rename(newDir.path);
+      _log.info('已迁移数据目录: ${oldDir.path} -> ${newDir.path}');
+
+      // 如果旧的父目录已空，则删除
+      final oldParent = Directory(path.join(roamingDir, _oldCompanyName));
+      if (oldParent.existsSync()) {
+        final remaining = oldParent.listSync();
+        if (remaining.isEmpty) {
+          await oldParent.delete();
+          _log.info('已删除空的旧目录: ${oldParent.path}');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('数据目录迁移失败: $e');
+      }
+    }
   }
 
   static String get appSupportDir => _appSupportDir ?? appDir;

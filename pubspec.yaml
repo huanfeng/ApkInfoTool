@@ -1,6 +1,6 @@
 name: apk_info_tool
 description: An apk info tool.
-homepage: https://fengware.com
+homepage: https://feng.to
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # Git release 时会自动从tag同步
@@ -57,7 +57,7 @@ flutter:
 
 inno_bundle:
   id: 8cdac933-dde4-5d06-985d-4c99f7247903
-  publisher: Fengware
+  publisher: Feng
   name: ApkInfoTool
   languages:
     - english

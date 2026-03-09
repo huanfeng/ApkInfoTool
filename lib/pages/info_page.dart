@@ -72,6 +72,7 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
     ref.read(currentFileStateProvider.notifier).update(FileState());
     ref.read(currentApkInfoProvider.notifier).reset();
     ref.read(selectedIconIndexProvider.notifier).reset();
+    ref.read(selectedLabelLocaleProvider.notifier).reset();
   }
 
   String getSdkVersionText(int? sdkVersion) {
@@ -89,6 +90,7 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
         ref.read(settingStateProvider.select((value) => value.enableHash));
     apkInfoState.reset();
     ref.read(selectedIconIndexProvider.notifier).reset();
+    ref.read(selectedLabelLocaleProvider.notifier).reset();
     isParsingState.update(true);
 
     // 初始化文件状态
@@ -336,6 +338,123 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
     );
   }
 
+  /// 获取当前显示的应用名称（根据用户选择的语言）
+  String _getDisplayLabel(ApkInfo? apkInfo) {
+    if (apkInfo == null) return "";
+    final selectedLocale = ref.read(selectedLabelLocaleProvider);
+    if (selectedLocale != null && apkInfo.labels.containsKey(selectedLocale)) {
+      return apkInfo.labels[selectedLocale]!;
+    }
+    return apkInfo.label ?? "";
+  }
+
+  static const _kDefaultLocale = '__default__';
+
+  /// 构建应用名称语言切换菜单按钮
+  Widget _buildLabelLocaleMenu(ApkInfo? apkInfo) {
+    final hasLabels = apkInfo != null && apkInfo.labels.isNotEmpty;
+    final selectedLocale = ref.watch(selectedLabelLocaleProvider);
+    return PopupMenuButton<String>(
+      padding: EdgeInsets.zero,
+      icon: Icon(
+        Icons.translate,
+        size: 16,
+        color: hasLabels
+            ? (selectedLocale != null
+                ? Theme.of(context).colorScheme.primary
+                : null)
+            : Theme.of(context).disabledColor,
+      ),
+      tooltip: t.apk_info.switch_label_language,
+      enabled: hasLabels,
+      offset: const Offset(0, 0),
+      position: PopupMenuPosition.under,
+      constraints: const BoxConstraints(maxHeight: 400, maxWidth: 300),
+      itemBuilder: (context) {
+        if (apkInfo == null) return [];
+        final colorScheme = Theme.of(context).colorScheme;
+        final items = <PopupMenuEntry<String>>[];
+        // 默认名称选项
+        items.add(PopupMenuItem<String>(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          value: _kDefaultLocale,
+          child: Row(
+            children: [
+              if (selectedLocale == null)
+                Icon(Icons.check, size: 14, color: colorScheme.primary)
+              else
+                const SizedBox(width: 14),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text('default',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: colorScheme.onPrimaryContainer)),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(apkInfo.label ?? '',
+                    style: const TextStyle(fontSize: 13),
+                    overflow: TextOverflow.ellipsis),
+              ),
+            ],
+          ),
+        ));
+        items.add(const PopupMenuDivider(height: 1));
+        // 各语言选项
+        final sortedEntries = apkInfo.labels.entries.toList()
+          ..sort((a, b) => a.key.compareTo(b.key));
+        for (final entry in sortedEntries) {
+          // 跳过与默认名称相同的条目
+          if (entry.value == apkInfo.label) continue;
+          items.add(PopupMenuItem<String>(
+            height: 36,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            value: entry.key,
+            child: Row(
+              children: [
+                if (selectedLocale == entry.key)
+                  Icon(Icons.check, size: 14, color: colorScheme.primary)
+                else
+                  const SizedBox(width: 14),
+                const SizedBox(width: 8),
+                Container(
+                  width: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(entry.key,
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: colorScheme.onSurfaceVariant)),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(entry.value,
+                      style: const TextStyle(fontSize: 13),
+                      overflow: TextOverflow.ellipsis),
+                ),
+              ],
+            ),
+          ));
+        }
+        return items;
+      },
+      onSelected: (locale) {
+        ref.read(selectedLabelLocaleProvider.notifier).select(
+            locale == _kDefaultLocale ? null : locale);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // 在当前页/文件/APK信息变化时需要更新Actions, 因为Actions的变化会修改按钮的使能状态
@@ -403,9 +522,16 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
                           Card(
                               child: TitleValueLayout(
                             title: t.apk_info.app_name,
-                            value: apkInfo?.label ?? "",
-                            end: _buildCopyButton(
-                                apkInfo?.label, apkInfo?.label != null),
+                            value: _getDisplayLabel(apkInfo),
+                            end: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildLabelLocaleMenu(apkInfo),
+                                _buildCopyButton(
+                                    _getDisplayLabel(apkInfo),
+                                    apkInfo?.label != null),
+                              ],
+                            ),
                           )),
                           Card(
                               child: TitleValueLayout(
@@ -616,7 +742,7 @@ class _APKInfoPageState extends ConsumerState<APKInfoPage> {
     final state = ref.read(currentFileStateProvider);
     if (state.filePath == null || apkInfo == null) return;
 
-    final fileName = apkInfo.label ?? '';
+    final fileName = _getDisplayLabel(apkInfo);
     final versionName = apkInfo.versionName ?? '';
     final extension = path.extension(state.filePath!).toLowerCase();
     final targetExtension = extension.isNotEmpty ? extension : '.apk';

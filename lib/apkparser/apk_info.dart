@@ -877,7 +877,7 @@ class ApkInfo {
       default:
         {
           if (key.startsWith("application-label-")) {
-            labels[key.substring("application-label-".length + 1)] =
+            labels[key.substring("application-label-".length)] =
                 value.trimSQ();
           } else if (key.startsWith("application-icon-")) {
             icons[key.substring("application-icon-".length)] = value.trimSQ();

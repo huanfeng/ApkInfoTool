@@ -108,6 +108,7 @@
     "archive_type": "파일 유형",
     "package_name": "패키지 이름",
     "app_name": "앱 이름",
+    "switch_label_language": "앱 이름 언어 전환",
     "min_sdk": "최소 SDK",
     "target_sdk": "대상 SDK",
     "version_code": "버전 코드",

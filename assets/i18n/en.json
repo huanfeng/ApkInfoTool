@@ -108,6 +108,7 @@
     "archive_type": "Archive Type",
     "package_name": "Package",
     "app_name": "Name",
+    "switch_label_language": "Switch app name language",
     "min_sdk": "Min SDK",
     "target_sdk": "Target SDK",
     "version_code": "Version Code",

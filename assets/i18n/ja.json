@@ -108,6 +108,7 @@
     "archive_type": "ファイルタイプ",
     "package_name": "パッケージ名",
     "app_name": "アプリ名",
+    "switch_label_language": "アプリ名の言語を切り替え",
     "min_sdk": "最小SDK",
     "target_sdk": "ターゲットSDK",
     "version_code": "バージョンコード",

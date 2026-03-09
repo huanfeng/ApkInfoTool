@@ -108,6 +108,7 @@
     "archive_type": "文件類型",
     "package_name": "包名",
     "app_name": "名稱",
+    "switch_label_language": "切換應用名稱語言",
     "min_sdk": "最低SDK",
     "target_sdk": "目標SDK",
     "version_code": "版本號",

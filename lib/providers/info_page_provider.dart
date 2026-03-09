@@ -30,6 +30,16 @@ class SelectedIconIndex extends _$SelectedIconIndex {
   void reset() => state = 0;
 }
 
+/// 用户选择的应用名称语言，null 表示使用默认名称
+@Riverpod(keepAlive: true)
+class SelectedLabelLocale extends _$SelectedLabelLocale {
+  @override
+  String? build() => null;
+
+  void select(String? locale) => state = locale;
+  void reset() => state = null;
+}
+
 @Riverpod(keepAlive: true)
 class IsParsing extends _$IsParsing {
   @override

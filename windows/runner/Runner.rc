@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "to.feng.app.apkinfotool" "\0"
+            VALUE "CompanyName", "" "\0"
             VALUE "FileDescription", "apk_info_tool" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "apk_info_tool" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 to.feng.app.apkinfotool. All rights reserved." "\0"
             VALUE "OriginalFilename", "apk_info_tool.exe" "\0"
-            VALUE "ProductName", "apk_info_tool" "\0"
+            VALUE "ProductName", "to.feng.app.apkinfotool" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

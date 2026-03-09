@@ -11,10 +11,7 @@ class ToolPaths {
   static String get appDir => File(Platform.resolvedExecutable).parent.path;
   static String? _appSupportDir;
 
-  /// 旧包名对应的 CompanyName，用于数据目录迁移
-  static const _oldCompanyName = 'com.fengware.app.apkinfotool';
-  static const _newCompanyName = 'to.feng.app.apkinfotool';
-  static const _productName = 'apk_info_tool';
+  static const _appDirName = 'to.feng.app.apkinfotool';
 
   static Future<void> init() async {
     if (_appSupportDir != null) return;
@@ -23,36 +20,48 @@ class ToolPaths {
     _appSupportDir = dir.path;
   }
 
-  /// Windows 数据目录迁移：将旧包名目录移动到新包名目录
+  /// Windows 数据目录迁移：将旧目录结构迁移到新的扁平结构
+  /// 旧结构: AppData/Roaming/{companyName}/apk_info_tool/
+  /// 新结构: AppData/Roaming/to.feng.app.apkinfotool/
   static Future<void> _migrateDataDir() async {
     if (!Platform.isWindows) return;
 
     final roamingDir = Platform.environment['APPDATA'];
     if (roamingDir == null) return;
 
-    final oldDir = Directory(path.join(roamingDir, _oldCompanyName, _productName));
-    final newDir = Directory(path.join(roamingDir, _newCompanyName, _productName));
+    final newDir = Directory(path.join(roamingDir, _appDirName));
 
-    if (!oldDir.existsSync() || newDir.existsSync()) return;
+    // 旧包名结构: com.fengware.app.apkinfotool/apk_info_tool -> to.feng.app.apkinfotool
+    final oldDir = Directory(
+        path.join(roamingDir, 'com.fengware.app.apkinfotool', 'apk_info_tool'));
+    if (!oldDir.existsSync()) return;
 
     try {
-      // 确保新的父目录存在
-      final newParent = Directory(path.join(roamingDir, _newCompanyName));
-      if (!newParent.existsSync()) {
-        await newParent.create(recursive: true);
+      if (!newDir.existsSync()) {
+        // 新目录不存在，直接重命名
+        await newDir.parent.create(recursive: true);
+        await oldDir.rename(newDir.path);
+      } else {
+        // 新目录已存在，将旧目录内容逐个移入
+        for (final entity in oldDir.listSync()) {
+          final targetPath = path.join(newDir.path, path.basename(entity.path));
+          if (!File(targetPath).existsSync() &&
+              !Directory(targetPath).existsSync()) {
+            await entity.rename(targetPath);
+          }
+        }
+        // 删除已空的旧子目录
+        if (oldDir.listSync().isEmpty) {
+          await oldDir.delete();
+        }
       }
-
-      await oldDir.rename(newDir.path);
       _log.info('已迁移数据目录: ${oldDir.path} -> ${newDir.path}');
 
-      // 如果旧的父目录已空，则删除
-      final oldParent = Directory(path.join(roamingDir, _oldCompanyName));
-      if (oldParent.existsSync()) {
-        final remaining = oldParent.listSync();
-        if (remaining.isEmpty) {
-          await oldParent.delete();
-          _log.info('已删除空的旧目录: ${oldParent.path}');
-        }
+      // 清理空的旧父目录
+      final oldParent = oldDir.parent;
+      if (oldParent.existsSync() && oldParent.listSync().isEmpty) {
+        await oldParent.delete();
+        _log.info('已删除空的旧目录: ${oldParent.path}');
       }
     } catch (e) {
       if (kDebugMode) {

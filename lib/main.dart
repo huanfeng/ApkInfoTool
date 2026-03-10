@@ -7,6 +7,7 @@ import 'package:apk_info_tool/utils/logger.dart';
 import 'package:apk_info_tool/utils/tool_paths.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -60,6 +61,8 @@ void main(List<String> arguments) async {
   runApp(ProviderScope(child: TranslationProvider(child: const MyApp())));
 }
 
+final _navigatorKey = GlobalKey<NavigatorState>();
+
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
@@ -67,6 +70,7 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeManager = ref.watch(themeManagerProvider);
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       locale: TranslationProvider.of(context).flutterLocale,
       supportedLocales: AppLocaleUtils.supportedLocales,
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
@@ -77,6 +81,45 @@ class MyApp extends ConsumerWidget {
         "/": (context) => const HomePage(),
         "setting": (context) => const SettingPage(),
       },
+      builder: (context, child) {
+        return _GlobalShortcuts(child: child!);
+      },
+    );
+  }
+}
+
+class _GlobalShortcuts extends StatelessWidget {
+  final Widget child;
+
+  const _GlobalShortcuts({required this.child});
+
+  Future<void> _handleBackOrClose() async {
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) return;
+    final didPop = await navigator.maybePop();
+    if (!didPop && isDesktop) {
+      windowManager.close();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+        final isCtrlW = HardwareKeyboard.instance.isControlPressed &&
+            event.logicalKey == LogicalKeyboardKey.keyW;
+        final isEsc = event.logicalKey == LogicalKeyboardKey.escape;
+
+        if (isCtrlW || isEsc) {
+          _handleBackOrClose();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: child,
     );
   }
 }

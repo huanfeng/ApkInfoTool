@@ -457,12 +457,12 @@ class _SettingPageState extends ConsumerState<SettingPage> {
             },
             items: [
               DropdownMenuItem(
-                value: Config.kParserAapt2,
-                child: Text(t.settings.parser_engine_aapt2),
-              ),
-              DropdownMenuItem(
                 value: Config.kParserBuiltin,
                 child: Text(t.settings.parser_engine_builtin),
+              ),
+              DropdownMenuItem(
+                value: Config.kParserAapt2,
+                child: Text(t.settings.parser_engine_aapt2),
               ),
             ],
           ),

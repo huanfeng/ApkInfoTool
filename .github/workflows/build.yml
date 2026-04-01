@@ -288,99 +288,54 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
 
     steps:
-      - name: Download Windows Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-release
-          path: windows-release
-
       - name: Prepare Scoop Metadata
         id: scoop
         shell: bash
         run: |
           set -euo pipefail
-          ZIP_PATH=$(ls windows-release/*.zip | head -n 1)
-          ZIP_NAME=$(basename "$ZIP_PATH")
           VERSION="${GITHUB_REF_NAME#v}"
-          SHA256=$(sha256sum "$ZIP_PATH" | awk '{print $1}')
-          echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
 
-      - name: Checkout Scoop Bucket
-        uses: actions/checkout@v4
-        with:
-          repository: huanfeng/scoop-bucket
-          token: ${{ secrets.SCOOP_BUCKET_GITHUB_TOKEN }}
-          path: scoop-bucket
-
-      - name: Update Scoop Manifest
+      - name: Dispatch Scoop Bucket Update
         shell: bash
         env:
-          MANIFEST: scoop-bucket/bucket/apk_info_tool.json
-          URL: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.scoop.outputs.zip_name }}
+          BUCKET_REPO: huanfeng/scoop-bucket
+          GH_TOKEN: ${{ secrets.SCOOP_BUCKET_GITHUB_TOKEN }}
           VERSION: ${{ steps.scoop.outputs.version }}
-          SHA256: ${{ steps.scoop.outputs.sha256 }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          python - << 'PY'
-          import json
-          import os
-
-          manifest = os.environ["MANIFEST"]
-          url = os.environ["URL"]
-          version = os.environ["VERSION"]
-          sha256 = os.environ["SHA256"]
-
-          if os.path.exists(manifest):
-              with open(manifest, "r", encoding="utf-8") as f:
-                  data = json.load(f)
-          else:
-              data = {
-                  "version": version,
-                  "architecture": {
-                      "64bit": {
-                          "url": url,
-                          "bin": ["apk_info_tool.exe"],
-                          "hash": sha256,
-                      }
-                  },
-                  "homepage": "https://github.com/huanfeng/ApkInfoTool",
-                  "license": "MIT",
-                  "description": "A simple tool for viewing APK/XAPK/APKM file information and installation.",
-              }
-
-          data["version"] = version
-          data.setdefault("architecture", {}).setdefault("64bit", {})
-          data["architecture"]["64bit"]["url"] = url
-          data["architecture"]["64bit"]["hash"] = sha256
-          data["architecture"]["64bit"].setdefault("bin", ["apk_info_tool.exe"])
-          data.setdefault("homepage", "https://github.com/huanfeng/ApkInfoTool")
-          data.setdefault("license", "MIT")
-          data.setdefault(
-              "description",
-              "A simple tool for viewing APK/XAPK/APKM file information and installation.",
-          )
-
-          with open(manifest, "w", encoding="utf-8") as f:
-              json.dump(data, f, indent=2, ensure_ascii=True)
-              f.write("\n")
-          PY
-
-      - name: Commit and Push
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd scoop-bucket
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add bucket/apk_info_tool.json
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "SCOOP_BUCKET_GITHUB_TOKEN is not set."
+            exit 1
           fi
-          git commit -m "Update apk_info_tool to ${{ steps.scoop.outputs.version }}"
-          git push
+          curl -sS -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${BUCKET_REPO}/dispatches" \
+            -d "$(jq -n \
+              --arg app "apk_info_tool" \
+              --arg repo "$REPO" \
+              --arg ver "$VERSION" \
+              --arg asset "ApkInfoTool-Windows-x86_64-${VERSION}.zip" \
+              --arg bin "apk_info_tool.exe" \
+              --arg desc "A simple tool for viewing APK/XAPK/APKM file information and installation." \
+              --arg homepage "https://github.com/huanfeng/ApkInfoTool" \
+              --arg license "MIT" \
+              '{
+                event_type: "update-scoop-manifest",
+                client_payload: {
+                  app: $app,
+                  repo: $repo,
+                  version: $ver,
+                  asset_name: $asset,
+                  bin: $bin,
+                  description: $desc,
+                  homepage: $homepage,
+                  license: $license
+                }
+              }')"
 
   publish-homebrew:
     needs: [create-release]

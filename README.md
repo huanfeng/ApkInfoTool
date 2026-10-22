@@ -1,3 +1,9 @@
+> [!IMPORTANT]
+> **本项目已停止开发，后续请使用 [ApkInfoPlus](https://github.com/huanfeng/ApkInfoPlus)。**
+>
+> ApkInfoPlus 是本项目的 Rust 重写版：自带纯 Rust 解析引擎，不依赖 aapt2 / Java，支持 Windows / macOS / Linux，并新增基于 LibChecker-Rules 的原生库与 SDK 识别。
+> 下载：[Releases](https://github.com/huanfeng/ApkInfoPlus/releases)
+
 <p align="center">
   <img src="assets/image/icon_512.png" width="120" alt="APK Info Tool">
 </p>

@@ -1,3 +1,9 @@
+> [!IMPORTANT]
+> **This project is no longer under development. Please use [ApkInfoPlus](https://github.com/huanfeng/ApkInfoPlus) instead.**
+>
+> ApkInfoPlus is a Rust rewrite of this project: it ships its own pure-Rust parsing engine (no aapt2 / Java required), runs on Windows / macOS / Linux, and adds native library and SDK detection based on LibChecker-Rules.
+> Download: [Releases](https://github.com/huanfeng/ApkInfoPlus/releases)
+
 <p align="center">
   <img src="assets/image/icon_512.png" width="120" alt="APK Info Tool">
 </p>
